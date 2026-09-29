@@ -154,6 +154,25 @@
   .map-embed{ background:#0a1614; border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
     overflow:hidden; height:78vh; min-height:560px; position:relative; }
   #tkmap{ position:absolute; inset:0; }
+  .flow-ctrl{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:14px; }
+  .flow-ctrl .grp{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--text-secondary); }
+  .flow-ctrl .seg{ display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:2px; }
+  .flow-ctrl .seg button{ border:none; background:transparent; padding:6px 12px; border-radius:7px; font-size:12px; font-weight:600;
+    color:var(--text-secondary); cursor:pointer; font-family:inherit; }
+  .flow-ctrl .seg button.active{ background:var(--surface-1); color:var(--accent); box-shadow:var(--shadow); }
+  .flow-ctrl select{ border:1px solid var(--border-strong); background:var(--surface-2); border-radius:8px; padding:6px 9px; font-family:inherit; font-size:12.5px; color:var(--text-primary); }
+  .flow-sum{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
+  @media (max-width:760px){ .flow-sum{ grid-template-columns:1fr; } }
+  .flow-sum .c{ background:var(--surface-1); border:1px solid var(--border); border-top:3px solid var(--c); border-radius:12px; padding:12px 14px; box-shadow:var(--shadow); }
+  .flow-sum .c .n{ font-size:12.5px; font-weight:700; margin-bottom:4px; }
+  .flow-sum .c .v{ font-size:18px; font-weight:800; }
+  .flow-sum .c .p{ font-size:12px; color:var(--text-muted); }
+  .flow-box{ background:var(--surface-1); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:12px; overflow-x:auto; }
+  #flowsvg{ width:100%; min-width:720px; height:auto; display:block; }
+  #flowsvg text{ fill:var(--text-primary); font-family:'Be Vietnam Pro',sans-serif; font-size:11.5px; }
+  #flowsvg text.sub, #flowsvg tspan.sub{ fill:var(--text-muted); font-size:10.5px; }
+  #flowsvg path.rib{ fill:none; opacity:.45; }
+  #flowsvg path.rib:hover{ opacity:.85; }
   .map-note{ font-size:12.5px; color:var(--text-muted); margin:10px 2px 0; }
 
   .notes{ background:var(--surface-1); border:1px solid var(--border); border-radius:14px; padding: 18px 22px; box-shadow: var(--shadow); }
@@ -194,12 +213,13 @@
   <header>
     <div class="eyebrow"><span class="dot"></span>Cụm M12 · Cấu hình tuyến Tân Kim</div>
     <h1>Cấu hình &amp; mô phỏng tuyến Tân Kim</h1>
-    <p class="lede">Thêm luật config theo <b>quận/huyện</b> hoặc <b>bưu cục/kho</b>, riêng cho từng chiều <b>lấy</b>/<b>giao</b> và từng loại hàng <b>Normal/Bulky</b> — số KPI và bản đồ mạng lưới cùng đọc từ 1 bộ luật, đổi 1 chỗ là cả hai nhảy theo ngay. Mặc định mỗi tháng hiện đúng scope <code>config_v3</code> hiện tại (khớp Sheet AOP); thêm/bớt luật sẽ chuyển sang chế độ ước tính what-if.</p>
+    <p class="lede">Thêm tuyến config theo <b>quận/huyện</b> hoặc <b>bưu cục/kho</b>, riêng cho từng chiều <b>lấy</b>/<b>giao</b> và từng loại hàng <b>Normal/Bulky</b> — số KPI và bản đồ mạng lưới cùng đọc từ 1 bộ tuyến, đổi 1 chỗ là cả hai nhảy theo ngay. Mặc định mỗi tháng hiện đúng scope <code>config_v3</code> hiện tại (khớp Sheet AOP); thêm/bớt tuyến sẽ chuyển sang chế độ ước tính what-if.</p>
   </header>
 
   <div class="view-tabs" role="tablist">
     <button class="view-tab" id="tab-btn-sim" role="tab" aria-selected="true">Cấu hình &amp; mô phỏng</button>
     <button class="view-tab" id="tab-btn-map" role="tab" aria-selected="false">Bản đồ mạng lưới (live)</button>
+    <button class="view-tab" id="tab-btn-flow" role="tab" aria-selected="false">Phân bổ luồng hàng</button>
   </div>
 
   <div class="tab-panel" id="panel-sim">
@@ -209,7 +229,7 @@
       <div class="month-group" id="month-group"></div>
       <div class="spacer"></div>
       <button class="ghost" id="btn-reset">Về scope mặc định (tháng này)</button>
-      <button class="primary" id="btn-export">Xuất luật mới để lưu Sheet</button>
+      <button class="primary" id="btn-export">Xuất tuyến mới để lưu Sheet</button>
     </div>
     <div class="mode-line" id="mode-line"></div>
     <div id="autosave-line" style="font-size:12px;color:#8aa0b4;margin:-6px 0 10px;"></div>
@@ -218,17 +238,17 @@
 
   <section>
     <div class="section-head">
-      <h2>Luật cấu hình đang áp dụng</h2>
+      <h2>Tuyến cấu hình đang áp dụng</h2>
       <span class="hint">Cấp quận/huyện hoặc cấp bưu cục · riêng lấy/giao · riêng Normal/Bulky — bưu cục luôn thắng quận khi trùng</span>
     </div>
     <div class="rules-grid">
       <div class="panel">
-        <div class="phead"><span class="ptitle">Danh sách luật (tháng đang xem)</span><span class="pcount" id="rule-count"></span></div>
+        <div class="phead"><span class="ptitle">Danh sách tuyến (tháng đang xem)</span><span class="pcount" id="rule-count"></span></div>
         <div class="rule-search"><input id="rule-search" placeholder="Tìm theo tên quận/BC…"></div>
         <div class="rule-list" id="rule-list"></div>
       </div>
       <div class="panel">
-        <div class="phead"><span class="ptitle">+ Thêm luật mới</span></div>
+        <div class="phead"><span class="ptitle">+ Thêm tuyến mới</span></div>
         <div class="add-form">
           <div class="full">
             <label>Chiều</label>
@@ -261,12 +281,12 @@
               <option value="Bulky">Chỉ Bulky</option>
             </select>
           </div>
-          <div><label>Hiệu lực từ</label><select id="sel-eff"></select></div>
-          <div class="note">Luật mới chỉ áp dụng cho tháng đang xem ở trên (mỗi tháng cấu hình riêng, giống cách config_v3 tách theo tháng hiện nay).</div>
-          <button type="button" class="btn-add" id="btn-add-rule">+ Thêm luật vào tháng đang xem</button>
+          <div><label>Áp dụng cho tháng</label><select id="sel-eff"></select></div>
+          <div class="note">Tuyến mới chỉ áp dụng cho tháng đang xem ở trên (mỗi tháng cấu hình riêng, giống cách config_v3 tách theo tháng hiện nay).</div>
+          <button type="button" class="btn-add" id="btn-add-rule">+ Thêm tuyến vào tháng đang xem</button>
         </div>
         <div class="export-box" id="export-box" style="display:none; padding:0 16px 16px;">
-          <label style="font-size:11.5px;font-weight:600;color:var(--text-secondary);">Luật mới (chưa có trong config_v3) — copy dán vào tab Config_Rules trên Sheet:</label>
+          <label style="font-size:11.5px;font-weight:600;color:var(--text-secondary);">Tuyến mới (chưa có trong config_v3) — copy dán vào tab Config_Rules trên Sheet:</label>
           <textarea id="export-text" readonly></textarea>
         </div>
       </div>
@@ -277,9 +297,9 @@
     <div class="notes">
       <ul>
         <li><b>Nguồn dữ liệu:</b> danh mục bưu cục/kho + toạ độ lấy từ <code>dim_warehouse</code>, volume/weight T6 theo BC + hàng (Normal/Bulky) lấy từ <code>vol_from</code>/<code>vol_to</code>, scope mặc định từng tháng lấy đúng từ <code>config_v3</code> (cấp mã BC, không còn ước lượng theo quận như bản trước) — nên tại scope mặc định, số hiện ra khớp <b>chính xác</b> với Sheet AOP, không cần hiệu chỉnh (calibrate) gần đúng nữa.</li>
-        <li><b>Bưu cục luôn thắng quận:</b> nếu 1 BC vừa nằm trong 1 luật cấp quận vừa có 1 luật cấp BC riêng (kể cả luật mặc định từ config_v3), luật cấp BC được áp dụng sau cùng và quyết định — đúng nguyên tắc "cụ thể hơn thì ưu tiên hơn".</li>
-        <li><b>Cách tính khi đã đổi luật:</b> tính tỷ lệ volume/weight T6 khớp được ở scope hiện tại so với scope mặc định (scale), nhân vào đúng % nhường mà Sheet AOP đã ghi cho tháng đó — nên tại scope mặc định, số khớp 100% với AOP; đổi 1 luật nhỏ chỉ làm số nhích đúng theo tỷ trọng của luật đó.</li>
-        <li><b>Lưu vào Sheet:</b> nút "Xuất luật mới" hiện tại chỉ xuất ra danh sách để copy tay vào tab Config_Rules — bản ghi tự động (bấm Lưu → API ghi thẳng vào Sheet) cần thêm 1 serverless function + Google service account, xem file hướng dẫn đi kèm.</li>
+        <li><b>Bưu cục luôn thắng quận:</b> nếu 1 BC vừa nằm trong 1 tuyến cấp quận vừa có 1 tuyến cấp BC riêng (kể cả tuyến mặc định từ config_v3), tuyến cấp BC được áp dụng sau cùng và quyết định — đúng nguyên tắc "cụ thể hơn thì ưu tiên hơn".</li>
+        <li><b>Cách tính khi đã đổi tuyến:</b> tính tỷ lệ volume/weight T6 khớp được ở scope hiện tại so với scope mặc định (scale), nhân vào đúng % nhường mà Sheet AOP đã ghi cho tháng đó — nên tại scope mặc định, số khớp 100% với AOP; đổi 1 tuyến nhỏ chỉ làm số nhích đúng theo tỷ trọng của tuyến đó.</li>
+        <li><b>Lưu vào Sheet:</b> nút "Xuất tuyến mới" hiện tại chỉ xuất ra danh sách để copy tay vào tab Config_Rules — bản ghi tự động (bấm Lưu → API ghi thẳng vào Sheet) cần thêm 1 serverless function + Google service account, xem file hướng dẫn đi kèm.</li>
       </ul>
     </div>
   </section>
@@ -290,10 +310,29 @@
     <section>
       <div class="section-head">
         <h2>Bản đồ mạng lưới Tân Kim — live</h2>
-        <span class="hint">Đọc trực tiếp từ bộ luật đang cấu hình ở tab bên kia · chấm = BC/kho trong scope</span>
+        <span class="hint">Đọc trực tiếp từ bộ tuyến đang cấu hình ở tab bên kia · chấm = BC/kho trong scope</span>
       </div>
       <div class="map-embed"><div id="tkmap"></div></div>
-      <p class="map-note">Đổi luật ở tab "Cấu hình &amp; mô phỏng" rồi quay lại tab này — bản đồ vẽ lại ngay theo đúng bộ luật mới, không còn là ảnh chụp tĩnh tách rời như trước.</p>
+      <p class="map-note">Đổi tuyến ở tab "Cấu hình &amp; mô phỏng" rồi quay lại tab này — bản đồ vẽ lại ngay theo đúng bộ tuyến mới, không còn là ảnh chụp tĩnh tách rời như trước.</p>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-flow" hidden>
+    <section>
+      <div class="section-head">
+        <h2>Phân bổ luồng hàng — flow chart</h2>
+        <span class="hint">Đọc từ cùng bộ tuyến đang cấu hình · tháng đang chọn ở tab "Cấu hình &amp; mô phỏng"</span>
+      </div>
+      <div class="flow-ctrl">
+        <div class="grp">Chiều <div class="seg" id="fl-chieu"><button type="button" data-v="lấy" class="active">Lấy</button><button type="button" data-v="giao">Giao</button></div></div>
+        <div class="grp">Nhóm theo <div class="seg" id="fl-level"><button type="button" data-v="pname" class="active">Tỉnh</button><button type="button" data-v="dname">Quận/huyện</button></div></div>
+        <div class="grp">Chỉ số <div class="seg" id="fl-metric"><button type="button" data-v="vol" class="active">Volume</button><button type="button" data-v="kl">Weight</button></div></div>
+        <div class="grp">Hiển thị top <select id="fl-top"><option>8</option><option selected>12</option><option>20</option><option>30</option></select></div>
+        <div class="grp" id="fl-month"></div>
+      </div>
+      <div class="flow-sum" id="flow-sum"></div>
+      <div class="flow-box"><svg id="flowsvg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <p class="map-note">Baseline T6. <b>Lấy</b>: hàng từ nhóm BC đi về kho HCM01 / HCM20 hoặc Tân Kim. <b>Giao</b>: hàng từ kho ra nhóm BC. Phần nằm trong tuyến đã cấu hình (đúng loại hàng Normal/Bulky) chuyển sang Tân Kim, phần còn lại giữ ở kho gốc. Rê chuột vào dải màu để xem số.</p>
     </section>
   </div>
 
@@ -351,7 +390,7 @@
       localStorage.setItem(LS_KEY, JSON.stringify(data));
       if(autosaveEl) autosaveEl.textContent = '💾 Đã tự lưu tạm trên trình duyệt này lúc ' + fmtTime(data.savedAt) + ' — mất nếu đổi máy/trình duyệt khác.';
     }catch(e){
-      if(autosaveEl) autosaveEl.textContent = '⚠ Không tự lưu tạm được trên trình duyệt này — nhớ bấm "Xuất luật mới" trước khi rời trang.';
+      if(autosaveEl) autosaveEl.textContent = '⚠ Không tự lưu tạm được trên trình duyệt này — nhớ bấm "Xuất tuyến mới" trước khi rời trang.';
     }
   }
   function loadLocal(){
@@ -390,19 +429,28 @@
     return m;
   }
 
+  // 2 tuyến cùng cấp trùng 1 đối tượng (vd Normal + Bulky) thì gộp lại thành 'Cả hai', không để tuyến sau đè tuyến trước
+  function mergeHang(a, b){ return !a ? b : (a===b ? a : 'Cả hai'); }
+
   function scopeFor(month, chieu){
     var m = {};
+    var q = {};
     customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='quan';}).forEach(function(r){
-      widsForDist(r.did).forEach(function(wid){ m[wid] = r.hang; });
+      widsForDist(r.did).forEach(function(wid){ q[wid] = mergeHang(q[wid], r.hang); });
     });
+    Object.keys(q).forEach(function(wid){ m[wid] = q[wid]; });
     (DEFAULT_RULES[month]||[]).forEach(function(r){
       if(r.chieu!==chieu) return;
       if(excludedDefault[month].has(chieu+':'+r.wid)) return;
       m[String(r.wid)] = 'Cả hai';
     });
+    var b = {};
     customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='bc';}).forEach(function(r){
-      if(r.hang === '__remove__') delete m[String(r.wid)];
-      else m[String(r.wid)] = r.hang;
+      var k = String(r.wid);
+      b[k] = r.hang === '__remove__' ? '__remove__' : (b[k]==='__remove__' ? r.hang : mergeHang(b[k], r.hang));
+    });
+    Object.keys(b).forEach(function(wid){
+      if(b[wid] === '__remove__') delete m[wid]; else m[wid] = b[wid];
     });
     return m;
   }
@@ -484,7 +532,7 @@
       else { label = bcLabel(r.wid); sub = bcSub(r.wid); }
       rows.push({kind:'custom', chieu:r.chieu, hang:r.hang, label:label, sub:sub, idx:idx});
     });
-    ruleCountEl.textContent = rows.length + ' luật';
+    ruleCountEl.textContent = rows.length + ' tuyến';
     var q = stripDia((document.getElementById('rule-search').value||'').trim());
     ruleListEl.innerHTML = rows.map(function(row){
       if(q && stripDia(row.label).indexOf(q)===-1) return '';
@@ -495,7 +543,7 @@
       return '<div class="rule-row'+(row.excluded?' excluded':'')+'">'+tagChieu+tagHang+
         '<div class="main"><span class="nm">'+row.label+'</span><span class="sub">'+row.sub+'</span></div>'+
         tagOrigin+
-        '<button class="rm" '+rmAttr+' title="'+(row.excluded?'Khôi phục':'Bỏ luật này')+'">'+(row.excluded?'↺':'✕')+'</button></div>';
+        '<button class="rm" '+rmAttr+' title="'+(row.excluded?'Khôi phục':'Bỏ tuyến này')+'">'+(row.excluded?'↺':'✕')+'</button></div>';
     }).join('');
   }
   document.getElementById('rule-search').addEventListener('input', renderRuleList);
@@ -510,7 +558,7 @@
     } else if(btn.dataset.customIdx !== undefined){
       customRules[currentMonth].splice(parseInt(btn.dataset.customIdx,10), 1);
     }
-    renderRuleList(); recompute(); renderMap(); saveLocal();
+    renderRuleList(); recompute(); syncMap(); saveLocal();
   });
 
   // ---------- add-rule form ----------
@@ -540,6 +588,7 @@
 
   var selEff = document.getElementById('sel-eff');
   selEff.innerHTML = MONTHS.map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join('');
+  selEff.value = currentMonth;
 
   var bcSearch = document.getElementById('bc-search'), bcResults = document.getElementById('bc-results'), bcPicked = document.getElementById('bc-picked');
   bcSearch.addEventListener('input', function(){
@@ -582,7 +631,11 @@
       rule = {capdo:'bc', chieu:formChieu, hang:hang, wid:pickedBcId, eff:eff, seq:ruleSeq++};
     }
     customRules[eff].push(rule);
-    renderRuleList(); recompute(); renderMap(); saveLocal();
+    if(eff !== currentMonth){
+      var mb = monthGroup.querySelector('.month-btn[data-month="'+eff+'"]');
+      if(mb) mb.click();
+    }
+    renderRuleList(); recompute(); syncMap(); saveLocal();
   });
 
   // ---------- export (interim — copy/paste vào Sheet, chưa auto-ghi) ----------
@@ -617,14 +670,15 @@
     b.addEventListener('click', function(){
       currentMonth = m;
       monthGroup.querySelectorAll('.month-btn').forEach(function(x){x.classList.toggle('active', x.dataset.month===m);});
-      renderRuleList(); recompute(); renderMap();
+      selEff.value = m;
+      renderRuleList(); recompute(); syncMap();
     });
     monthGroup.appendChild(b);
   });
   document.getElementById('btn-reset').addEventListener('click', function(){
     excludedDefault[currentMonth] = new Set();
     customRules[currentMonth] = [];
-    renderRuleList(); recompute(); renderMap(); saveLocal();
+    renderRuleList(); recompute(); syncMap(); saveLocal();
   });
 
   // ---------- KPI ----------
@@ -638,7 +692,7 @@
 
     document.getElementById('mode-line').innerHTML = official
       ? '<span class="mode-badge official">✓ Khớp chính thức — đúng scope config_v3 (' + currentMonth + ')</span>'
-      : '<span class="mode-badge estimate">◐ Ước tính what-if — đã đổi luật so với config_v3</span>';
+      : '<span class="mode-badge estimate">◐ Ước tính what-if — đã đổi tuyến so với config_v3</span>';
 
     kpiRow.innerHTML =
       '<div class="kpi" style="--kpi-color:var(--s-hcm01);"><div class="name"><span class="swatch"></span>HCM01</div>'+
@@ -668,7 +722,7 @@
   var mapLayer = L.layerGroup().addTo(map);
   var mstate = {prov:'', dist:'', bc:'', lay:true, giao:true};
 
-  var mpanelHtml = '<h3>🗺️ Bộ lọc bản đồ</h3><div class="sub">Live theo bộ luật đang cấu hình</div>'+
+  var mpanelHtml = '<h3>🗺️ Bộ lọc bản đồ</h3><div class="sub">Live theo bộ tuyến đang cấu hình</div>'+
     '<label>Tỉnh</label><select id="mfProv"></select>'+
     '<label>Huyện/Quận</label><select id="mfDist"></select>'+
     '<label>Bưu cục / Kho</label><select id="mfBC"></select>'+
@@ -704,6 +758,10 @@
 
   function mRefreshOptions(){
     var all = currentMapRecs(currentMonth);
+    // bộ lọc đang chọn mà không còn nằm trong scope mới thì bỏ, tránh bản đồ trống vì lọc "ma"
+    if(mstate.prov && !all.some(function(r){return r.prov===mstate.prov;})){ mstate.prov=''; mstate.dist=''; mstate.bc=''; }
+    if(mstate.dist && !all.some(function(r){return r.dist===mstate.dist && (!mstate.prov || r.prov===mstate.prov);})){ mstate.dist=''; mstate.bc=''; }
+    if(mstate.bc && !all.some(function(r){return String(r.id)===mstate.bc;})){ mstate.bc=''; }
     var provs = [...new Set(all.map(function(r){return r.prov;}).filter(Boolean))].sort();
     var dists = [...new Set(all.filter(function(r){return !mstate.prov || r.prov===mstate.prov;}).map(function(r){return r.dist;}).filter(Boolean))].sort();
     var bcs = all.filter(function(r){return (!mstate.prov || r.prov===mstate.prov) && (!mstate.dist || r.dist===mstate.dist);});
@@ -750,6 +808,7 @@
     if(topProv.length){ s += '<div class="sec">Top tỉnh (số BC)</div>'; topProv.forEach(function(p){ s+='<div class="row"><span class="l">'+p[0]+'</span><span class="v">'+p[1]+'</span></div>'; }); }
     document.getElementById('mstbody').innerHTML = s;
   }
+  function syncMap(){ mRefreshOptions(); renderMap(); if(typeof renderFlow==='function') renderFlow(); }
   document.getElementById('mfProv').addEventListener('change', function(e){ mstate.prov=e.target.value; mstate.dist=''; mstate.bc=''; mRefreshOptions(); renderMap(); });
   document.getElementById('mfDist').addEventListener('change', function(e){ mstate.dist=e.target.value; mstate.bc=''; mRefreshOptions(); renderMap(); });
   document.getElementById('mfBC').addEventListener('change', function(e){ mstate.bc=e.target.value; renderMap();
@@ -757,19 +816,129 @@
   document.getElementById('mtLay').addEventListener('change', function(e){ mstate.lay=e.target.checked; renderMap(); });
   document.getElementById('mtGiao').addEventListener('change', function(e){ mstate.giao=e.target.checked; renderMap(); });
 
+  // ---------- flow chart (Sankey) — cùng bộ tuyến ----------
+  var fl = {chieu:'lấy', level:'pname', metric:'vol'};
+  var KHO = [
+    {id:'1626', name:'HCM01', color:'#2a78d6'},
+    {id:'2388', name:'HCM20', color:'#1baf7a'},
+    {id:'TK',   name:'Tân Kim', color:'#d9501a'}
+  ];
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function flowData(){
+    var scope = scopeFor(currentMonth, fl.chieu);
+    var volSrc = fl.chieu==='lấy' ? VOL_LAY : VOL_GIAO;
+    var groups = {};
+    Object.keys(volSrc).forEach(function(wid){
+      var w = WH[wid]; if(!w) return;
+      var gname = w.pname ? (fl.level==='dname' ? (w.dname||'?')+' ('+w.pname+')' : w.pname) : 'Không rõ';
+      var g = groups[gname] || (groups[gname] = {name:gname, sub:0, f:{'1626':0,'2388':0,'TK':0}});
+      var h = scope[wid];
+      OWNERS.forEach(function(o){
+        var e = volSrc[wid][o]; if(!e) return;
+        ['Normal','Bulky'].forEach(function(sv){
+          var v = e[sv]; if(!v) return;
+          var x = fl.metric==='vol' ? v.vol : v.kl/1000;
+          var moved = h && (h==='Cả hai' || h===sv);
+          g.f[moved?'TK':o] += x;
+        });
+      });
+    });
+    var list = Object.keys(groups).map(function(k){ var g=groups[k]; g.total=g.f['1626']+g.f['2388']+g.f.TK; return g; })
+      .filter(function(g){return g.total>0;}).sort(function(a,b){return b.total-a.total;});
+    var top = parseInt(document.getElementById('fl-top').value,10);
+    var shown = list.slice(0, top), rest = list.slice(top);
+    if(rest.length){
+      var o = {name:'Khác ('+rest.length+' nhóm)', f:{'1626':0,'2388':0,'TK':0}};
+      rest.forEach(function(g){ ['1626','2388','TK'].forEach(function(k){ o.f[k]+=g.f[k]; }); });
+      o.total = o.f['1626']+o.f['2388']+o.f.TK; shown.push(o);
+    }
+    return shown;
+  }
+  function renderFlow(){
+    var svg = document.getElementById('flowsvg');
+    var groups = flowData();
+    var unit = fl.metric==='vol' ? 'kiện' : 'kg';
+    var kho = {'1626':0,'2388':0,'TK':0}, total=0;
+    groups.forEach(function(g){ ['1626','2388','TK'].forEach(function(k){ kho[k]+=g.f[k]; }); total+=g.total; });
+    document.getElementById('flow-month').textContent = currentMonth;
+    document.getElementById('flow-sum').innerHTML = KHO.map(function(k){
+      var lbl = k.id==='TK' ? 'Tân Kim nhận' : k.name+' giữ lại';
+      return '<div class="c" style="--c:'+k.color+'"><div class="n">'+lbl+'</div><div class="v mono">'+fmt(kho[k.id])+' <span style="font-size:12px;font-weight:600">'+unit+'</span></div><div class="p">'+(total?(kho[k.id]/total*100).toFixed(1).replace('.',','):'0')+'% tổng luồng '+(fl.chieu==='lấy'?'lấy':'giao')+' (nhóm đang hiển thị)</div></div>';
+    }).join('');
+    if(!total){ svg.setAttribute('viewBox','0 0 900 80'); svg.innerHTML='<text x="20" y="40">Chưa có dữ liệu.</text>'; return; }
+
+    var n = groups.length, padL = 6, padR = 40, W = 900, xL = 230, xR = 690, nodeW = 14;
+    var H = Math.max(380, n*30 + 40);
+    var k = Math.min((H-40-padL*(n-1))/total, (H-40-padR*2)/total);
+    var lay = fl.chieu==='lấy';
+    // node geometry — cột trái = nhóm BC (lấy) hoặc kho (giao)
+    var lNodes = [], rNodes = [], y = 20;
+    var srcList = lay ? groups.map(function(g){return {key:g.name,label:g.name,total:g.total,g:g};}) : KHO.map(function(c){return {key:c.id,label:c.name,total:kho[c.id],color:c.color};});
+    var dstList = lay ? KHO.map(function(c){return {key:c.id,label:c.name,total:kho[c.id],color:c.color};}) : groups.map(function(g){return {key:g.name,label:g.name,total:g.total,g:g};});
+    var padS = lay ? padL : padR, padD = lay ? padR : padL;
+    srcList.forEach(function(nd){ nd.y=y; nd.h=Math.max(nd.total*k,18); nd.off=(nd.h-nd.total*k)/2; y+=nd.h+padS; });
+    var srcEnd = y; y = 20;
+    dstList.forEach(function(nd){ nd.y=y; nd.h=Math.max(nd.total*k,18); nd.off=(nd.h-nd.total*k)/2; y+=nd.h+padD; });
+    function link(gn, khoId){ return gn.f[khoId]; }
+    var links = [];
+    if(lay){
+      srcList.forEach(function(s){ dstList.forEach(function(d){ var v=link(s.g,d.key); if(v>0) links.push({s:s,d:d,v:v}); }); });
+    } else {
+      srcList.forEach(function(s){ dstList.forEach(function(d){ var v=link(d.g,s.key); if(v>0) links.push({s:s,d:d,v:v}); }); });
+    }
+    var out = '';
+    // links (đã theo thứ tự nên không chéo nhau trong cùng node)
+    links.forEach(function(l){
+      var t = l.v*k, y0 = l.s.y+l.s.off+t/2, y1 = l.d.y+l.d.off+t/2; l.s.off+=t; l.d.off+=t;
+      var c = KHO.filter(function(c){return c.id===(lay?l.d.key:l.s.key);})[0];
+      var x0 = xL+nodeW, x1 = xR, mx = (x0+x1)/2;
+      var from = lay?l.s.label:l.s.label, to = l.d.label;
+      out += '<path class="rib" d="M'+x0+','+y0+' C'+mx+','+y0+' '+mx+','+y1+' '+x1+','+y1+'" stroke="'+c.color+'" stroke-width="'+Math.max(t,0.8)+'"><title>'+esc(from)+' → '+esc(to)+': '+fmt(l.v)+' '+unit+'</title></path>';
+    });
+    function drawNode(nd, x, leftSide, isKho){
+      var col = nd.color || '#948d7c';
+      var o = '<rect x="'+x+'" y="'+nd.y+'" width="'+nodeW+'" height="'+nd.h+'" rx="2" fill="'+col+'"/>';
+      var cy = nd.y+nd.h/2, tx = leftSide ? x-8 : x+nodeW+8, anchor = leftSide?'end':'start';
+      var lbl = nd.label.length>30 ? nd.label.slice(0,29)+'…' : nd.label;
+      o += '<text x="'+tx+'" y="'+(cy-(isKho?0:0))+'" text-anchor="'+anchor+'" dominant-baseline="middle" style="font-weight:'+(isKho?700:500)+'">'+esc(lbl)+'<tspan class="sub" dx="6" style="font-weight:400">'+fmt(nd.total)+' '+unit+'</tspan></text>';
+      return o;
+    }
+    srcList.forEach(function(nd){ out += drawNode(nd, xL, true, !lay); });
+    dstList.forEach(function(nd){ out += drawNode(nd, xR, false, lay); });
+    out += '<text class="sub" x="'+xL+'" y="10" text-anchor="end">'+(lay?'Nhóm bưu cục (nguồn lấy)':'Kho (nguồn giao)')+'</text>';
+    out += '<text class="sub" x="'+(xR+nodeW)+'" y="10" text-anchor="start">'+(lay?'Kho nhận':'Nhóm bưu cục (đích giao)')+'</text>';
+    svg.setAttribute('viewBox','0 0 '+W+' '+(Math.max(srcEnd, y)+10));
+    svg.innerHTML = out;
+  }
+  function bindSeg(id, key){
+    document.getElementById(id).addEventListener('click', function(e){
+      var b = e.target.closest('button'); if(!b) return;
+      fl[key] = b.dataset.v;
+      this.querySelectorAll('button').forEach(function(x){x.classList.toggle('active', x===b);});
+      renderFlow();
+    });
+  }
+  bindSeg('fl-chieu','chieu'); bindSeg('fl-level','level'); bindSeg('fl-metric','metric');
+  document.getElementById('fl-top').addEventListener('change', renderFlow);
+  document.getElementById('fl-month').innerHTML = 'Tháng: <b id="flow-month"></b>';
+
   // ---------- tab switching ----------
   var btnSim = document.getElementById('tab-btn-sim'), btnMap = document.getElementById('tab-btn-map');
   var panelSim = document.getElementById('panel-sim'), panelMap = document.getElementById('panel-map');
+  var btnFlow = document.getElementById('tab-btn-flow'), panelFlow = document.getElementById('panel-flow');
   var mapInited = false;
   function showTab(which){
-    var sim = which==='sim';
+    var sim = which==='sim', mp = which==='map', flw = which==='flow';
     btnSim.setAttribute('aria-selected', sim?'true':'false');
-    btnMap.setAttribute('aria-selected', sim?'false':'true');
-    panelSim.hidden = !sim; panelMap.hidden = sim;
-    if(!sim){ setTimeout(function(){ map.invalidateSize(); if(!mapInited){ mRefreshOptions(); renderMap(); mapInited = true; } }, 30); }
+    btnMap.setAttribute('aria-selected', mp?'true':'false');
+    btnFlow.setAttribute('aria-selected', flw?'true':'false');
+    panelSim.hidden = !sim; panelMap.hidden = !mp; panelFlow.hidden = !flw;
+    if(flw) renderFlow();
+    if(mp){ setTimeout(function(){ map.invalidateSize(); syncMap(); mapInited = true; }, 30); }
   }
   btnSim.addEventListener('click', function(){ showTab('sim'); });
   btnMap.addEventListener('click', function(){ showTab('map'); });
+  btnFlow.addEventListener('click', function(){ showTab('flow'); });
 
   // ---------- restore autosave (nếu có) trước khi vẽ lần đầu ----------
   var restoredAt = loadLocal();
