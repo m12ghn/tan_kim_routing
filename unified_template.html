@@ -390,19 +390,28 @@
     return m;
   }
 
+  // 2 luật cùng cấp trùng 1 đối tượng (vd Normal + Bulky) thì gộp lại thành 'Cả hai', không để luật sau đè luật trước
+  function mergeHang(a, b){ return !a ? b : (a===b ? a : 'Cả hai'); }
+
   function scopeFor(month, chieu){
     var m = {};
+    var q = {};
     customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='quan';}).forEach(function(r){
-      widsForDist(r.did).forEach(function(wid){ m[wid] = r.hang; });
+      widsForDist(r.did).forEach(function(wid){ q[wid] = mergeHang(q[wid], r.hang); });
     });
+    Object.keys(q).forEach(function(wid){ m[wid] = q[wid]; });
     (DEFAULT_RULES[month]||[]).forEach(function(r){
       if(r.chieu!==chieu) return;
       if(excludedDefault[month].has(chieu+':'+r.wid)) return;
       m[String(r.wid)] = 'Cả hai';
     });
+    var b = {};
     customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='bc';}).forEach(function(r){
-      if(r.hang === '__remove__') delete m[String(r.wid)];
-      else m[String(r.wid)] = r.hang;
+      var k = String(r.wid);
+      b[k] = r.hang === '__remove__' ? '__remove__' : (b[k]==='__remove__' ? r.hang : mergeHang(b[k], r.hang));
+    });
+    Object.keys(b).forEach(function(wid){
+      if(b[wid] === '__remove__') delete m[wid]; else m[wid] = b[wid];
     });
     return m;
   }
@@ -510,7 +519,7 @@
     } else if(btn.dataset.customIdx !== undefined){
       customRules[currentMonth].splice(parseInt(btn.dataset.customIdx,10), 1);
     }
-    renderRuleList(); recompute(); renderMap(); saveLocal();
+    renderRuleList(); recompute(); syncMap(); saveLocal();
   });
 
   // ---------- add-rule form ----------
@@ -540,6 +549,7 @@
 
   var selEff = document.getElementById('sel-eff');
   selEff.innerHTML = MONTHS.map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join('');
+  selEff.value = currentMonth;
 
   var bcSearch = document.getElementById('bc-search'), bcResults = document.getElementById('bc-results'), bcPicked = document.getElementById('bc-picked');
   bcSearch.addEventListener('input', function(){
@@ -582,7 +592,11 @@
       rule = {capdo:'bc', chieu:formChieu, hang:hang, wid:pickedBcId, eff:eff, seq:ruleSeq++};
     }
     customRules[eff].push(rule);
-    renderRuleList(); recompute(); renderMap(); saveLocal();
+    if(eff !== currentMonth){
+      var mb = monthGroup.querySelector('.month-btn[data-month="'+eff+'"]');
+      if(mb) mb.click();
+    }
+    renderRuleList(); recompute(); syncMap(); saveLocal();
   });
 
   // ---------- export (interim — copy/paste vào Sheet, chưa auto-ghi) ----------
@@ -617,14 +631,15 @@
     b.addEventListener('click', function(){
       currentMonth = m;
       monthGroup.querySelectorAll('.month-btn').forEach(function(x){x.classList.toggle('active', x.dataset.month===m);});
-      renderRuleList(); recompute(); renderMap();
+      selEff.value = m;
+      renderRuleList(); recompute(); syncMap();
     });
     monthGroup.appendChild(b);
   });
   document.getElementById('btn-reset').addEventListener('click', function(){
     excludedDefault[currentMonth] = new Set();
     customRules[currentMonth] = [];
-    renderRuleList(); recompute(); renderMap(); saveLocal();
+    renderRuleList(); recompute(); syncMap(); saveLocal();
   });
 
   // ---------- KPI ----------
@@ -704,6 +719,10 @@
 
   function mRefreshOptions(){
     var all = currentMapRecs(currentMonth);
+    // bộ lọc đang chọn mà không còn nằm trong scope mới thì bỏ, tránh bản đồ trống vì lọc "ma"
+    if(mstate.prov && !all.some(function(r){return r.prov===mstate.prov;})){ mstate.prov=''; mstate.dist=''; mstate.bc=''; }
+    if(mstate.dist && !all.some(function(r){return r.dist===mstate.dist && (!mstate.prov || r.prov===mstate.prov);})){ mstate.dist=''; mstate.bc=''; }
+    if(mstate.bc && !all.some(function(r){return String(r.id)===mstate.bc;})){ mstate.bc=''; }
     var provs = [...new Set(all.map(function(r){return r.prov;}).filter(Boolean))].sort();
     var dists = [...new Set(all.filter(function(r){return !mstate.prov || r.prov===mstate.prov;}).map(function(r){return r.dist;}).filter(Boolean))].sort();
     var bcs = all.filter(function(r){return (!mstate.prov || r.prov===mstate.prov) && (!mstate.dist || r.dist===mstate.dist);});
@@ -750,6 +769,7 @@
     if(topProv.length){ s += '<div class="sec">Top tỉnh (số BC)</div>'; topProv.forEach(function(p){ s+='<div class="row"><span class="l">'+p[0]+'</span><span class="v">'+p[1]+'</span></div>'; }); }
     document.getElementById('mstbody').innerHTML = s;
   }
+  function syncMap(){ mRefreshOptions(); renderMap(); }
   document.getElementById('mfProv').addEventListener('change', function(e){ mstate.prov=e.target.value; mstate.dist=''; mstate.bc=''; mRefreshOptions(); renderMap(); });
   document.getElementById('mfDist').addEventListener('change', function(e){ mstate.dist=e.target.value; mstate.bc=''; mRefreshOptions(); renderMap(); });
   document.getElementById('mfBC').addEventListener('change', function(e){ mstate.bc=e.target.value; renderMap();
@@ -766,7 +786,7 @@
     btnSim.setAttribute('aria-selected', sim?'true':'false');
     btnMap.setAttribute('aria-selected', sim?'false':'true');
     panelSim.hidden = !sim; panelMap.hidden = sim;
-    if(!sim){ setTimeout(function(){ map.invalidateSize(); if(!mapInited){ mRefreshOptions(); renderMap(); mapInited = true; } }, 30); }
+    if(!sim){ setTimeout(function(){ map.invalidateSize(); syncMap(); mapInited = true; }, 30); }
   }
   btnSim.addEventListener('click', function(){ showTab('sim'); });
   btnMap.addEventListener('click', function(){ showTab('map'); });
