@@ -194,6 +194,10 @@
    padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.5);font-size:13px;color:#cdd9e5;max-height:94%;overflow:auto}
   #mpanel{left:10px;width:250px}
   #mstats{right:10px;width:260px}
+  .mlbl{ background:none; border:none; box-shadow:none; pointer-events:none; white-space:nowrap; text-align:center; transform:translate(-50%,-50%);
+    font-family:'Be Vietnam Pro',sans-serif; text-shadow:0 0 3px #0a1614,0 0 3px #0a1614,0 0 5px #0a1614; }
+  .mlbl-p{ color:#d8f3ec; font-size:12.5px; font-weight:700; letter-spacing:.02em; }
+  .mlbl-d{ color:#a9d0c4; font-size:11px; font-weight:500; }
   .pnl h3{margin:0 0 4px;font-size:13.5px;color:#25c2a0;font-family:'Be Vietnam Pro',sans-serif;}
   .pnl .sub{font-size:11px;color:#8aa0b4;margin-bottom:8px}
   .pnl label{display:block;margin:9px 0 3px;font-weight:600;color:#aebfce;font-size:12px}
@@ -800,12 +804,67 @@
   var distLayer = L.geoJSON(DATA.adm2, {
     style:{color:DIST_LINE, weight:distWeight(), opacity:.75, fill:true, fillColor:'#1b2f2a', fillOpacity:.92, dashArray:'4 4'},
     onEachFeature:function(f, layer){
-      layer.bindTooltip(f.properties.name, {sticky:true, className:'rt'});
+      layer.bindTooltip(f.properties.vn || f.properties.name, {sticky:true, className:'rt'});
       layer.on('mouseover', function(){ layer.setStyle({fillColor:'#24433b', opacity:.9}); });
       layer.on('mouseout', function(){ distLayer.resetStyle(layer); layer.setStyle({weight:distWeight()}); });
     }
   }).addTo(map);
   map.on('zoomend', function(){ distLayer.setStyle({weight:distWeight()}); });
+
+  // ---------- nhãn tên tỉnh / quận-huyện (đặt tại trọng tâm polygon lớn nhất) ----------
+  function ringCentroid(ring){
+    var a=0, cx=0, cy=0;
+    for(var i=0, j=ring.length-1; i<ring.length; j=i++){
+      var f = ring[j][0]*ring[i][1] - ring[i][0]*ring[j][1];
+      a += f; cx += (ring[j][0]+ring[i][0])*f; cy += (ring[j][1]+ring[i][1])*f;
+    }
+    if(!a) return {lng:ring[0][0], lat:ring[0][1], area:0};
+    return {lng:cx/(3*a), lat:cy/(3*a), area:Math.abs(a)/2};
+  }
+  function featureCenter(geom){
+    var polys = geom.type==='Polygon' ? [geom.coordinates] : geom.coordinates, best=null;
+    polys.forEach(function(p){ var c = ringCentroid(p[0]); if(!best || c.area>best.area) best=c; });
+    return best;
+  }
+  function shortAdm(n){
+    return n.replace(/^Tỉnh\s+/,'').replace(/^Thành phố\s+(?=(Hà Nội|Hồ Chí Minh|Hải Phòng|Đà Nẵng|Cần Thơ|Huế))/,'')
+            .replace(/^Quận\s+/,'Q. ').replace(/^Thành phố\s+/,'TP. ').replace(/^Thị [xX]ã\s+/,'TX. ').replace(/^Thị trấn\s+/,'TT. ').replace(/^Huyện\s+/,'');
+  }
+  // Bộ nhãn có tránh đè: ưu tiên polygon lớn hơn, nhãn nào chạm nhãn đã đặt thì bỏ (tự hiện thêm khi zoom gần hơn)
+  function makeLabelSet(fc, cls, textOf, charW, lineH){
+    var items = [];
+    fc.features.forEach(function(f){
+      var c = featureCenter(f.geometry); if(!c) return;
+      items.push({lat:c.lat, lng:c.lng, area:c.area, text:textOf(f)});
+    });
+    items.sort(function(a,b){ return b.area-a.area; });
+    var group = L.layerGroup();
+    function rebuild(){
+      group.clearLayers();
+      var placed = [];
+      items.forEach(function(it){
+        var pt = map.latLngToLayerPoint([it.lat,it.lng]), w = it.text.length*charW+6, h = lineH;
+        var r = {x0:pt.x-w/2, x1:pt.x+w/2, y0:pt.y-h/2, y1:pt.y+h/2};
+        for(var i=0;i<placed.length;i++){ var q=placed[i]; if(r.x0<q.x1 && r.x1>q.x0 && r.y0<q.y1 && r.y1>q.y0) return; }
+        placed.push(r);
+        L.marker([it.lat,it.lng], {interactive:false, keyboard:false,
+          icon:L.divIcon({className:'mlbl '+cls, html:it.text.replace(/&/g,'&amp;').replace(/</g,'&lt;'), iconSize:[0,0]})}).addTo(group);
+      });
+    }
+    return {group:group, rebuild:rebuild};
+  }
+  var provSet = makeLabelSet(DATA.prov, 'mlbl-p', function(f){ return shortAdm(f.properties.name); }, 7.4, 16);
+  var distSet = makeLabelSet(DATA.adm2, 'mlbl-d', function(f){ return shortAdm(f.properties.vn || f.properties.name); }, 6.2, 14);
+  var provLabels = provSet.group, distLabels = distSet.group;
+  var DIST_LABEL_MIN_ZOOM = 8;
+  var labelOpt = {prov:true, dist:true};
+  function syncLabels(){
+    if(labelOpt.prov){ provSet.rebuild(); if(!map.hasLayer(provLabels)) provLabels.addTo(map); } else if(map.hasLayer(provLabels)) map.removeLayer(provLabels);
+    var showD = labelOpt.dist && map.getZoom() >= DIST_LABEL_MIN_ZOOM;
+    if(showD){ distSet.rebuild(); if(!map.hasLayer(distLabels)) distLabels.addTo(map); } else if(map.hasLayer(distLabels)) map.removeLayer(distLabels);
+  }
+  map.on('zoomend', syncLabels);
+  syncLabels();
   var provLayer = L.geoJSON(DATA.prov, {interactive:false, style:{color:'#8fd4c4', weight:2.2, opacity:.95, lineJoin:'round', fill:false}}).addTo(map);
   L.marker([TK.lat, TK.lng]).addTo(map).bindTooltip('🏭 '+TK.name, {permanent:true, className:'whlbl', direction:'top', offset:[0,-8]});
   var mapLayer = L.layerGroup().addTo(map);
@@ -819,7 +878,9 @@
     '<div class="hk"><input type="checkbox" id="mtLay" checked> LẤY (nét đứt, hàng về TK)</div>'+
     '<div class="hk"><input type="checkbox" id="mtGiao" checked> GIAO (nét liền, hàng ra TK)</div>'+
     '<div class="hr"></div>'+
-    '<div class="hk"><input type="checkbox" id="mtDist" checked> Ranh giới quận/huyện (nét đứt mờ)</div>';
+    '<div class="hk"><input type="checkbox" id="mtDist" checked> Ranh giới quận/huyện (nét đứt mờ)</div>'+
+    '<div class="hk"><input type="checkbox" id="mtProvName" checked> Tên tỉnh</div>'+
+    '<div class="hk"><input type="checkbox" id="mtDistName" checked> Tên quận/huyện <span style="color:#8aa0b4;font-size:11px">(hiện khi zoom gần)</span></div>';
   var mpanel = document.createElement('div'); mpanel.className='pnl'; mpanel.id='mpanel'; mpanel.innerHTML = mpanelHtml;
   document.getElementById('tkmap').appendChild(mpanel);
   var mstats = document.createElement('div'); mstats.className='pnl'; mstats.id='mstats';
@@ -907,6 +968,8 @@
   document.getElementById('mtDist').addEventListener('change', function(e){
     if(e.target.checked){ distLayer.addTo(map); distLayer.bringToBack(); } else { map.removeLayer(distLayer); }
   });
+  document.getElementById('mtProvName').addEventListener('change', function(e){ labelOpt.prov = e.target.checked; syncLabels(); });
+  document.getElementById('mtDistName').addEventListener('change', function(e){ labelOpt.dist = e.target.checked; syncLabels(); });
   document.getElementById('mtLay').addEventListener('change', function(e){ mstate.lay=e.target.checked; renderMap(); });
   document.getElementById('mtGiao').addEventListener('change', function(e){ mstate.giao=e.target.checked; renderMap(); });
 
