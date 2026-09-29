@@ -1,0 +1,21 @@
+{
+  "_note": "Override lat/lng/metadata cho BC không có trong dim_warehouse.csv (missing hoặc mới tạo). Build_tk_map_v3.py merge khi dim_warehouse thiếu entry.",
+  "1180": {
+    "lat": 10.26,
+    "lng": 106.38,
+    "name": "89 Nguyễn Thị Định-TP.Bến Tre",
+    "province": "Bến Tre",
+    "district": "Thành phố Bến Tre",
+    "ward": "",
+    "dept": ""
+  },
+  "21495000": {
+    "lat": 10.26,
+    "lng": 106.13,
+    "name": "Bưu Cục QL57 KP3-Thị Trấn Chợ Lách-Bến Tre",
+    "province": "Bến Tre",
+    "district": "Huyện Chợ Lách",
+    "ward": "",
+    "dept": ""
+  }
+}

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+index.localtest.html
+shot_sim.png
+shot_map.png
+tan-kim-project/

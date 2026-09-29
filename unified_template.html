@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8">
+<title>Cấu Hình & Mô Phỏng Tuyến Tân Kim</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+  :root{
+    color-scheme: light;
+    --surface-0:#faf8f5; --surface-1:#ffffff; --surface-2:#f1eee7;
+    --border:#e4dfd4; --border-strong:#d3ccbc;
+    --text-primary:#1c1814; --text-secondary:#5c564a; --text-muted:#948d7c;
+    --accent:#d9501a; --accent-soft:#fbe6da;
+    --s-hcm01:#2a78d6; --s-hcm01-soft:#e4eefb;
+    --s-tk:#d9501a; --s-tk-soft:#fbe6da;
+    --s-hcm20:#1baf7a; --s-hcm20-soft:#e0f5ec;
+    --shadow: 0 1px 2px rgba(28,24,20,.04), 0 8px 24px -12px rgba(28,24,20,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --surface-0:#161310; --surface-1:#1e1b16; --surface-2:#262219;
+      --border:#39332a; --border-strong:#4a4235;
+      --text-primary:#f4f1ea; --text-secondary:#c3beaf; --text-muted:#8d8674;
+      --accent:#ff8452; --accent-soft:#3a2317;
+      --s-hcm01:#3987e5; --s-hcm01-soft:#1c2c40;
+      --s-tk:#e8672f; --s-tk-soft:#3a2317;
+      --s-hcm20:#199e70; --s-hcm20-soft:#153229;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --surface-0:#161310; --surface-1:#1e1b16; --surface-2:#262219;
+    --border:#39332a; --border-strong:#4a4235;
+    --text-primary:#f4f1ea; --text-secondary:#c3beaf; --text-muted:#8d8674;
+    --accent:#ff8452; --accent-soft:#3a2317;
+    --s-hcm01:#3987e5; --s-hcm01-soft:#1c2c40;
+    --s-tk:#e8672f; --s-tk-soft:#3a2317;
+    --s-hcm20:#199e70; --s-hcm20-soft:#153229;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--surface-0); color:var(--text-primary);
+    font-family:'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+    padding: 40px 20px 64px; -webkit-font-smoothing:antialiased; }
+  .page{ max-width: 1220px; margin: 0 auto; }
+  .mono{ font-family:'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  header{ margin-bottom: 30px; }
+  .eyebrow{ display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono', monospace;
+    font-size: 12.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px; }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  h1{ font-size: clamp(24px, 3.6vw, 32px); line-height:1.18; font-weight:800; letter-spacing:-0.01em;
+    margin: 0 0 12px; text-wrap: balance; max-width: 34ch; }
+  header p.lede{ font-size:15px; line-height:1.6; color:var(--text-secondary); max-width:76ch; margin:0; }
+  header p.lede b{ color:var(--text-primary); font-weight:600; }
+  header p.lede code{ font-family:'JetBrains Mono', monospace; font-size:12.5px; background:var(--surface-2); padding:1px 5px; border-radius:4px; }
+  section{ margin-bottom: 36px; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin: 0 0 14px; flex-wrap:wrap;}
+  .section-head h2{ font-size:18px; font-weight:700; margin:0; letter-spacing:-0.005em;}
+  .section-head .hint{ font-size:12.5px; color:var(--text-muted); }
+  .view-tabs{ display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:28px; }
+  .view-tab{ border:none; background:transparent; font-family:inherit; font-size:13.5px; font-weight:700;
+    color:var(--text-muted); padding:11px 4px; margin-bottom:-1px; border-bottom:2px solid transparent;
+    cursor:pointer; display:flex; align-items:center; gap:8px; }
+  .view-tab + .view-tab{ margin-left:14px; }
+  .view-tab:hover{ color:var(--text-primary); }
+  .view-tab[aria-selected="true"]{ color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-panel[hidden]{ display:none; }
+  .toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .toolbar .month-group{ display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; }
+  .toolbar button.month-btn{ border:none; background:transparent; padding:6px 14px; border-radius:7px; font-family:'JetBrains Mono',monospace;
+    font-size:12.5px; font-weight:600; color:var(--text-secondary); cursor:pointer; }
+  .toolbar button.month-btn.active{ background:var(--surface-1); color:var(--text-primary); box-shadow:var(--shadow); }
+  .toolbar .spacer{ flex:1; }
+  .toolbar button.ghost{ border:1px solid var(--border-strong); background:var(--surface-1); color:var(--text-secondary);
+    font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:9px; cursor:pointer; font-family:inherit; }
+  .toolbar button.ghost:hover{ border-color:var(--accent); color:var(--accent); }
+  .toolbar button.primary{ border:1px solid var(--accent); background:var(--accent); color:#fff;
+    font-size:12.5px; font-weight:700; padding:7px 13px; border-radius:9px; cursor:pointer; font-family:inherit; }
+  .mode-line{ margin-bottom:12px; }
+  .mode-badge{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
+    padding:5px 11px; border-radius:20px; letter-spacing:.01em; }
+  .mode-badge.official{ background:var(--s-hcm20-soft); color:var(--s-hcm20); border:1px solid var(--s-hcm20); }
+  .mode-badge.estimate{ background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent); }
+  .kpi-row{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+  .kpi{ background:var(--surface-1); border:1px solid var(--border); border-radius:14px; padding:16px 18px;
+    box-shadow: var(--shadow); border-top: 3px solid var(--kpi-color); }
+  .kpi .name{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:10px;}
+  .kpi .swatch{ width:9px; height:9px; border-radius:2.5px; background:var(--kpi-color); }
+  .kpi .row{ display:flex; align-items:baseline; justify-content:space-between; padding:5px 0; border-top:1px dashed var(--border); }
+  .kpi .row:first-of-type{ border-top:none; padding-top:0; }
+  .kpi .row .lbl{ font-size:12px; color:var(--text-muted); }
+  .kpi .row .val{ font-size:13.5px; font-weight:600; }
+  .kpi .delta{ margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .kpi .delta .lbl{ font-size:11.5px; color:var(--text-secondary); font-weight:600;}
+  .kpi .delta .pct{ font-size:19px; font-weight:800; color:var(--kpi-color); }
+
+  .rules-grid{ display:grid; grid-template-columns: 1.05fr 0.95fr; gap:18px; align-items:start; }
+  @media (max-width: 900px){ .rules-grid{ grid-template-columns: 1fr; } }
+  .panel{ background:var(--surface-1); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
+  .panel .phead{ padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .panel .phead .ptitle{ font-weight:700; font-size:14.5px; }
+  .panel .phead .pcount{ font-size:12px; color:var(--text-muted); font-weight:500; }
+  .rule-list{ max-height: 420px; overflow-y:auto; padding:6px 0; }
+  .rule-row{ display:flex; align-items:center; gap:8px; padding:7px 16px; font-size:12.5px; border-bottom:1px solid var(--border); }
+  .rule-row:last-child{ border-bottom:none; }
+  .rule-row .tag{ font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:5px; flex:none; letter-spacing:.02em; }
+  .rule-row .tag.lay{ background:var(--s-hcm01-soft); color:var(--s-hcm01); }
+  .rule-row .tag.giao{ background:var(--s-hcm20-soft); color:var(--s-hcm20); }
+  .rule-row .tag.hang{ background:var(--surface-2); color:var(--text-secondary); border:1px solid var(--border); }
+  .rule-row .tag.origin{ background:transparent; color:var(--text-muted); border:1px solid var(--border-strong); }
+  .rule-row .main{ flex:1; min-width:0; }
+  .rule-row .main .nm{ color:var(--text-primary); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+  .rule-row .main .sub{ color:var(--text-muted); font-size:11px; }
+  .rule-row .rm{ flex:none; border:1px solid var(--border-strong); background:var(--surface-1); color:var(--text-muted);
+    border-radius:6px; width:22px; height:22px; cursor:pointer; font-size:12px; line-height:1; }
+  .rule-row .rm:hover{ border-color:var(--accent); color:var(--accent); }
+  .rule-row.excluded{ opacity:.45; text-decoration:line-through; }
+  .rule-search{ padding:10px 16px; border-bottom:1px solid var(--border); }
+  .rule-search input{ width:100%; border:1px solid var(--border-strong); background:var(--surface-2); border-radius:8px;
+    padding:7px 10px; font-family:inherit; font-size:13px; color:var(--text-primary); outline:none; }
+
+  .add-form{ padding:14px 16px; display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .add-form .full{ grid-column: 1 / -1; }
+  .add-form label{ font-size:11.5px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:4px; }
+  .add-form select, .add-form input{ width:100%; border:1px solid var(--border-strong); background:var(--surface-2); border-radius:8px;
+    padding:7px 9px; font-family:inherit; font-size:13px; color:var(--text-primary); }
+  .add-form .seg{ display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:2px; }
+  .add-form .seg button{ flex:1; border:none; background:transparent; padding:6px; border-radius:7px; font-size:12px; font-weight:600;
+    color:var(--text-secondary); cursor:pointer; font-family:inherit; }
+  .add-form .seg button.active{ background:var(--surface-1); color:var(--accent); box-shadow:var(--shadow); }
+  .add-form .bc-results{ max-height:150px; overflow-y:auto; border:1px solid var(--border-strong); border-radius:8px; margin-top:4px; display:none; background:var(--surface-1); }
+  .add-form .bc-results.show{ display:block; }
+  .add-form .bc-opt{ padding:6px 9px; font-size:12px; cursor:pointer; border-bottom:1px solid var(--border); }
+  .add-form .bc-opt:last-child{ border-bottom:none; }
+  .add-form .bc-opt:hover{ background:var(--surface-2); }
+  .add-form .bc-opt small{ color:var(--text-muted); display:block; }
+  .add-form .picked-bc{ font-size:12px; padding:6px 9px; background:var(--accent-soft); color:var(--accent); border-radius:8px; margin-top:4px; display:none; }
+  .add-form .picked-bc.show{ display:block; }
+  .add-form .btn-add{ grid-column:1/-1; border:1px solid var(--accent); background:var(--accent); color:#fff; font-weight:700;
+    font-size:13px; padding:9px; border-radius:9px; cursor:pointer; font-family:inherit; }
+  .add-form .btn-add:hover{ opacity:.92; }
+  .add-form .note{ grid-column:1/-1; font-size:11px; color:var(--text-muted); line-height:1.5; }
+
+  .export-box{ margin-top:10px; }
+  .export-box textarea{ width:100%; min-height:110px; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    border:1px solid var(--border-strong); background:var(--surface-2); border-radius:8px; padding:10px; color:var(--text-primary); resize:vertical; }
+
+  .map-embed{ background:#0a1614; border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
+    overflow:hidden; height:78vh; min-height:560px; position:relative; }
+  #tkmap{ position:absolute; inset:0; }
+  .map-note{ font-size:12.5px; color:var(--text-muted); margin:10px 2px 0; }
+
+  .notes{ background:var(--surface-1); border:1px solid var(--border); border-radius:14px; padding: 18px 22px; box-shadow: var(--shadow); }
+  .notes ul{ margin:0; padding-left:20px; }
+  .notes li{ font-size:13px; line-height:1.6; color:var(--text-secondary); margin-bottom:8px; }
+  .notes li:last-child{ margin-bottom:0; }
+  .notes li b{ color:var(--text-primary); font-weight:600; }
+  .notes code{ font-family:'JetBrains Mono', monospace; font-size:11.5px; background:var(--surface-2); padding:1px 5px; border-radius:4px; }
+  footer{ margin-top:36px; text-align:center; font-size:12px; color:var(--text-muted); }
+
+  /* leaflet panels (dark, self-contained inside .map-embed) */
+  .pnl{position:absolute;z-index:1000;top:10px;background:#152e28;border:1px solid #26483f;border-radius:10px;
+   padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.5);font-size:13px;color:#cdd9e5;max-height:94%;overflow:auto}
+  #mpanel{left:10px;width:250px}
+  #mstats{right:10px;width:260px}
+  .pnl h3{margin:0 0 4px;font-size:13.5px;color:#25c2a0;font-family:'Be Vietnam Pro',sans-serif;}
+  .pnl .sub{font-size:11px;color:#8aa0b4;margin-bottom:8px}
+  .pnl label{display:block;margin:9px 0 3px;font-weight:600;color:#aebfce;font-size:12px}
+  .pnl select,.pnl input[type=text]{width:100%;padding:5px;border:1px solid #2d5047;border-radius:6px;font-size:12px;background:#11251f;color:#e6eef5;box-sizing:border-box}
+  .hk{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:12px;font-weight:500;color:#cdd9e5}
+  .hr{border-top:1px solid #2d5047;margin:8px 0}
+  #mstbody .row{display:flex;justify-content:space-between;margin:2px 0;font-size:12px}
+  #mstbody .row .l{color:#aebfce}
+  #mstbody .row .v{color:#e6eef5;font-weight:600}
+  #mstbody .sec{color:#25c2a0;font-weight:700;font-size:12px;margin:8px 0 3px;padding-bottom:2px;border-bottom:1px solid #2d5047}
+  .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#152e28;color:#cdd9e5;border:1px solid #26483f}
+  .whlbl{background:#25c2a0;color:#08150f;border:0;font-weight:700;font-size:11px;padding:2px 6px;border-radius:4px}
+  .whlbl:before{border-top-color:#25c2a0}
+  .leaflet-tooltip.rt{background:#08150f;color:#e6eef5;border:1px solid #2a4a41;font-size:12px;padding:4px 7px;white-space:nowrap}
+
+  @media (max-width: 760px){
+    .kpi-row{ grid-template-columns: 1fr; }
+  }
+</style>
+</head><body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>Cụm M12 · Cấu hình tuyến Tân Kim</div>
+    <h1>Cấu hình &amp; mô phỏng tuyến Tân Kim</h1>
+    <p class="lede">Thêm luật config theo <b>quận/huyện</b> hoặc <b>bưu cục/kho</b>, riêng cho từng chiều <b>lấy</b>/<b>giao</b> và từng loại hàng <b>Normal/Bulky</b> — số KPI và bản đồ mạng lưới cùng đọc từ 1 bộ luật, đổi 1 chỗ là cả hai nhảy theo ngay. Mặc định mỗi tháng hiện đúng scope <code>config_v3</code> hiện tại (khớp Sheet AOP); thêm/bớt luật sẽ chuyển sang chế độ ước tính what-if.</p>
+  </header>
+
+  <div class="view-tabs" role="tablist">
+    <button class="view-tab" id="tab-btn-sim" role="tab" aria-selected="true">Cấu hình &amp; mô phỏng</button>
+    <button class="view-tab" id="tab-btn-map" role="tab" aria-selected="false">Bản đồ mạng lưới (live)</button>
+  </div>
+
+  <div class="tab-panel" id="panel-sim">
+
+  <section>
+    <div class="toolbar">
+      <div class="month-group" id="month-group"></div>
+      <div class="spacer"></div>
+      <button class="ghost" id="btn-reset">Về scope mặc định (tháng này)</button>
+      <button class="primary" id="btn-export">Xuất luật mới để lưu Sheet</button>
+    </div>
+    <div class="mode-line" id="mode-line"></div>
+    <div id="autosave-line" style="font-size:12px;color:#8aa0b4;margin:-6px 0 10px;"></div>
+    <div class="kpi-row" id="kpi-row"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Luật cấu hình đang áp dụng</h2>
+      <span class="hint">Cấp quận/huyện hoặc cấp bưu cục · riêng lấy/giao · riêng Normal/Bulky — bưu cục luôn thắng quận khi trùng</span>
+    </div>
+    <div class="rules-grid">
+      <div class="panel">
+        <div class="phead"><span class="ptitle">Danh sách luật (tháng đang xem)</span><span class="pcount" id="rule-count"></span></div>
+        <div class="rule-search"><input id="rule-search" placeholder="Tìm theo tên quận/BC…"></div>
+        <div class="rule-list" id="rule-list"></div>
+      </div>
+      <div class="panel">
+        <div class="phead"><span class="ptitle">+ Thêm luật mới</span></div>
+        <div class="add-form">
+          <div class="full">
+            <label>Chiều</label>
+            <div class="seg" id="seg-chieu">
+              <button type="button" data-v="lấy" class="active">Lấy</button>
+              <button type="button" data-v="giao">Giao</button>
+            </div>
+          </div>
+          <div class="full">
+            <label>Cấp độ</label>
+            <div class="seg" id="seg-capdo">
+              <button type="button" data-v="quan" class="active">Quận/huyện</button>
+              <button type="button" data-v="bc">Bưu cục/kho</button>
+            </div>
+          </div>
+          <div id="wrap-quan" class="full" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><label>Tỉnh</label><select id="sel-prov"></select></div>
+            <div><label>Quận/huyện</label><select id="sel-dist"></select></div>
+          </div>
+          <div id="wrap-bc" class="full" style="display:none;">
+            <label>Tìm bưu cục / kho (theo tên hoặc mã)</label>
+            <input id="bc-search" placeholder="vd: Tân Bình, hoặc 21291000">
+            <div class="bc-results" id="bc-results"></div>
+            <div class="picked-bc" id="bc-picked"></div>
+          </div>
+          <div><label>Hàng</label>
+            <select id="sel-hang">
+              <option value="Cả hai" selected>Cả hai (Normal + Bulky)</option>
+              <option value="Normal">Chỉ Normal</option>
+              <option value="Bulky">Chỉ Bulky</option>
+            </select>
+          </div>
+          <div><label>Hiệu lực từ</label><select id="sel-eff"></select></div>
+          <div class="note">Luật mới chỉ áp dụng cho tháng đang xem ở trên (mỗi tháng cấu hình riêng, giống cách config_v3 tách theo tháng hiện nay).</div>
+          <button type="button" class="btn-add" id="btn-add-rule">+ Thêm luật vào tháng đang xem</button>
+        </div>
+        <div class="export-box" id="export-box" style="display:none; padding:0 16px 16px;">
+          <label style="font-size:11.5px;font-weight:600;color:var(--text-secondary);">Luật mới (chưa có trong config_v3) — copy dán vào tab Config_Rules trên Sheet:</label>
+          <textarea id="export-text" readonly></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="notes">
+      <ul>
+        <li><b>Nguồn dữ liệu:</b> danh mục bưu cục/kho + toạ độ lấy từ <code>dim_warehouse</code>, volume/weight T6 theo BC + hàng (Normal/Bulky) lấy từ <code>vol_from</code>/<code>vol_to</code>, scope mặc định từng tháng lấy đúng từ <code>config_v3</code> (cấp mã BC, không còn ước lượng theo quận như bản trước) — nên tại scope mặc định, số hiện ra khớp <b>chính xác</b> với Sheet AOP, không cần hiệu chỉnh (calibrate) gần đúng nữa.</li>
+        <li><b>Bưu cục luôn thắng quận:</b> nếu 1 BC vừa nằm trong 1 luật cấp quận vừa có 1 luật cấp BC riêng (kể cả luật mặc định từ config_v3), luật cấp BC được áp dụng sau cùng và quyết định — đúng nguyên tắc "cụ thể hơn thì ưu tiên hơn".</li>
+        <li><b>Cách tính khi đã đổi luật:</b> tính tỷ lệ volume/weight T6 khớp được ở scope hiện tại so với scope mặc định (scale), nhân vào đúng % nhường mà Sheet AOP đã ghi cho tháng đó — nên tại scope mặc định, số khớp 100% với AOP; đổi 1 luật nhỏ chỉ làm số nhích đúng theo tỷ trọng của luật đó.</li>
+        <li><b>Lưu vào Sheet:</b> nút "Xuất luật mới" hiện tại chỉ xuất ra danh sách để copy tay vào tab Config_Rules — bản ghi tự động (bấm Lưu → API ghi thẳng vào Sheet) cần thêm 1 serverless function + Google service account, xem file hướng dẫn đi kèm.</li>
+      </ul>
+    </div>
+  </section>
+
+  </div>
+
+  <div class="tab-panel" id="panel-map" hidden>
+    <section>
+      <div class="section-head">
+        <h2>Bản đồ mạng lưới Tân Kim — live</h2>
+        <span class="hint">Đọc trực tiếp từ bộ luật đang cấu hình ở tab bên kia · chấm = BC/kho trong scope</span>
+      </div>
+      <div class="map-embed"><div id="tkmap"></div></div>
+      <p class="map-note">Đổi luật ở tab "Cấu hình &amp; mô phỏng" rồi quay lại tab này — bản đồ vẽ lại ngay theo đúng bộ luật mới, không còn là ảnh chụp tĩnh tách rời như trước.</p>
+    </section>
+  </div>
+
+  <footer>Cụm M12 · HRBP GHN — công cụ cấu hình &amp; mô phỏng, xem kỹ ghi chú "Lưu vào Sheet" phía trên trước khi dùng làm số chính thức</footer>
+</div>
+
+<script id="blob" type="application/json">__BLOB__</script>
+<script>
+(function(){
+  var DATA = JSON.parse(document.getElementById('blob').textContent);
+  var WH = DATA.wh, VOL_LAY = DATA.volLay, VOL_GIAO = DATA.volGiao, TOTALS = DATA.totals;
+  var DEFAULT_RULES = DATA.defaultRules, OFFICIAL = DATA.official, TK = DATA.tk;
+  var MONTHS = ['T10','T11','T12'], MONTH_IDX = {T10:0,T11:1,T12:2};
+  var OWNERS = ['1626','2388'];
+
+  function fmt(n){ return Math.round(n||0).toLocaleString('vi-VN'); }
+  function clamp01(x){ return x<0?0:(x>1?1:x); }
+  function stripDia(s){
+    return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/gi, function(m){return m==='đ'?'d':'D';}).toLowerCase();
+  }
+
+  // ---------- province / district option lists derived from WH dimension ----------
+  var PROV_LIST = [], DIST_BY_PROV = {};
+  (function(){
+    var seenP = {}, seenD = {};
+    Object.keys(WH).forEach(function(wid){
+      var w = WH[wid];
+      if(w.pid && !seenP[w.pid]){ seenP[w.pid]=1; PROV_LIST.push({pid:w.pid, pname:w.pname}); }
+      if(w.pid && w.did && !seenD[w.pid+'|'+w.did]){ seenD[w.pid+'|'+w.did]=1; (DIST_BY_PROV[w.pid]=DIST_BY_PROV[w.pid]||[]).push({did:w.did, dname:w.dname}); }
+    });
+    PROV_LIST.sort(function(a,b){ return a.pname.localeCompare(b.pname,'vi'); });
+    Object.keys(DIST_BY_PROV).forEach(function(pid){ DIST_BY_PROV[pid].sort(function(a,b){ return a.dname.localeCompare(b.dname,'vi'); }); });
+  })();
+
+  // ---------- per-month rule state ----------
+  var excludedDefault = {}, customRules = {};
+  MONTHS.forEach(function(m){ excludedDefault[m] = new Set(); customRules[m] = []; });
+  var currentMonth = 'T10';
+  var ruleSeq = 1;
+
+  // ---------- autosave (localStorage) — lưu tạm trên trình duyệt này để không mất khi refresh ----------
+  var LS_KEY = 'tk_config_autosave_v1';
+  var autosaveEl = document.getElementById('autosave-line');
+  function fmtTime(ts){
+    var d = new Date(ts);
+    function p2(n){ return (n<10?'0':'')+n; }
+    return p2(d.getDate())+'/'+p2(d.getMonth()+1)+' '+p2(d.getHours())+':'+p2(d.getMinutes());
+  }
+  function saveLocal(){
+    try{
+      var data = { savedAt: Date.now(), ruleSeq: ruleSeq, months: {} };
+      MONTHS.forEach(function(m){
+        data.months[m] = { excluded: Array.from(excludedDefault[m]), custom: customRules[m] };
+      });
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      if(autosaveEl) autosaveEl.textContent = '💾 Đã tự lưu tạm trên trình duyệt này lúc ' + fmtTime(data.savedAt) + ' — mất nếu đổi máy/trình duyệt khác.';
+    }catch(e){
+      if(autosaveEl) autosaveEl.textContent = '⚠ Không tự lưu tạm được trên trình duyệt này — nhớ bấm "Xuất luật mới" trước khi rời trang.';
+    }
+  }
+  function loadLocal(){
+    try{
+      var raw = localStorage.getItem(LS_KEY);
+      if(!raw) return null;
+      var data = JSON.parse(raw);
+      if(!data || !data.months) return null;
+      MONTHS.forEach(function(m){
+        var md = data.months[m];
+        if(!md) return;
+        excludedDefault[m] = new Set(md.excluded || []);
+        customRules[m] = md.custom || [];
+      });
+      if(data.ruleSeq) ruleSeq = Math.max(ruleSeq, data.ruleSeq);
+      return data.savedAt || null;
+    }catch(e){ return null; }
+  }
+  document.getElementById('btn-export').insertAdjacentHTML('afterend',
+    '<button class="ghost" id="btn-clear-autosave" title="Xoá bản lưu tạm trên trình duyệt này">Xoá lưu tạm</button>');
+  document.getElementById('btn-clear-autosave').addEventListener('click', function(){
+    if(!confirm('Xoá bản lưu tạm trên trình duyệt này? (không ảnh hưởng Google Sheet)')) return;
+    try{ localStorage.removeItem(LS_KEY); }catch(e){}
+    if(autosaveEl) autosaveEl.textContent = 'Đã xoá bản lưu tạm.';
+  });
+
+  function widsForDist(did){
+    var out = [];
+    Object.keys(WH).forEach(function(wid){ if(WH[wid].did === did) out.push(wid); });
+    return out;
+  }
+
+  function defaultScopeFor(month, chieu){
+    var m = {};
+    (DEFAULT_RULES[month]||[]).forEach(function(r){ if(r.chieu===chieu) m[String(r.wid)] = 'Cả hai'; });
+    return m;
+  }
+
+  function scopeFor(month, chieu){
+    var m = {};
+    customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='quan';}).forEach(function(r){
+      widsForDist(r.did).forEach(function(wid){ m[wid] = r.hang; });
+    });
+    (DEFAULT_RULES[month]||[]).forEach(function(r){
+      if(r.chieu!==chieu) return;
+      if(excludedDefault[month].has(chieu+':'+r.wid)) return;
+      m[String(r.wid)] = 'Cả hai';
+    });
+    customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='bc';}).forEach(function(r){
+      if(r.hang === '__remove__') delete m[String(r.wid)];
+      else m[String(r.wid)] = r.hang;
+    });
+    return m;
+  }
+
+  function sumScope(scopeMap, volSrc, owner){
+    var vol=0, kl=0;
+    Object.keys(scopeMap).forEach(function(wid){
+      var h = scopeMap[wid];
+      var entry = volSrc[wid] && volSrc[wid][owner];
+      if(!entry) return;
+      var svcs = h === 'Cả hai' ? ['Normal','Bulky'] : [h];
+      svcs.forEach(function(s){ var v = entry[s]; if(v){ vol+=v.vol; kl+=v.kl; } });
+    });
+    return {vol:vol, kl:kl};
+  }
+
+  function unionPair(pA, pB){ return pA + pB - pA*pB; }
+
+  function matchPct(scopeLay, scopeGiao, owner){
+    var lay = sumScope(scopeLay, VOL_LAY, owner);
+    var giao = sumScope(scopeGiao, VOL_GIAO, owner);
+    var tot = TOTALS[owner];
+    var pVol = unionPair(tot.vol? lay.vol/tot.vol:0, tot.vol? giao.vol/tot.vol:0);
+    var pKl  = unionPair(tot.kl?  lay.kl/tot.kl:0,  tot.kl?  giao.kl/tot.kl:0);
+    return {pVol:pVol, pKl:pKl};
+  }
+
+  function isOfficialScope(month){
+    return excludedDefault[month].size===0 && customRules[month].length===0;
+  }
+
+  function computeAll(month){
+    var curLay = scopeFor(month,'lấy'), curGiao = scopeFor(month,'giao');
+    var defLay = defaultScopeFor(month,'lấy'), defGiao = defaultScopeFor(month,'giao');
+    var mIdx = MONTH_IDX[month];
+    var out = {};
+    OWNERS.forEach(function(owner){
+      var cur = matchPct(curLay, curGiao, owner);
+      var def = matchPct(defLay, defGiao, owner);
+      var scaleVol = def.pVol ? cur.pVol/def.pVol : 0;
+      var scaleKl  = def.pKl  ? cur.pKl/def.pKl  : 0;
+      function offPct(metric){
+        var o = OFFICIAL[owner][metric]; var b=o.before[mIdx], a=o.after[mIdx];
+        return b ? (b-a)/b : 0;
+      }
+      function project(metric, pct){
+        var b = OFFICIAL[owner][metric].before[mIdx];
+        var a = b*(1-pct);
+        return {before:b, after:a, shifted:b-a};
+      }
+      var pctVol = clamp01(offPct('vol')*scaleVol);
+      var pctWn  = clamp01(offPct('w_nhap')*scaleKl);
+      var pctW4t = clamp01(offPct('w_4t')*scaleKl);
+      out[owner] = {
+        vol: project('vol', pctVol), w_nhap: project('w_nhap', pctWn), w_4t: project('w_4t', pctW4t),
+        pctVol: pctVol
+      };
+    });
+    return out;
+  }
+
+  // ---------- rule list UI ----------
+  var ruleListEl = document.getElementById('rule-list');
+  var ruleCountEl = document.getElementById('rule-count');
+  function bcLabel(wid){ var w = WH[wid]; return w ? w.name : ('BC '+wid); }
+  function bcSub(wid){ var w = WH[wid]; return w ? (w.pname+' / '+w.dname) : ''; }
+
+  function renderRuleList(){
+    var month = currentMonth;
+    var rows = [];
+    (DEFAULT_RULES[month]||[]).forEach(function(r){
+      var key = r.chieu+':'+r.wid;
+      var excluded = excludedDefault[month].has(key);
+      rows.push({kind:'default', chieu:r.chieu, hang:'Cả hai', label: bcLabel(r.wid), sub: bcSub(r.wid), excluded: excluded, key: key});
+    });
+    customRules[month].forEach(function(r, idx){
+      var label, sub;
+      if(r.capdo==='quan'){ label = r.dname+' ('+r.pname+')'; sub = (widsForDist(r.did).length)+' bưu cục/kho'; }
+      else { label = bcLabel(r.wid); sub = bcSub(r.wid); }
+      rows.push({kind:'custom', chieu:r.chieu, hang:r.hang, label:label, sub:sub, idx:idx});
+    });
+    ruleCountEl.textContent = rows.length + ' luật';
+    var q = stripDia((document.getElementById('rule-search').value||'').trim());
+    ruleListEl.innerHTML = rows.map(function(row){
+      if(q && stripDia(row.label).indexOf(q)===-1) return '';
+      var tagChieu = '<span class="tag '+(row.chieu==='lấy'?'lay':'giao')+'">'+row.chieu.toUpperCase()+'</span>';
+      var tagHang = '<span class="tag hang">'+row.hang+'</span>';
+      var tagOrigin = '<span class="tag origin">'+(row.kind==='default'?'config_v3':'mới')+'</span>';
+      var rmAttr = row.kind==='default' ? ('data-default-key="'+row.key+'"') : ('data-custom-idx="'+row.idx+'"');
+      return '<div class="rule-row'+(row.excluded?' excluded':'')+'">'+tagChieu+tagHang+
+        '<div class="main"><span class="nm">'+row.label+'</span><span class="sub">'+row.sub+'</span></div>'+
+        tagOrigin+
+        '<button class="rm" '+rmAttr+' title="'+(row.excluded?'Khôi phục':'Bỏ luật này')+'">'+(row.excluded?'↺':'✕')+'</button></div>';
+    }).join('');
+  }
+  document.getElementById('rule-search').addEventListener('input', renderRuleList);
+
+  ruleListEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.rm');
+    if(!btn) return;
+    if(btn.dataset.defaultKey){
+      var key = btn.dataset.defaultKey;
+      if(excludedDefault[currentMonth].has(key)) excludedDefault[currentMonth].delete(key);
+      else excludedDefault[currentMonth].add(key);
+    } else if(btn.dataset.customIdx !== undefined){
+      customRules[currentMonth].splice(parseInt(btn.dataset.customIdx,10), 1);
+    }
+    renderRuleList(); recompute(); renderMap(); saveLocal();
+  });
+
+  // ---------- add-rule form ----------
+  var formChieu = 'lấy', formCapdo = 'quan', pickedBcId = null;
+  document.getElementById('seg-chieu').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    formChieu = b.dataset.v;
+    this.querySelectorAll('button').forEach(function(x){x.classList.toggle('active', x===b);});
+  });
+  document.getElementById('seg-capdo').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    formCapdo = b.dataset.v;
+    this.querySelectorAll('button').forEach(function(x){x.classList.toggle('active', x===b);});
+    document.getElementById('wrap-quan').style.display = formCapdo==='quan' ? 'grid' : 'none';
+    document.getElementById('wrap-bc').style.display = formCapdo==='bc' ? 'block' : 'none';
+  });
+
+  var selProv = document.getElementById('sel-prov'), selDist = document.getElementById('sel-dist');
+  selProv.innerHTML = PROV_LIST.map(function(p){return '<option value="'+p.pid+'">'+p.pname+'</option>';}).join('');
+  function refreshDist(){
+    var pid = selProv.value;
+    var dl = DIST_BY_PROV[pid] || [];
+    selDist.innerHTML = dl.map(function(d){return '<option value="'+d.did+'">'+d.dname+'</option>';}).join('');
+  }
+  selProv.addEventListener('change', refreshDist);
+  refreshDist();
+
+  var selEff = document.getElementById('sel-eff');
+  selEff.innerHTML = MONTHS.map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join('');
+
+  var bcSearch = document.getElementById('bc-search'), bcResults = document.getElementById('bc-results'), bcPicked = document.getElementById('bc-picked');
+  bcSearch.addEventListener('input', function(){
+    var q = stripDia(this.value.trim());
+    if(q.length < 2){ bcResults.classList.remove('show'); bcResults.innerHTML=''; return; }
+    var matches = [];
+    for(var wid in WH){
+      var w = WH[wid];
+      if(stripDia(w.name).indexOf(q)!==-1 || wid.indexOf(q)!==-1){
+        matches.push({wid:wid, w:w});
+        if(matches.length>=25) break;
+      }
+    }
+    bcResults.innerHTML = matches.map(function(m){
+      return '<div class="bc-opt" data-wid="'+m.wid+'"><b>'+m.wid+'</b> — '+m.w.name+'<small>'+m.w.pname+' / '+m.w.dname+'</small></div>';
+    }).join('') || '<div class="bc-opt">Không thấy kết quả</div>';
+    bcResults.classList.add('show');
+  });
+  bcResults.addEventListener('click', function(e){
+    var o = e.target.closest('.bc-opt'); if(!o || !o.dataset.wid) return;
+    pickedBcId = o.dataset.wid;
+    var w = WH[pickedBcId];
+    bcPicked.textContent = 'Đã chọn: ' + pickedBcId + ' — ' + w.name;
+    bcPicked.classList.add('show');
+    bcResults.classList.remove('show');
+  });
+
+  document.getElementById('btn-add-rule').addEventListener('click', function(){
+    var hang = document.getElementById('sel-hang').value;
+    var eff = selEff.value;
+    var rule;
+    if(formCapdo === 'quan'){
+      var pid = selProv.value, did = selDist.value;
+      if(!did){ alert('Chọn quận/huyện trước.'); return; }
+      var pname = PROV_LIST.find(function(p){return p.pid===pid;}).pname;
+      var dname = (DIST_BY_PROV[pid]||[]).find(function(d){return d.did===did;}).dname;
+      rule = {capdo:'quan', chieu:formChieu, hang:hang, pid:pid, pname:pname, did:did, dname:dname, eff:eff, seq:ruleSeq++};
+    } else {
+      if(!pickedBcId){ alert('Tìm và chọn 1 bưu cục/kho trước.'); return; }
+      rule = {capdo:'bc', chieu:formChieu, hang:hang, wid:pickedBcId, eff:eff, seq:ruleSeq++};
+    }
+    customRules[eff].push(rule);
+    renderRuleList(); recompute(); renderMap(); saveLocal();
+  });
+
+  // ---------- export (interim — copy/paste vào Sheet, chưa auto-ghi) ----------
+  document.getElementById('btn-export').addEventListener('click', function(){
+    var lines = ['hiệu_lực_từ\tchiều\tcấp_độ\ttỉnh\tquận\twarehouse_id\ttên\thàng\tđích\tghi_chú'];
+    MONTHS.forEach(function(m){
+      customRules[m].forEach(function(r){
+        if(r.capdo==='quan'){
+          lines.push([m, r.chieu, 'quận', r.pname, r.dname, '', '', r.hang, 'Tân Kim', 'thêm qua công cụ cấu hình'].join('\t'));
+        } else {
+          lines.push([m, r.chieu, 'bưu_cục', WH[r.wid].pname, WH[r.wid].dname, r.wid, WH[r.wid].name, r.hang, 'Tân Kim', 'thêm qua công cụ cấu hình'].join('\t'));
+        }
+      });
+      excludedDefault[m].forEach(function(key){
+        var parts = key.split(':'); var chieu = parts[0], wid = parts[1];
+        lines.push([m, chieu, 'bưu_cục', (WH[wid]||{}).pname||'', (WH[wid]||{}).dname||'', wid, (WH[wid]||{}).name||'', '(BỎ khỏi Tân Kim)', 'Khác', 'đã loại khỏi scope qua công cụ cấu hình'].join('\t'));
+      });
+    });
+    var box = document.getElementById('export-box'), ta = document.getElementById('export-text');
+    if(lines.length===1){ ta.value = '(chưa có thay đổi nào so với config_v3 hiện tại)'; }
+    else { ta.value = lines.join('\n'); }
+    box.style.display = 'block';
+    ta.focus(); ta.select();
+  });
+
+  // ---------- month toggle / reset ----------
+  var monthGroup = document.getElementById('month-group');
+  MONTHS.forEach(function(m){
+    var b = document.createElement('button');
+    b.className = 'month-btn' + (m===currentMonth?' active':'');
+    b.textContent = m; b.dataset.month = m;
+    b.addEventListener('click', function(){
+      currentMonth = m;
+      monthGroup.querySelectorAll('.month-btn').forEach(function(x){x.classList.toggle('active', x.dataset.month===m);});
+      renderRuleList(); recompute(); renderMap();
+    });
+    monthGroup.appendChild(b);
+  });
+  document.getElementById('btn-reset').addEventListener('click', function(){
+    excludedDefault[currentMonth] = new Set();
+    customRules[currentMonth] = [];
+    renderRuleList(); recompute(); renderMap(); saveLocal();
+  });
+
+  // ---------- KPI ----------
+  var kpiRow = document.getElementById('kpi-row');
+  function recompute(){
+    var official = isOfficialScope(currentMonth);
+    var res = computeAll(currentMonth);
+    var v1=res['1626'].vol, w1=res['1626'].w_nhap, t1=res['1626'].w_4t;
+    var v2=res['2388'].vol, w2=res['2388'].w_nhap, t2=res['2388'].w_4t;
+    var tkVol=v1.shifted+v2.shifted, tkW=w1.shifted+w2.shifted, tkT=t1.shifted+t2.shifted;
+
+    document.getElementById('mode-line').innerHTML = official
+      ? '<span class="mode-badge official">✓ Khớp chính thức — đúng scope config_v3 (' + currentMonth + ')</span>'
+      : '<span class="mode-badge estimate">◐ Ước tính what-if — đã đổi luật so với config_v3</span>';
+
+    kpiRow.innerHTML =
+      '<div class="kpi" style="--kpi-color:var(--s-hcm01);"><div class="name"><span class="swatch"></span>HCM01</div>'+
+      '<div class="row"><span class="lbl">Vol nhập</span><span class="val mono">'+fmt(v1.before)+' → '+fmt(v1.after)+'</span></div>'+
+      '<div class="row"><span class="lbl">Weight nhập</span><span class="val mono">'+fmt(w1.before)+' → '+fmt(w1.after)+'</span></div>'+
+      '<div class="row"><span class="lbl">Weight 4TT</span><span class="val mono">'+fmt(t1.before)+' → '+fmt(t1.after)+'</span></div>'+
+      '<div class="delta"><span class="lbl">Nhường cho Tân Kim</span><span class="pct">−'+(res['1626'].pctVol*100).toFixed(1).replace('.',',')+'%</span></div></div>'+
+
+      '<div class="kpi" style="--kpi-color:var(--s-hcm20);"><div class="name"><span class="swatch"></span>HCM20</div>'+
+      '<div class="row"><span class="lbl">Vol nhập</span><span class="val mono">'+fmt(v2.before)+' → '+fmt(v2.after)+'</span></div>'+
+      '<div class="row"><span class="lbl">Weight nhập</span><span class="val mono">'+fmt(w2.before)+' → '+fmt(w2.after)+'</span></div>'+
+      '<div class="row"><span class="lbl">Weight 4TT</span><span class="val mono">'+fmt(t2.before)+' → '+fmt(t2.after)+'</span></div>'+
+      '<div class="delta"><span class="lbl">Nhường cho Tân Kim</span><span class="pct">−'+(res['2388'].pctVol*100).toFixed(1).replace('.',',')+'%</span></div></div>'+
+
+      '<div class="kpi" style="--kpi-color:var(--s-tk);"><div class="name"><span class="swatch"></span>Tân Kim (mới nhận)</div>'+
+      '<div class="row"><span class="lbl">Vol nhập</span><span class="val mono">0 → '+fmt(tkVol)+'</span></div>'+
+      '<div class="row"><span class="lbl">Weight nhập</span><span class="val mono">0 → '+fmt(tkW)+'</span></div>'+
+      '<div class="row"><span class="lbl">Weight 4TT</span><span class="val mono">0 → '+fmt(tkT)+'</span></div>'+
+      '<div class="delta"><span class="lbl">% tổng volume mạng lưới</span><span class="pct">'+(tkVol/(TOTALS['1626'].vol+TOTALS['2388'].vol)*100).toFixed(1).replace('.',',')+'%</span></div></div>';
+  }
+
+  // ---------- Leaflet map (live, driven by the same rules) ----------
+  var map = L.map('tkmap',{preferCanvas:true, attributionControl:false, minZoom:5, maxZoom:14}).setView([16,107],6);
+  L.geoJSON(DATA.adm2, {interactive:false, style:{color:'#264740', weight:.35, opacity:.8, fill:true, fillColor:'#1b2f2a', fillOpacity:.92}}).addTo(map);
+  L.geoJSON(DATA.prov, {interactive:false, style:{color:'#8fd4c4', weight:2.2, opacity:.95, lineJoin:'round', fill:false}}).addTo(map);
+  L.marker([TK.lat, TK.lng]).addTo(map).bindTooltip('🏭 '+TK.name, {permanent:true, className:'whlbl', direction:'top', offset:[0,-8]});
+  var mapLayer = L.layerGroup().addTo(map);
+  var mstate = {prov:'', dist:'', bc:'', lay:true, giao:true};
+
+  var mpanelHtml = '<h3>🗺️ Bộ lọc bản đồ</h3><div class="sub">Live theo bộ luật đang cấu hình</div>'+
+    '<label>Tỉnh</label><select id="mfProv"></select>'+
+    '<label>Huyện/Quận</label><select id="mfDist"></select>'+
+    '<label>Bưu cục / Kho</label><select id="mfBC"></select>'+
+    '<div class="hr"></div>'+
+    '<div class="hk"><input type="checkbox" id="mtLay" checked> LẤY (nét đứt, hàng về TK)</div>'+
+    '<div class="hk"><input type="checkbox" id="mtGiao" checked> GIAO (nét liền, hàng ra TK)</div>';
+  var mpanel = document.createElement('div'); mpanel.className='pnl'; mpanel.id='mpanel'; mpanel.innerHTML = mpanelHtml;
+  document.getElementById('tkmap').appendChild(mpanel);
+  var mstats = document.createElement('div'); mstats.className='pnl'; mstats.id='mstats';
+  mstats.innerHTML = '<h3>📊 Thống kê</h3><div id="mstbody"></div>';
+  document.getElementById('tkmap').appendChild(mstats);
+
+  function currentMapRecs(month){
+    var recs = [];
+    ['lấy','giao'].forEach(function(chieu){
+      var scope = scopeFor(month, chieu);
+      var volSrc = chieu==='lấy' ? VOL_LAY : VOL_GIAO;
+      Object.keys(scope).forEach(function(wid){
+        var w = WH[wid];
+        if(!w || w.lat==null) return;
+        var byOwner = volSrc[wid] || {};
+        var vol=0, kl=0;
+        Object.keys(byOwner).forEach(function(owner){
+          var svcs = scope[wid]==='Cả hai' ? ['Normal','Bulky'] : [scope[wid]];
+          svcs.forEach(function(s){ var v = byOwner[owner][s]; if(v){ vol+=v.vol; kl+=v.kl; } });
+        });
+        recs.push({id:wid, lat:w.lat, lng:w.lng, name:w.name, prov:w.pname, dist:w.dname, dept:w.dept,
+          vol:vol, kl_kg: Math.round(kl/100)/10, type:chieu, hang: scope[wid]});
+      });
+    });
+    return recs;
+  }
+
+  function mRefreshOptions(){
+    var all = currentMapRecs(currentMonth);
+    var provs = [...new Set(all.map(function(r){return r.prov;}).filter(Boolean))].sort();
+    var dists = [...new Set(all.filter(function(r){return !mstate.prov || r.prov===mstate.prov;}).map(function(r){return r.dist;}).filter(Boolean))].sort();
+    var bcs = all.filter(function(r){return (!mstate.prov || r.prov===mstate.prov) && (!mstate.dist || r.dist===mstate.dist);});
+    document.getElementById('mfProv').innerHTML = '<option value="">— Tất cả tỉnh —</option>' + provs.map(function(p){return '<option value="'+p+'"'+(mstate.prov===p?' selected':'')+'>'+p+'</option>';}).join('');
+    document.getElementById('mfDist').innerHTML = '<option value="">— Tất cả huyện/quận —</option>' + dists.map(function(d){return '<option value="'+d+'"'+(mstate.dist===d?' selected':'')+'>'+d+'</option>';}).join('');
+    document.getElementById('mfBC').innerHTML = '<option value="">— Tất cả BC —</option>' + bcs.map(function(r){return '<option value="'+r.id+'"'+(mstate.bc==String(r.id)?' selected':'')+'>'+r.id+' · '+r.name.slice(0,40)+'</option>';}).join('');
+  }
+
+  function renderMap(){
+    mapLayer.clearLayers();
+    var recs = currentMapRecs(currentMonth).filter(function(r){
+      if(!mstate.lay && r.type==='lấy') return false;
+      if(!mstate.giao && r.type==='giao') return false;
+      if(mstate.prov && r.prov!==mstate.prov) return false;
+      if(mstate.dist && r.dist!==mstate.dist) return false;
+      if(mstate.bc && String(r.id)!==mstate.bc) return false;
+      return true;
+    });
+    var nLay=0,nGia=0,sumVL=0,sumVG=0,sumKL=0,sumKG=0; var byProv={};
+    recs.forEach(function(r){
+      var isLay = r.type==='lấy';
+      var color = isLay ? '#25c2a0' : '#e07b3a';
+      if(isLay){nLay++;sumVL+=r.vol;sumKL+=r.kl_kg;} else {nGia++;sumVG+=r.vol;sumKG+=r.kl_kg;}
+      byProv[r.prov] = (byProv[r.prov]||0)+1;
+      var path = isLay ? [[r.lat,r.lng],[TK.lat,TK.lng]] : [[TK.lat,TK.lng],[r.lat,r.lng]];
+      var line = L.polyline(path, {color:color, weight:1.3, opacity:0.6, dashArray: isLay?'5 5':null}).addTo(mapLayer);
+      L.polylineDecorator(line, {patterns:[{offset:'100%',repeat:0, symbol:L.Symbol.arrowHead({pixelSize:9, polygon:true, pathOptions:{color:color, fillColor:color, fillOpacity:1, weight:0}})}]}).addTo(mapLayer);
+      var sz = r.vol ? Math.max(4, Math.min(20, Math.log10(r.vol+1)*3.5)) : 4;
+      var m = L.circleMarker([r.lat,r.lng], {radius:sz, color:color, weight:2, fillColor:color, fillOpacity:0.7}).addTo(mapLayer);
+      m.bindTooltip(r.name.slice(0,50), {sticky:true, className:'rt'});
+      m.bindPopup('<div><b>'+r.id+'</b> — '+r.name+'<br><span style="color:#8aa0b4">'+r.prov+' / '+r.dist+'</span><br>'+
+        (isLay?'⚫ LẤY':'⚫ GIAO')+' · hàng: '+r.hang+'<br>Volume T6: <b>'+fmt(r.vol)+'</b> kiện<br>Weight T6: <b>'+fmt(r.kl_kg)+'</b> kg</div>');
+      m.on('click', function(){ mstate.bc = String(r.id); mRefreshOptions(); });
+    });
+    var topProv = Object.entries(byProv).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+    var s = '<div class="sec">Tháng '+currentMonth+' · '+recs.length+' BC</div>';
+    s += '<div class="row"><span class="l">LẤY (nét đứt)</span><span class="v">'+nLay+'</span></div>';
+    s += '<div class="row"><span class="l">GIAO (nét liền)</span><span class="v">'+nGia+'</span></div>';
+    s += '<div class="sec">Volume T6 baseline</div>';
+    s += '<div class="row"><span class="l">Vol LẤY</span><span class="v">'+fmt(sumVL)+' kiện</span></div>';
+    s += '<div class="row"><span class="l">Vol GIAO</span><span class="v">'+fmt(sumVG)+' kiện</span></div>';
+    s += '<div class="row"><span class="l">Weight LẤY</span><span class="v">'+fmt(sumKL)+' kg</span></div>';
+    s += '<div class="row"><span class="l">Weight GIAO</span><span class="v">'+fmt(sumKG)+' kg</span></div>';
+    if(topProv.length){ s += '<div class="sec">Top tỉnh (số BC)</div>'; topProv.forEach(function(p){ s+='<div class="row"><span class="l">'+p[0]+'</span><span class="v">'+p[1]+'</span></div>'; }); }
+    document.getElementById('mstbody').innerHTML = s;
+  }
+  document.getElementById('mfProv').addEventListener('change', function(e){ mstate.prov=e.target.value; mstate.dist=''; mstate.bc=''; mRefreshOptions(); renderMap(); });
+  document.getElementById('mfDist').addEventListener('change', function(e){ mstate.dist=e.target.value; mstate.bc=''; mRefreshOptions(); renderMap(); });
+  document.getElementById('mfBC').addEventListener('change', function(e){ mstate.bc=e.target.value; renderMap();
+    if(mstate.bc){ var w = WH[mstate.bc]; if(w) map.setView([w.lat,w.lng],12); } });
+  document.getElementById('mtLay').addEventListener('change', function(e){ mstate.lay=e.target.checked; renderMap(); });
+  document.getElementById('mtGiao').addEventListener('change', function(e){ mstate.giao=e.target.checked; renderMap(); });
+
+  // ---------- tab switching ----------
+  var btnSim = document.getElementById('tab-btn-sim'), btnMap = document.getElementById('tab-btn-map');
+  var panelSim = document.getElementById('panel-sim'), panelMap = document.getElementById('panel-map');
+  var mapInited = false;
+  function showTab(which){
+    var sim = which==='sim';
+    btnSim.setAttribute('aria-selected', sim?'true':'false');
+    btnMap.setAttribute('aria-selected', sim?'false':'true');
+    panelSim.hidden = !sim; panelMap.hidden = sim;
+    if(!sim){ setTimeout(function(){ map.invalidateSize(); if(!mapInited){ mRefreshOptions(); renderMap(); mapInited = true; } }, 30); }
+  }
+  btnSim.addEventListener('click', function(){ showTab('sim'); });
+  btnMap.addEventListener('click', function(){ showTab('map'); });
+
+  // ---------- restore autosave (nếu có) trước khi vẽ lần đầu ----------
+  var restoredAt = loadLocal();
+  renderRuleList();
+  recompute();
+  if(restoredAt){
+    autosaveEl.textContent = '↺ Đã khôi phục cấu hình lưu tạm trên trình duyệt này lúc ' + fmtTime(restoredAt) + '.';
+  } else {
+    saveLocal();
+  }
+})();
+</script>
+</body></html>

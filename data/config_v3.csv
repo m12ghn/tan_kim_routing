@@ -1,0 +1,76 @@
+tháng 10,order_warehouse_id,order_warehouse_name,,tháng 11,order_warehouse_id,order_warehouse_name,,tháng 12,order_warehouse_id,order_warehouse_name
+lấy,1182,(LAN) Long An 2,,giao,21291000,Kho Giao Hàng Nặng - TP Bến Tre - Bến Tre,,giao,21291000,Kho Giao Hàng Nặng - TP Bến Tre - Bến Tre
+,,,,giao,22159000,Kho Giao Hàng Nặng - TP Mỹ Tho - Tiền Giang,,giao,22159000,Kho Giao Hàng Nặng - TP Mỹ Tho - Tiền Giang
+lấy,1333,Bưu Cục Tân Kiên-Bình Chánh-HCM,,giao,22496000,Kho Giao Hàng Nặng - TX Cai Lậy - Tiền Giang,,giao,22496000,Kho Giao Hàng Nặng - TX Cai Lậy - Tiền Giang
+lấy,1337,Bưu Cục 63 Vĩnh Hội-Q.4-HCM,,giao,22953000,Kho Giao Hàng Nặng - Gò Công - Tiền Giang,,giao,22953000,Kho Giao Hàng Nặng - Gò Công - Tiền Giang
+lấy,2278,(LAN) Cần Đước,,,,,,,,
+lấy,2376,(HCM) Bình Đông,,lấy,1182,(LAN) Long An 2,,lấy,1180,Bưu Cục 89 Nguyễn Thị Định-TP.Bến Tre
+lấy,2534,Bưu Cục 903B Tạ Quang Bửu-Q.8-HCM,,lấy,1199,(TGI) Đạo Thạnh,,lấy,1182,(LAN) Long An 2
+lấy,20075000,Bưu Cục T30 Nguyễn Hữu Hào-Q.4-HCM,,lấy,1333,Bưu Cục Tân Kiên-Bình Chánh-HCM,,lấy,1199,(TGI) Đạo Thạnh
+lấy,20124000,(HCM) CK Tân Hưng,,lấy,1337,Bưu Cục 63 Vĩnh Hội-Q.4-HCM,,lấy,1333,Bưu Cục Tân Kiên-Bình Chánh-HCM
+lấy,20665000,(LAN) Bến Lức,,lấy,2278,(LAN) Cần Đước,,lấy,1337,Bưu Cục 63 Vĩnh Hội-Q.4-HCM
+lấy,20665001,(LAN) ĐL Lương Hòa,,lấy,2376,(HCM) Bình Đông,,lấy,1934,(BTR) Mỏ Cày
+lấy,20715000,(LAN) Long An 1,,lấy,2534,Bưu Cục 903B Tạ Quang Bửu-Q.8-HCM,,lấy,2278,(LAN) Cần Đước
+lấy,21001000,Bưu Cục 20 Đường số 81-Q.7-HCM,,lấy,20075000,Bưu Cục T30 Nguyễn Hữu Hào-Q.4-HCM,,lấy,2376,(HCM) Bình Đông
+lấy,21092000,Kho Giao Hàng Nặng - Đức Hòa - Long An,,lấy,20124000,(HCM) CK Tân Hưng,,lấy,2534,Bưu Cục 903B Tạ Quang Bửu-Q.8-HCM
+lấy,21309000,Bưu Cục Phước Kiển-Nhà Bè-HCM,,lấy,20227000,(TGI) Tân Phước 1,,lấy,20075000,Bưu Cục T30 Nguyễn Hữu Hào-Q.4-HCM
+lấy,21485000,(HCM) CK Phú Thuận,,lấy,20349000,(TGI) Đồng Sơn,,lấy,20124000,(HCM) CK Tân Hưng
+lấy,21529000,(LAN) Cần Giuộc,,lấy,20665000,(LAN) Bến Lức,,lấy,20153000,(BTR) Giồng Trôm
+lấy,21677000,Bưu Cục 26 Bùi Thanh Khiết-Tân Túc-Bình Chánh,,lấy,20665001,(LAN) ĐL Lương Hòa,,lấy,20227000,(TGI) Tân Phước 1
+lấy,21710000,(LAN) Tầm Vu,,lấy,20715000,(LAN) Long An 1,,lấy,20349000,(TGI) Đồng Sơn
+lấy,21965000,Kho Giao Hàng Nặng - Nhà Bè - HCM,,lấy,20776000,(TGI) Hậu Mỹ,,lấy,20665000,(LAN) Bến Lức
+lấy,22067000,Kho Giao Hàng Nặng - TP Tân An - Long An,,lấy,20795000,(TGI) Mỹ Phong,,lấy,20665001,(LAN) ĐL Lương Hòa
+lấy,22137000,(HCM) Bình Hưng,,lấy,20798000,(TGI) Cái Bè,,lấy,20715000,(LAN) Long An 1
+lấy,22206000,(LAN) Rạch Kiến,,lấy,21001000,Bưu Cục 20 Đường số 81-Q.7-HCM,,lấy,20776000,(TGI) Hậu Mỹ
+lấy,22257000,Bưu Cục 31-31A Lý Phục Man-Bình Thuận-Quận 7-HCM,,lấy,21092000,Kho Giao Hàng Nặng - Đức Hòa - Long An,,lấy,20795000,(TGI) Mỹ Phong
+lấy,22361000,Bưu Cục 63 Đường Số 7-Xã Nhà Bè-HCM,,lấy,21309000,Bưu Cục Phước Kiển-Nhà Bè-HCM,,lấy,20798000,(TGI) Cái Bè
+lấy,22478000,Bưu Cục 2227 Văn Tiến Dũng-Bình Chánh-HCM,,lấy,21313000,(TGI) Long Tiên,,lấy,21001000,Bưu Cục 20 Đường số 81-Q.7-HCM
+lấy,22488000,Bưu Cục 860/36 Huỳnh Tấn Phát-Q.7-HCM,,lấy,21485000,(HCM) CK Phú Thuận,,lấy,21092000,Kho Giao Hàng Nặng - Đức Hòa - Long An
+lấy,22498000,(HCM) Tân Thới Hiệp 1,,lấy,21528000,(TGI) Vĩnh Kim,,lấy,21291000,Kho Giao Hàng Nặng - TP Bến Tre - Bến Tre
+lấy,22546000,Bưu Cục 692 An Phú Tây-Bình Chánh-HCM,,lấy,21529000,(LAN) Cần Giuộc,,lấy,21309000,Bưu Cục Phước Kiển-Nhà Bè-HCM
+lấy,22674000,(LAN) Thạnh Lợi,,lấy,21559000,(TGI) Thanh Hòa,,lấy,21313000,(TGI) Long Tiên
+lấy,22819000,(LAN) Đức Hòa,,lấy,21677000,Bưu Cục 26 Bùi Thanh Khiết-Tân Túc-Bình Chánh,,lấy,21485000,(HCM) CK Phú Thuận
+lấy,22849000,(LAN) Phước Lý,,lấy,21965000,Kho Giao Hàng Nặng - Nhà Bè - HCM,,lấy,21528000,(TGI) Vĩnh Kim
+lấy,22941000,Bưu Cục 165A Nguyễn Văn Tạo-Nhà Bè-HCM,,lấy,21991000,(TGI) Châu Thành,,lấy,21529000,(LAN) Cần Giộc
+lấy,22957000,Kho Giao Hàng Nặng - Tân Thuận - Hồ Chí Minh,,lấy,21992000,(TGI) Thạnh Phú,,lấy,21559000,(TGI) Thanh Hòa
+lấy,23018000,(HCM) Bình Hưng 2,,lấy,22067000,Kho Giao Hàng Nặng - TP Tân An - Long An,,lấy,21582000,(BTR) Thạnh Phú
+lấy,23044000,(LAN) Tân Trụ,,lấy,22137000,(HCM) Bình Hưng,,lấy,21583000,(BTR) Bình Đại
+,,,,lấy,22159000,Kho Giao Hàng Nặng - TP Mỹ Tho - Tiền Giang,,lấy,21677000,Bưu Cục 26 Bùi Thanh Khiết-Tân Túc-Bình Chánh
+,,,,lấy,22206000,(LAN) Rạch Kiến,,lấy,21710000,(LAN) Tầm Vu
+,,,,lấy,22257000,Bưu Cục 31-31A Lý Phục Man-Bình Thuận-Quận 7-HCM,,lấy,21965000,Kho Giao Hàng Nặng - Nhà Bè - HCM
+,,,,lấy,22270000,(TGI) Long Thuận,,lấy,21991000,(TGI) Châu Thành
+,,,,lấy,22316000,(TGI) Chợ Gạo,,lấy,21992000,(TGI) Thạnh Phú
+,,,,lấy,22361000,Bưu Cục 63 Đưởng Số 7-Xã Nhà Bè-HCM,,lấy,21998000,(BTR) Tiên Thủy
+,,,,lấy,22478000,Bưu Cục 2227 Văn Tiến Dĩng-Bình Chánh-HCM,,lấy,22003000,(BTR) Ba Tri
+,,,,lấy,22488000,Bưu Cục 860/36 Huỳnh Tấn Phát-Q.7-HCM,,lấy,22031000,(BTR) An Hội
+,,,,lấy,22496000,Kho Giao Hàng Nặng - TX Cai Lậy - Tiền Giang,,lấy,22067000,Kho Giao Hàng Nặng - TP Tân An - Long An
+,,,,lấy,22498000,(HCM) Tân Thội Hiệp 1,,lấy,22101000,(BTR) Phú Túc
+,,,,lấy,22546000,Bưu Cục 692 An Phú Tây-Bình Chánh-HCM,,lấy,22137000,(HCM) Bình Hưng
+,,,,lấy,22674000,(LAN) Thạnh Lợi,,lấy,22159000,Kho Giao Hàng Nặng - TP Mỹ Tho - Tiền Giang
+,,,,lấy,22819000,(LAN) Đức Hòa,,lấy,22206000,(LAN) Rạch Kiến
+,,,,lấy,22835000,(LAN) Thủ Thừa,,lấy,22257000,Bưu Cục 31-31A Lý Phục Man-Bình Thuận-Quận 7-HCM
+,,,,lấy,22849000,(LAN) Phước Lý,,lấy,22270000,(TGI) Long Thuận
+,,,,lấy,22867000,(TGI) Gia Thuận,,lấy,22316000,(TGI) Chợ Gạo
+,,,,lấy,22869000,(TGI) Mỹ Lợi,,lấy,22337000,(BTR) Phước Mỹ Trung
+,,,,lấy,22941000,Bưu Cục 165A Nguyễn Văn Tạo-Nhà Bè-HCM,,lấy,22361000,Bưu Cục 63 Đưởng Số 7-Xã Nhà Bè-HCM
+,,,,lấy,22953000,Kho Giao Hàng Nặng - Gò Công - Tiền Giang,,lấy,22478000,Bưu Cục 2227 Văn Tiến Dĩng-Bình Chánh-HCM
+,,,,lấy,22957000,Kho Giao Hàng Nặng - Tân Thuận - Hồ Chí Minh,,lấy,22488000,Bưu Cục 860/36 Huỳnh Tấn Phát-Q.7-HCM
+,,,,lấy,23018000,(HCM) Bình Hưng 2,,lấy,22496000,Kho Giao Hàng Nặng - TX Cai Lậy - Tiền Giang
+,,,,lấy,23044000,(LAN) Tân Trụ,,lấy,22498000,(HCM) Tân Thội Hiệp 1
+,,,,,,,lấy,22546000,Bưu Cục 692 An Phú Tây-Bình Chánh-HCM
+,,,,,,,,lấy,22674000,(LAN) Thạnh Lợi
+,,,,,,,,lấy,22819000,(LAN) Đức Hòa
+,,,,,,,,lấy,22835000,(LAN) Thủ Thừa
+,,,,,,,,lấy,22849000,(LAN) Phước Lý
+,,,,,,,,lấy,22867000,(TGI) Gia Thuận
+,,,,,,,,lấy,22868000,(BTR) Lộc Thuận
+,,,,,,,,lấy,22869000,(TGI) Mỹ Lợi
+,,,,,,,,lấy,22876000,(BTR) Hương Khánh Trung
+,,,,,,,,lấy,22910000,(BTR) Hương Mỹ
+,,,,,,,,lấy,22941000,Bưu Cục 165A Nguyễn Văn Tạo-Nhà Bè-HCM
+,,,,,,,,lấy,22953000,Kho Giao Hàng Nặng - Gò Công - Tiền Giang
+,,,,,,,,lấy,22957000,Kho Giao Hàng Nặng - Tân Thuận - Hồ Chí Minh
+,,,,,,,,lấy,22972000,(BTR) Sơn Đông
+,,,,,,,,lấy,23018000,(HCM) Bình Hưng 2
+,,,,,,,,lấy,23030000,(BTR) Phú Phụng
+,,,,,,,,lấy,23044000,(LAN) Tân Trụ
