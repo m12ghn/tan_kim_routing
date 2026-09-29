@@ -247,6 +247,7 @@
     <div class="toolbar">
       <div class="month-group" id="month-group"></div>
       <div class="spacer"></div>
+      <button class="ghost" id="btn-proximity" title="Áp quy tắc: BC phía Nam về Tân Kim; BC gần kho trung chuyển/chuyển tiếp khác hơn Tân Kim thì về kho đó">📍 Áp quy tắc gần kho (T10)</button>
       <button class="ghost" id="btn-reset">Về scope mặc định (tháng này)</button>
       <button class="primary" id="btn-export">Xuất tuyến mới để lưu Sheet</button>
     </div>
@@ -765,6 +766,58 @@
     });
     monthGroup.appendChild(b);
   });
+  // ---------- quy tắc T10: BC phía Nam về Tân Kim; BC gần kho trung chuyển/chuyển tiếp khác hơn thì về kho đó (chiều LẤY) ----------
+  var PROX_MONTH = 'T10';
+  var PROX_SOUTH = ['Nhà Bè','Cần Giờ','Nhơn Trạch','Cần Đước'];               // luôn về Tân Kim
+  var PROX_HUBS = [{id:'1626',n:'HCM01'},{id:'2388',n:'HCM20'},{id:'22883000',n:'Sóng Thần'},{id:'20757000',n:'Đồng Nai'}];
+  function isSouth(w){ return PROX_SOUTH.some(function(k){ return (w.dname||'').indexOf(k) !== -1; }); }
+  function nearestHub(w){
+    var best = null;
+    PROX_HUBS.forEach(function(h){
+      var hw = WH[h.id]; if(!hw || hw.lat==null) return;
+      var d = haversineKm(w.lat, w.lng, hw.lat, hw.lng);
+      if(!best || d < best.km) best = {n:h.n, km:d};
+    });
+    return best;
+  }
+  function planProximity(){
+    var m = PROX_MONTH, drop = [], add = [], restore = [];
+    var haveCustom = {};
+    customRules[m].forEach(function(r){ if(r.chieu==='lấy' && r.capdo==='bc') haveCustom[String(r.wid)] = 1; });
+    var defSet = {};
+    (DEFAULT_RULES[m]||[]).forEach(function(r){
+      if(r.chieu!=='lấy') return;
+      var wid = String(r.wid), w = WH[wid]; defSet[wid] = 1;
+      if(!w || w.lat==null) return;
+      var key = 'lấy:'+r.wid, excluded = excludedDefault[m].has(key);
+      if(isSouth(w)){ if(excluded) restore.push({wid:wid, w:w, key:key}); return; }
+      var dTK = haversineKm(w.lat, w.lng, TK.lat, TK.lng), nh = nearestHub(w);
+      if(nh && nh.km < dTK && !excluded) drop.push({wid:wid, w:w, key:key, dTK:dTK, nh:nh});
+    });
+    Object.keys(WH).forEach(function(wid){
+      var w = WH[wid]; if(w.lat==null || !isSouth(w)) return;
+      if(defSet[wid] || haveCustom[wid]) return;
+      if(w.dept === 'Sorting Centers') return;
+      add.push({wid:wid, w:w});
+    });
+    return {drop:drop, add:add, restore:restore};
+  }
+  document.getElementById('btn-proximity').addEventListener('click', function(){
+    var m = PROX_MONTH, plan = planProximity();
+    if(!plan.drop.length && !plan.add.length && !plan.restore.length){ alert('Quy tắc gần kho đã được áp dụng cho '+m+' rồi — không có thay đổi nào thêm.'); return; }
+    function list(arr, f){ return arr.slice(0,12).map(f).join('\n') + (arr.length>12 ? '\n… và '+(arr.length-12)+' BC khác' : ''); }
+    var msg = 'Áp quy tắc gần kho cho '+m+' (chiều LẤY):\n\n' +
+      '• LOẠI khỏi Tân Kim ('+plan.drop.length+' BC, gần kho khác hơn Tân Kim):\n' + (plan.drop.length ? list(plan.drop, function(x){ return '   - '+x.w.name+' (TK '+Math.round(x.dTK)+' km, '+x.nh.n+' '+Math.round(x.nh.km)+' km)'; }) : '   (không có)') + '\n\n' +
+      '• THÊM vào Tân Kim ('+plan.add.length+' BC phía Nam còn thiếu):\n' + (plan.add.length ? list(plan.add, function(x){ return '   - '+x.w.name+' ('+x.w.dname+')'; }) : '   (không có)') + '\n\n' +
+      (plan.restore.length ? '• KHÔI PHỤC '+plan.restore.length+' BC phía Nam đang bị loại.\n\n' : '') +
+      'Thay đổi được lưu vào bản chung, có thể hoàn tác từng BC bằng ↺/✕ hoặc nút "Về scope mặc định". Áp dụng?';
+    if(!confirm(msg)) return;
+    plan.drop.forEach(function(x){ excludedDefault[m].add(x.key); });
+    plan.restore.forEach(function(x){ excludedDefault[m].delete(x.key); });
+    plan.add.forEach(function(x){ customRules[m].push({capdo:'bc', chieu:'lấy', hang:'Cả hai', wid:x.wid, eff:m, seq:ruleSeq++}); });
+    var mb = monthGroup.querySelector('.month-btn[data-month="'+m+'"]'); if(mb && currentMonth!==m) mb.click();
+    renderRuleList(); recompute(); syncMap(); persist();
+  });
   document.getElementById('btn-reset').addEventListener('click', function(){
     if(remoteState==='on' && !confirm('Đưa tháng '+currentMonth+' về scope mặc định? Thao tác này lưu vào bản chung và ảnh hưởng tất cả mọi người.')) return;
     excludedDefault[currentMonth] = new Set();
@@ -889,7 +942,7 @@
     '<div class="hk"><input type="checkbox" id="mtGiao" checked> <span style="color:#e07b3a">➜</span> GIAO (nét liền, hàng ra TK)</div>'+
     '<div class="sub" style="margin:4px 0 0">Mũi tên chỉ hướng hàng đi. Rê chuột vào điểm để xem khoảng cách tới Tân Kim.</div>'+
     '<div class="hr"></div>'+
-    '<div class="hk"><input type="checkbox" id="mtKho" checked> <span style="color:#f2c94c">◆</span> Kho (HCM01, HCM20, Sóng Thần, Tân Thuận, Tân Tạo)</div>'+
+    '<div class="hk"><input type="checkbox" id="mtKho" checked> <span style="color:#f2c94c">◆</span> Kho (HCM01, HCM20, Sóng Thần, Đồng Nai, Tân Thuận, Tân Tạo)</div>'+
     '<div class="hk"><input type="checkbox" id="mtDist" checked> Ranh giới quận/huyện (nét đứt mờ)</div>'+
     '<div class="hk"><input type="checkbox" id="mtProvName" checked> Tên tỉnh</div>'+
     '<div class="hk"><input type="checkbox" id="mtDistName" checked> Tên quận/huyện <span style="color:#8aa0b4;font-size:11px">(hiện khi zoom gần)</span></div>';
@@ -936,6 +989,7 @@
     {id:'1626',     short:'HCM01'},
     {id:'2388',     short:'HCM20'},
     {id:'22883000', short:'Sóng Thần'},
+    {id:'20757000', short:'Đồng Nai'},
     {id:'22957000', short:'Tân Thuận'},
     {id:'21606000', short:'Tân Tạo'}
   ];
