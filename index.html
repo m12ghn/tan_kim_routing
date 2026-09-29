@@ -875,7 +875,7 @@
     '<label>Huyện/Quận</label><select id="mfDist"></select>'+
     '<label>Bưu cục / Kho</label><select id="mfBC"></select>'+
     '<div class="hr"></div>'+
-    '<div class="hk"><input type="checkbox" id="mtLay" checked> <span style="color:#25c2a0">➜</span> LẤY (nét đứt, hàng về TK)</div>'+
+    '<div class="hk"><input type="checkbox" id="mtLay" checked> <span style="color:#4da3ff">➜</span> LẤY (nét đứt, hàng về TK)</div>'+
     '<div class="hk"><input type="checkbox" id="mtGiao" checked> <span style="color:#e07b3a">➜</span> GIAO (nét liền, hàng ra TK)</div>'+
     '<div class="sub" style="margin:4px 0 0">Mũi tên chỉ hướng hàng đi. Rê chuột vào điểm để xem khoảng cách tới Tân Kim.</div>'+
     '<div class="hr"></div>'+
@@ -945,7 +945,7 @@
     var nLay=0,nGia=0,sumVL=0,sumVG=0,sumKL=0,sumKG=0; var byProv={};
     recs.forEach(function(r){
       var isLay = r.type==='lấy';
-      var color = isLay ? '#25c2a0' : '#e07b3a';
+      var color = isLay ? '#4da3ff' : '#e07b3a';
       if(isLay){nLay++;sumVL+=r.vol;sumKL+=r.kl_kg;} else {nGia++;sumVG+=r.vol;sumKG+=r.kl_kg;}
       byProv[r.prov] = (byProv[r.prov]||0)+1;
       var path = isLay ? [[r.lat,r.lng],[TK.lat,TK.lng]] : [[TK.lat,TK.lng],[r.lat,r.lng]];
@@ -963,11 +963,11 @@
       m.bindTooltip('<b>'+r.name.slice(0,50)+'</b><br>'+(isLay?'LẤY':'GIAO')+' · hàng: '+r.hang+'<br>'+
         '📏 Cách '+TK.name+': <b>'+fmtKm(km)+' km</b> <span style="color:#8aa0b4">(đường chim bay)</span><br>'+
         '<span style="color:#8aa0b4">≈ '+fmtKm(kmRoad)+' km đường bộ (ước tính)</span><br>'+
-        'Vol T6: '+fmt(r.vol)+' kiện', {sticky:true, className:'rt'});
+        'Vol T6: '+fmt(r.vol)+' đơn', {sticky:true, className:'rt'});
       m.bindPopup('<div><b>'+r.id+'</b> — '+r.name+'<br><span style="color:#8aa0b4">'+r.prov+' / '+r.dist+'</span><br>'+
         (isLay?'⚫ LẤY':'⚫ GIAO')+' · hàng: '+r.hang+'<br>➜ Hướng: '+dirTxt+'<br>'+
         '📏 Khoảng cách tới '+TK.name+': <b>'+fmtKm(km)+' km</b> (đường chim bay, từ toạ độ) · ≈ <b>'+fmtKm(kmRoad)+' km</b> đường bộ (ước tính ×'+String(ROAD_FACTOR).replace('.',',')+')<br>'+
-        'Volume T6: <b>'+fmt(r.vol)+'</b> kiện<br>Weight T6: <b>'+fmt(r.kl_kg)+'</b> kg</div>');
+        'Volume T6: <b>'+fmt(r.vol)+'</b> đơn<br>Weight T6: <b>'+fmt(r.kl_kg)+'</b> kg</div>');
       m.on('mouseover', function(){ line.setStyle({weight:3.5, opacity:1}); });
       m.on('mouseout', function(){ line.setStyle({weight:1.8, opacity:.75}); });
       m.on('click', function(){ mstate.bc = String(r.id); mRefreshOptions(); });
@@ -977,8 +977,8 @@
     s += '<div class="row"><span class="l">LẤY (nét đứt)</span><span class="v">'+nLay+'</span></div>';
     s += '<div class="row"><span class="l">GIAO (nét liền)</span><span class="v">'+nGia+'</span></div>';
     s += '<div class="sec">Volume T6 baseline</div>';
-    s += '<div class="row"><span class="l">Vol LẤY</span><span class="v">'+fmt(sumVL)+' kiện</span></div>';
-    s += '<div class="row"><span class="l">Vol GIAO</span><span class="v">'+fmt(sumVG)+' kiện</span></div>';
+    s += '<div class="row"><span class="l">Vol LẤY</span><span class="v">'+fmt(sumVL)+' đơn</span></div>';
+    s += '<div class="row"><span class="l">Vol GIAO</span><span class="v">'+fmt(sumVG)+' đơn</span></div>';
     s += '<div class="row"><span class="l">Weight LẤY</span><span class="v">'+fmt(sumKL)+' kg</span></div>';
     s += '<div class="row"><span class="l">Weight GIAO</span><span class="v">'+fmt(sumKG)+' kg</span></div>';
     if(topProv.length){ s += '<div class="sec">Top tỉnh (số BC)</div>'; topProv.forEach(function(p){ s+='<div class="row"><span class="l">'+p[0]+'</span><span class="v">'+p[1]+'</span></div>'; }); }
@@ -1005,7 +1005,7 @@
     {id:'TK',   name:'Tân Kim', color:'#d9501a'}
   ];
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  var flowCtx = {scope:{}, tkAll:{}}, flowGroups = [], flowUnit = 'kiện';
+  var flowCtx = {scope:{}, tkAll:{}}, flowGroups = [], flowUnit = 'đơn';
   function flowData(){
     var scope = scopeFor(currentMonth, fl.chieu);
     var volSrc = fl.chieu==='lấy' ? VOL_LAY : VOL_GIAO;
@@ -1042,7 +1042,7 @@
   function renderFlow(){
     var svg = document.getElementById('flowsvg');
     var groups = flowData(); flowGroups = groups;
-    var unit = fl.metric==='vol' ? 'kiện' : 'kg'; flowUnit = unit;
+    var unit = fl.metric==='vol' ? 'đơn' : 'kg'; flowUnit = unit;
     var kho = {'1626':0,'2388':0,'TK':0}, total=0;
     groups.forEach(function(g){ ['1626','2388','TK'].forEach(function(k){ kho[k]+=g.f[k]; }); total+=g.total; });
     document.getElementById('flow-month').textContent = currentMonth;
