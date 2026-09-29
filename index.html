@@ -204,6 +204,9 @@
   .pnl.collapsed{ width:auto !important; min-width:0; padding:8px 40px 8px 12px; }
   .pnl.collapsed > *:not(h3):not(.pnl-toggle){ display:none; }
   .pnl.collapsed h3{ margin:0; white-space:nowrap; }
+  .khoicon{ width:16px; height:16px; background:#f2c94c; border:2px solid #0a1614; transform:rotate(45deg); box-shadow:0 0 0 2px rgba(242,201,76,.35); }
+  .leaflet-tooltip.khotip{ background:#f2c94c; color:#1a1400; border:1px solid #0a1614; font-weight:700; font-size:11px; padding:2px 6px; }
+  .leaflet-tooltip.khotip:before{ border-top-color:#f2c94c; }
   .pnl h3{margin:0 0 4px;font-size:13.5px;color:#25c2a0;font-family:'Be Vietnam Pro',sans-serif;}
   .pnl .sub{font-size:11px;color:#8aa0b4;margin-bottom:8px}
   .pnl label{display:block;margin:9px 0 3px;font-weight:600;color:#aebfce;font-size:12px}
@@ -886,6 +889,7 @@
     '<div class="hk"><input type="checkbox" id="mtGiao" checked> <span style="color:#e07b3a">➜</span> GIAO (nét liền, hàng ra TK)</div>'+
     '<div class="sub" style="margin:4px 0 0">Mũi tên chỉ hướng hàng đi. Rê chuột vào điểm để xem khoảng cách tới Tân Kim.</div>'+
     '<div class="hr"></div>'+
+    '<div class="hk"><input type="checkbox" id="mtKho" checked> <span style="color:#f2c94c">◆</span> Kho (HCM01, Sóng Thần, Tân Thuận, Tân Tạo)</div>'+
     '<div class="hk"><input type="checkbox" id="mtDist" checked> Ranh giới quận/huyện (nét đứt mờ)</div>'+
     '<div class="hk"><input type="checkbox" id="mtProvName" checked> Tên tỉnh</div>'+
     '<div class="hk"><input type="checkbox" id="mtDistName" checked> Tên quận/huyện <span style="color:#8aa0b4;font-size:11px">(hiện khi zoom gần)</span></div>';
@@ -926,6 +930,23 @@
       el.appendChild(btn); apply();
     });
   })();
+
+  // ---------- các kho đánh dấu cố định (luôn hiện, không phụ thuộc bộ tuyến); toạ độ lấy từ dim_warehouse ----------
+  var KHO_MARKERS = [
+    {id:'1626',     short:'HCM01'},
+    {id:'22883000', short:'Sóng Thần'},
+    {id:'22957000', short:'Tân Thuận'},
+    {id:'21606000', short:'Tân Tạo'}
+  ];
+  var khoLayer = L.layerGroup().addTo(map);
+  KHO_MARKERS.forEach(function(k){
+    var w = WH[k.id]; if(!w || w.lat==null) return;
+    var km = haversineKm(w.lat, w.lng, TK.lat, TK.lng);
+    var m = L.marker([w.lat, w.lng], {icon:L.divIcon({className:'', html:'<div class="khoicon"></div>', iconSize:[16,16], iconAnchor:[8,8]}), zIndexOffset:500}).addTo(khoLayer);
+    m.bindTooltip('🏬 '+k.short, {permanent:true, direction:'top', offset:[0,-8], className:'khotip'});
+    m.bindPopup('<div><b>'+k.id+'</b> — '+w.name+'<br><span style="color:#8aa0b4">'+w.pname+' / '+w.dname+'</span><br>'+
+      '📍 '+w.lat.toFixed(5)+', '+w.lng.toFixed(5)+'<br>📏 Cách '+TK.name+': <b>'+fmtKm(km)+' km</b> (đường chim bay) · ≈ <b>'+fmtKm(km*ROAD_FACTOR)+' km</b> đường bộ (ước tính)</div>');
+  });
 
   function currentMapRecs(month){
     var recs = [];
@@ -1021,6 +1042,9 @@
     if(mstate.bc){ var w = WH[mstate.bc]; if(w) map.setView([w.lat,w.lng],12); } });
   document.getElementById('mtDist').addEventListener('change', function(e){
     if(e.target.checked){ distLayer.addTo(map); distLayer.bringToBack(); } else { map.removeLayer(distLayer); }
+  });
+  document.getElementById('mtKho').addEventListener('change', function(e){
+    if(e.target.checked) khoLayer.addTo(map); else map.removeLayer(khoLayer);
   });
   document.getElementById('mtProvName').addEventListener('change', function(e){ labelOpt.prov = e.target.checked; syncLabels(); });
   document.getElementById('mtDistName').addEventListener('change', function(e){ labelOpt.dist = e.target.checked; syncLabels(); });
