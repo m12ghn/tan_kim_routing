@@ -305,7 +305,7 @@
         <li><b>Nguồn dữ liệu:</b> danh mục bưu cục/kho + toạ độ lấy từ <code>dim_warehouse</code>, volume/weight T6 theo BC + hàng (Normal/Bulky) lấy từ <code>vol_from</code>/<code>vol_to</code>, scope mặc định từng tháng lấy đúng từ <code>config_v3</code> (cấp mã BC, không còn ước lượng theo quận như bản trước) — nên tại scope mặc định, số hiện ra khớp <b>chính xác</b> với Sheet AOP, không cần hiệu chỉnh (calibrate) gần đúng nữa.</li>
         <li><b>Bưu cục luôn thắng quận:</b> nếu 1 BC vừa nằm trong 1 tuyến cấp quận vừa có 1 tuyến cấp BC riêng (kể cả tuyến mặc định từ config_v3), tuyến cấp BC được áp dụng sau cùng và quyết định — đúng nguyên tắc "cụ thể hơn thì ưu tiên hơn".</li>
         <li><b>Cách tính khi đã đổi tuyến:</b> tính tỷ lệ volume/weight T6 khớp được ở scope hiện tại so với scope mặc định (scale), nhân vào đúng % nhường mà Sheet AOP đã ghi cho tháng đó — nên tại scope mặc định, số khớp 100% với AOP; đổi 1 tuyến nhỏ chỉ làm số nhích đúng theo tỷ trọng của tuyến đó.</li>
-        <li><b>Lưu vào Sheet:</b> nút "Xuất tuyến mới" hiện tại chỉ xuất ra danh sách để copy tay vào tab Config_Rules — bản ghi tự động (bấm Lưu → API ghi thẳng vào Sheet) cần thêm 1 serverless function + Google service account, xem file hướng dẫn đi kèm.</li>
+        <li><b>Lưu tuyến:</b> khi trang chạy trên Vercel có kết nối Supabase, mọi thay đổi tự lưu vào <b>bản chung</b> (ai mở link cũng thấy cùng một bộ tuyến, tự cập nhật sau tối đa 30 giây; nếu 2 người sửa cùng lúc thì bản lưu sau sẽ được báo và tải lại bản mới). Đồng thời vẫn lưu tạm trên trình duyệt làm dự phòng. Nút "Xuất tuyến mới" vẫn dùng để copy sang tab Config_Rules trên Sheet khi cần lưu chính thức.</li>
       </ul>
     </div>
   </section>
@@ -342,7 +342,7 @@
     </section>
   </div>
 
-  <footer>Cụm M12 · HRBP GHN — công cụ cấu hình &amp; mô phỏng, xem kỹ ghi chú "Lưu vào Sheet" phía trên trước khi dùng làm số chính thức</footer>
+  <footer>Cụm M12 · HRBP GHN — công cụ cấu hình &amp; mô phỏng, xem ghi chú "Lưu tuyến" phía trên trước khi dùng làm số chính thức</footer>
 </div>
 
 <script id="blob" type="application/json">__BLOB__</script>
@@ -387,40 +387,111 @@
     function p2(n){ return (n<10?'0':'')+n; }
     return p2(d.getDate())+'/'+p2(d.getMonth()+1)+' '+p2(d.getHours())+':'+p2(d.getMinutes());
   }
+  function snapshot(){
+    var data = { savedAt: Date.now(), ruleSeq: ruleSeq, months: {} };
+    MONTHS.forEach(function(m){
+      data.months[m] = { excluded: Array.from(excludedDefault[m]), custom: customRules[m] };
+    });
+    return data;
+  }
+  function applyData(data){
+    if(!data || !data.months) return false;
+    MONTHS.forEach(function(m){
+      var md = data.months[m];
+      excludedDefault[m] = new Set((md && md.excluded) || []);
+      customRules[m] = (md && md.custom) || [];
+    });
+    if(data.ruleSeq) ruleSeq = Math.max(ruleSeq, data.ruleSeq);
+    return true;
+  }
+  function setStatus(t){ if(autosaveEl) autosaveEl.textContent = t; }
   function saveLocal(){
     try{
-      var data = { savedAt: Date.now(), ruleSeq: ruleSeq, months: {} };
-      MONTHS.forEach(function(m){
-        data.months[m] = { excluded: Array.from(excludedDefault[m]), custom: customRules[m] };
-      });
+      var data = snapshot();
       localStorage.setItem(LS_KEY, JSON.stringify(data));
-      if(autosaveEl) autosaveEl.textContent = '💾 Đã tự lưu tạm trên trình duyệt này lúc ' + fmtTime(data.savedAt) + ' — mất nếu đổi máy/trình duyệt khác.';
-    }catch(e){
-      if(autosaveEl) autosaveEl.textContent = '⚠ Không tự lưu tạm được trên trình duyệt này — nhớ bấm "Xuất tuyến mới" trước khi rời trang.';
-    }
+      return data.savedAt;
+    }catch(e){ return null; }
   }
   function loadLocal(){
     try{
       var raw = localStorage.getItem(LS_KEY);
       if(!raw) return null;
       var data = JSON.parse(raw);
-      if(!data || !data.months) return null;
-      MONTHS.forEach(function(m){
-        var md = data.months[m];
-        if(!md) return;
-        excludedDefault[m] = new Set(md.excluded || []);
-        customRules[m] = md.custom || [];
-      });
-      if(data.ruleSeq) ruleSeq = Math.max(ruleSeq, data.ruleSeq);
+      if(!applyData(data)) return null;
       return data.savedAt || null;
     }catch(e){ return null; }
   }
+
+  // ---------- lưu chung (Supabase qua /api/config) ----------
+  // remoteState: 'unknown' (đang thử) | 'on' (kết nối được) | 'off' (không có API -> chỉ lưu tạm trên máy)
+  var remoteState = 'unknown', remoteVersion = 0, saveTimer = null, saving = false, dirty = false, restoredAtGlobal = null;
+  function refreshAll(){ renderRuleList(); recompute(); syncMap(); }
+  function persist(){
+    var t = saveLocal();
+    if(remoteState === 'off'){
+      setStatus(t ? '💾 Đã tự lưu tạm trên trình duyệt này lúc ' + fmtTime(t) + ' — chưa có kết nối lưu chung, mất nếu đổi máy/trình duyệt.'
+                  : '⚠ Không tự lưu tạm được — nhớ bấm "Xuất tuyến mới" trước khi rời trang.');
+      return;
+    }
+    dirty = true;
+    setStatus('⏳ Đang lưu lên bản chung…');
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(pushRemote, 700);
+  }
+  function pushRemote(){
+    if(saving){ saveTimer = setTimeout(pushRemote, 400); return; }
+    saving = true; dirty = false;
+    var data = snapshot();
+    fetch('/api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({data:data, baseVersion:remoteVersion})})
+      .then(function(r){ return r.json().then(function(j){ return {status:r.status, j:j}; }); })
+      .then(function(res){
+        saving = false;
+        if(res.status === 200 && res.j.ok){
+          remoteVersion = res.j.version; remoteState = 'on';
+          if(!dirty) setStatus('☁ Đã lưu vào bản chung (Supabase) lúc ' + fmtTime(data.savedAt) + ' · phiên bản ' + remoteVersion + '.');
+        } else if(res.status === 409 && res.j.conflict){
+          clearTimeout(saveTimer); dirty = false;
+          applyData(res.j.data); remoteVersion = res.j.version; saveLocal(); refreshAll();
+          setStatus('⚠ Người khác vừa lưu trước bạn — đã tải bản mới nhất (phiên bản ' + remoteVersion + '). Thay đổi vừa rồi của bạn chưa được lưu, hãy làm lại nếu cần.');
+        } else {
+          setStatus('⚠ Lưu lên bản chung thất bại (' + (res.j.error || res.status) + ') — đã lưu tạm trên máy này, sẽ thử lại ở lần sửa sau.');
+        }
+      })
+      .catch(function(){
+        saving = false;
+        setStatus('⚠ Mất kết nối khi lưu bản chung — đã lưu tạm trên máy này, sẽ thử lại ở lần sửa sau.');
+      });
+  }
+  function pullRemote(initial){
+    return fetch('/api/config', {cache:'no-store'})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+      .then(function(j){
+        if(!j || !j.ok) throw new Error('bad');
+        remoteState = 'on';
+        var hasRemote = j.version > 0 && j.data && j.data.months;
+        if(initial){
+          if(hasRemote){
+            applyData(j.data); remoteVersion = j.version; saveLocal(); refreshAll();
+            setStatus('☁ Đã tải bản chung (Supabase), phiên bản ' + j.version + (j.updated_at ? ' · lưu lúc ' + fmtTime(Date.parse(j.updated_at)) : '') + '.');
+          } else {
+            remoteVersion = j.version;
+            setStatus('☁ Đã kết nối bản chung (Supabase) — chưa có bản nào được lưu, sửa gì đó để lưu bản đầu tiên.');
+            if(restoredAtGlobal) persist();   // máy này đang có bản lưu tạm -> đẩy lên làm bản chung đầu tiên
+          }
+        } else if(hasRemote && j.version > remoteVersion && !dirty && !saving){
+          applyData(j.data); remoteVersion = j.version; saveLocal(); refreshAll();
+          setStatus('☁ Đã cập nhật bản mới từ người khác (phiên bản ' + j.version + ').');
+        }
+      })
+      .catch(function(){ if(remoteState !== 'on') remoteState = 'off'; });
+  }
+  setInterval(function(){ if(remoteState==='on' && !document.hidden) pullRemote(false); }, 30000);
   document.getElementById('btn-export').insertAdjacentHTML('afterend',
-    '<button class="ghost" id="btn-clear-autosave" title="Xoá bản lưu tạm trên trình duyệt này">Xoá lưu tạm</button>');
+    '<button class="ghost" id="btn-clear-autosave" title="Xoá bản lưu tạm trên trình duyệt này">Xoá lưu tạm trên máy</button>');
   document.getElementById('btn-clear-autosave').addEventListener('click', function(){
-    if(!confirm('Xoá bản lưu tạm trên trình duyệt này? (không ảnh hưởng Google Sheet)')) return;
+    if(!confirm('Xoá bản lưu tạm trên trình duyệt này? (không ảnh hưởng bản chung trên Supabase hay Google Sheet)')) return;
     try{ localStorage.removeItem(LS_KEY); }catch(e){}
-    if(autosaveEl) autosaveEl.textContent = 'Đã xoá bản lưu tạm.';
+    setStatus('Đã xoá bản lưu tạm trên máy này.');
   });
 
   function widsForDist(did){
@@ -564,7 +635,7 @@
     } else if(btn.dataset.customIdx !== undefined){
       customRules[currentMonth].splice(parseInt(btn.dataset.customIdx,10), 1);
     }
-    renderRuleList(); recompute(); syncMap(); saveLocal();
+    renderRuleList(); recompute(); syncMap(); persist();
   });
 
   // ---------- add-rule form ----------
@@ -641,7 +712,7 @@
       var mb = monthGroup.querySelector('.month-btn[data-month="'+eff+'"]');
       if(mb) mb.click();
     }
-    renderRuleList(); recompute(); syncMap(); saveLocal();
+    renderRuleList(); recompute(); syncMap(); persist();
   });
 
   // ---------- export (interim — copy/paste vào Sheet, chưa auto-ghi) ----------
@@ -682,9 +753,10 @@
     monthGroup.appendChild(b);
   });
   document.getElementById('btn-reset').addEventListener('click', function(){
+    if(remoteState==='on' && !confirm('Đưa tháng '+currentMonth+' về scope mặc định? Thao tác này lưu vào bản chung và ảnh hưởng tất cả mọi người.')) return;
     excludedDefault[currentMonth] = new Set();
     customRules[currentMonth] = [];
-    renderRuleList(); recompute(); syncMap(); saveLocal();
+    renderRuleList(); recompute(); syncMap(); persist();
   });
 
   // ---------- KPI ----------
@@ -986,15 +1058,23 @@
   btnMap.addEventListener('click', function(){ showTab('map'); });
   btnFlow.addEventListener('click', function(){ showTab('flow'); });
 
-  // ---------- restore autosave (nếu có) trước khi vẽ lần đầu ----------
-  var restoredAt = loadLocal();
+  // ---------- khôi phục: bản lưu tạm trên máy trước, rồi tải bản chung (Supabase) đè lên nếu có ----------
+  var restoredAt = loadLocal(); restoredAtGlobal = restoredAt;
   renderRuleList();
   recompute();
   if(restoredAt){
-    autosaveEl.textContent = '↺ Đã khôi phục cấu hình lưu tạm trên trình duyệt này lúc ' + fmtTime(restoredAt) + '.';
+    setStatus('↺ Đã khôi phục cấu hình lưu tạm trên trình duyệt này lúc ' + fmtTime(restoredAt) + ' — đang kiểm tra bản chung…');
   } else {
-    saveLocal();
+    var t0 = saveLocal();
+    setStatus('💾 Đang kiểm tra bản chung…');
   }
+  pullRemote(true).then(function(){
+    if(remoteState === 'off'){
+      var t = restoredAt || saveLocal();
+      setStatus(restoredAt ? '↺ Đã khôi phục cấu hình lưu tạm trên trình duyệt này lúc ' + fmtTime(restoredAt) + ' — chưa có kết nối lưu chung.'
+                           : '💾 Đã tự lưu tạm trên trình duyệt này lúc ' + fmtTime(t||Date.now()) + ' — chưa có kết nối lưu chung, mất nếu đổi máy/trình duyệt khác.');
+    }
+  });
 })();
 </script>
 </body></html>
