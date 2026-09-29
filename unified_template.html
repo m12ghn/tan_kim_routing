@@ -194,7 +194,7 @@
   <header>
     <div class="eyebrow"><span class="dot"></span>Cụm M12 · Cấu hình tuyến Tân Kim</div>
     <h1>Cấu hình &amp; mô phỏng tuyến Tân Kim</h1>
-    <p class="lede">Thêm luật config theo <b>quận/huyện</b> hoặc <b>bưu cục/kho</b>, riêng cho từng chiều <b>lấy</b>/<b>giao</b> và từng loại hàng <b>Normal/Bulky</b> — số KPI và bản đồ mạng lưới cùng đọc từ 1 bộ luật, đổi 1 chỗ là cả hai nhảy theo ngay. Mặc định mỗi tháng hiện đúng scope <code>config_v3</code> hiện tại (khớp Sheet AOP); thêm/bớt luật sẽ chuyển sang chế độ ước tính what-if.</p>
+    <p class="lede">Thêm tuyến config theo <b>quận/huyện</b> hoặc <b>bưu cục/kho</b>, riêng cho từng chiều <b>lấy</b>/<b>giao</b> và từng loại hàng <b>Normal/Bulky</b> — số KPI và bản đồ mạng lưới cùng đọc từ 1 bộ tuyến, đổi 1 chỗ là cả hai nhảy theo ngay. Mặc định mỗi tháng hiện đúng scope <code>config_v3</code> hiện tại (khớp Sheet AOP); thêm/bớt tuyến sẽ chuyển sang chế độ ước tính what-if.</p>
   </header>
 
   <div class="view-tabs" role="tablist">
@@ -209,7 +209,7 @@
       <div class="month-group" id="month-group"></div>
       <div class="spacer"></div>
       <button class="ghost" id="btn-reset">Về scope mặc định (tháng này)</button>
-      <button class="primary" id="btn-export">Xuất luật mới để lưu Sheet</button>
+      <button class="primary" id="btn-export">Xuất tuyến mới để lưu Sheet</button>
     </div>
     <div class="mode-line" id="mode-line"></div>
     <div id="autosave-line" style="font-size:12px;color:#8aa0b4;margin:-6px 0 10px;"></div>
@@ -218,17 +218,17 @@
 
   <section>
     <div class="section-head">
-      <h2>Luật cấu hình đang áp dụng</h2>
+      <h2>Tuyến cấu hình đang áp dụng</h2>
       <span class="hint">Cấp quận/huyện hoặc cấp bưu cục · riêng lấy/giao · riêng Normal/Bulky — bưu cục luôn thắng quận khi trùng</span>
     </div>
     <div class="rules-grid">
       <div class="panel">
-        <div class="phead"><span class="ptitle">Danh sách luật (tháng đang xem)</span><span class="pcount" id="rule-count"></span></div>
+        <div class="phead"><span class="ptitle">Danh sách tuyến (tháng đang xem)</span><span class="pcount" id="rule-count"></span></div>
         <div class="rule-search"><input id="rule-search" placeholder="Tìm theo tên quận/BC…"></div>
         <div class="rule-list" id="rule-list"></div>
       </div>
       <div class="panel">
-        <div class="phead"><span class="ptitle">+ Thêm luật mới</span></div>
+        <div class="phead"><span class="ptitle">+ Thêm tuyến mới</span></div>
         <div class="add-form">
           <div class="full">
             <label>Chiều</label>
@@ -261,12 +261,12 @@
               <option value="Bulky">Chỉ Bulky</option>
             </select>
           </div>
-          <div><label>Hiệu lực từ</label><select id="sel-eff"></select></div>
-          <div class="note">Luật mới chỉ áp dụng cho tháng đang xem ở trên (mỗi tháng cấu hình riêng, giống cách config_v3 tách theo tháng hiện nay).</div>
-          <button type="button" class="btn-add" id="btn-add-rule">+ Thêm luật vào tháng đang xem</button>
+          <div><label>Áp dụng cho tháng</label><select id="sel-eff"></select></div>
+          <div class="note">Tuyến mới chỉ áp dụng cho tháng đang xem ở trên (mỗi tháng cấu hình riêng, giống cách config_v3 tách theo tháng hiện nay).</div>
+          <button type="button" class="btn-add" id="btn-add-rule">+ Thêm tuyến vào tháng đang xem</button>
         </div>
         <div class="export-box" id="export-box" style="display:none; padding:0 16px 16px;">
-          <label style="font-size:11.5px;font-weight:600;color:var(--text-secondary);">Luật mới (chưa có trong config_v3) — copy dán vào tab Config_Rules trên Sheet:</label>
+          <label style="font-size:11.5px;font-weight:600;color:var(--text-secondary);">Tuyến mới (chưa có trong config_v3) — copy dán vào tab Config_Rules trên Sheet:</label>
           <textarea id="export-text" readonly></textarea>
         </div>
       </div>
@@ -277,9 +277,9 @@
     <div class="notes">
       <ul>
         <li><b>Nguồn dữ liệu:</b> danh mục bưu cục/kho + toạ độ lấy từ <code>dim_warehouse</code>, volume/weight T6 theo BC + hàng (Normal/Bulky) lấy từ <code>vol_from</code>/<code>vol_to</code>, scope mặc định từng tháng lấy đúng từ <code>config_v3</code> (cấp mã BC, không còn ước lượng theo quận như bản trước) — nên tại scope mặc định, số hiện ra khớp <b>chính xác</b> với Sheet AOP, không cần hiệu chỉnh (calibrate) gần đúng nữa.</li>
-        <li><b>Bưu cục luôn thắng quận:</b> nếu 1 BC vừa nằm trong 1 luật cấp quận vừa có 1 luật cấp BC riêng (kể cả luật mặc định từ config_v3), luật cấp BC được áp dụng sau cùng và quyết định — đúng nguyên tắc "cụ thể hơn thì ưu tiên hơn".</li>
-        <li><b>Cách tính khi đã đổi luật:</b> tính tỷ lệ volume/weight T6 khớp được ở scope hiện tại so với scope mặc định (scale), nhân vào đúng % nhường mà Sheet AOP đã ghi cho tháng đó — nên tại scope mặc định, số khớp 100% với AOP; đổi 1 luật nhỏ chỉ làm số nhích đúng theo tỷ trọng của luật đó.</li>
-        <li><b>Lưu vào Sheet:</b> nút "Xuất luật mới" hiện tại chỉ xuất ra danh sách để copy tay vào tab Config_Rules — bản ghi tự động (bấm Lưu → API ghi thẳng vào Sheet) cần thêm 1 serverless function + Google service account, xem file hướng dẫn đi kèm.</li>
+        <li><b>Bưu cục luôn thắng quận:</b> nếu 1 BC vừa nằm trong 1 tuyến cấp quận vừa có 1 tuyến cấp BC riêng (kể cả tuyến mặc định từ config_v3), tuyến cấp BC được áp dụng sau cùng và quyết định — đúng nguyên tắc "cụ thể hơn thì ưu tiên hơn".</li>
+        <li><b>Cách tính khi đã đổi tuyến:</b> tính tỷ lệ volume/weight T6 khớp được ở scope hiện tại so với scope mặc định (scale), nhân vào đúng % nhường mà Sheet AOP đã ghi cho tháng đó — nên tại scope mặc định, số khớp 100% với AOP; đổi 1 tuyến nhỏ chỉ làm số nhích đúng theo tỷ trọng của tuyến đó.</li>
+        <li><b>Lưu vào Sheet:</b> nút "Xuất tuyến mới" hiện tại chỉ xuất ra danh sách để copy tay vào tab Config_Rules — bản ghi tự động (bấm Lưu → API ghi thẳng vào Sheet) cần thêm 1 serverless function + Google service account, xem file hướng dẫn đi kèm.</li>
       </ul>
     </div>
   </section>
@@ -290,10 +290,10 @@
     <section>
       <div class="section-head">
         <h2>Bản đồ mạng lưới Tân Kim — live</h2>
-        <span class="hint">Đọc trực tiếp từ bộ luật đang cấu hình ở tab bên kia · chấm = BC/kho trong scope</span>
+        <span class="hint">Đọc trực tiếp từ bộ tuyến đang cấu hình ở tab bên kia · chấm = BC/kho trong scope</span>
       </div>
       <div class="map-embed"><div id="tkmap"></div></div>
-      <p class="map-note">Đổi luật ở tab "Cấu hình &amp; mô phỏng" rồi quay lại tab này — bản đồ vẽ lại ngay theo đúng bộ luật mới, không còn là ảnh chụp tĩnh tách rời như trước.</p>
+      <p class="map-note">Đổi tuyến ở tab "Cấu hình &amp; mô phỏng" rồi quay lại tab này — bản đồ vẽ lại ngay theo đúng bộ tuyến mới, không còn là ảnh chụp tĩnh tách rời như trước.</p>
     </section>
   </div>
 
@@ -351,7 +351,7 @@
       localStorage.setItem(LS_KEY, JSON.stringify(data));
       if(autosaveEl) autosaveEl.textContent = '💾 Đã tự lưu tạm trên trình duyệt này lúc ' + fmtTime(data.savedAt) + ' — mất nếu đổi máy/trình duyệt khác.';
     }catch(e){
-      if(autosaveEl) autosaveEl.textContent = '⚠ Không tự lưu tạm được trên trình duyệt này — nhớ bấm "Xuất luật mới" trước khi rời trang.';
+      if(autosaveEl) autosaveEl.textContent = '⚠ Không tự lưu tạm được trên trình duyệt này — nhớ bấm "Xuất tuyến mới" trước khi rời trang.';
     }
   }
   function loadLocal(){
@@ -390,7 +390,7 @@
     return m;
   }
 
-  // 2 luật cùng cấp trùng 1 đối tượng (vd Normal + Bulky) thì gộp lại thành 'Cả hai', không để luật sau đè luật trước
+  // 2 tuyến cùng cấp trùng 1 đối tượng (vd Normal + Bulky) thì gộp lại thành 'Cả hai', không để tuyến sau đè tuyến trước
   function mergeHang(a, b){ return !a ? b : (a===b ? a : 'Cả hai'); }
 
   function scopeFor(month, chieu){
@@ -493,7 +493,7 @@
       else { label = bcLabel(r.wid); sub = bcSub(r.wid); }
       rows.push({kind:'custom', chieu:r.chieu, hang:r.hang, label:label, sub:sub, idx:idx});
     });
-    ruleCountEl.textContent = rows.length + ' luật';
+    ruleCountEl.textContent = rows.length + ' tuyến';
     var q = stripDia((document.getElementById('rule-search').value||'').trim());
     ruleListEl.innerHTML = rows.map(function(row){
       if(q && stripDia(row.label).indexOf(q)===-1) return '';
@@ -504,7 +504,7 @@
       return '<div class="rule-row'+(row.excluded?' excluded':'')+'">'+tagChieu+tagHang+
         '<div class="main"><span class="nm">'+row.label+'</span><span class="sub">'+row.sub+'</span></div>'+
         tagOrigin+
-        '<button class="rm" '+rmAttr+' title="'+(row.excluded?'Khôi phục':'Bỏ luật này')+'">'+(row.excluded?'↺':'✕')+'</button></div>';
+        '<button class="rm" '+rmAttr+' title="'+(row.excluded?'Khôi phục':'Bỏ tuyến này')+'">'+(row.excluded?'↺':'✕')+'</button></div>';
     }).join('');
   }
   document.getElementById('rule-search').addEventListener('input', renderRuleList);
@@ -653,7 +653,7 @@
 
     document.getElementById('mode-line').innerHTML = official
       ? '<span class="mode-badge official">✓ Khớp chính thức — đúng scope config_v3 (' + currentMonth + ')</span>'
-      : '<span class="mode-badge estimate">◐ Ước tính what-if — đã đổi luật so với config_v3</span>';
+      : '<span class="mode-badge estimate">◐ Ước tính what-if — đã đổi tuyến so với config_v3</span>';
 
     kpiRow.innerHTML =
       '<div class="kpi" style="--kpi-color:var(--s-hcm01);"><div class="name"><span class="swatch"></span>HCM01</div>'+
@@ -683,7 +683,7 @@
   var mapLayer = L.layerGroup().addTo(map);
   var mstate = {prov:'', dist:'', bc:'', lay:true, giao:true};
 
-  var mpanelHtml = '<h3>🗺️ Bộ lọc bản đồ</h3><div class="sub">Live theo bộ luật đang cấu hình</div>'+
+  var mpanelHtml = '<h3>🗺️ Bộ lọc bản đồ</h3><div class="sub">Live theo bộ tuyến đang cấu hình</div>'+
     '<label>Tỉnh</label><select id="mfProv"></select>'+
     '<label>Huyện/Quận</label><select id="mfDist"></select>'+
     '<label>Bưu cục / Kho</label><select id="mfBC"></select>'+

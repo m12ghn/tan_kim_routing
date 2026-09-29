@@ -51,7 +51,7 @@ async def main():
         print("mode line AFTER reload (T11):", mode_after.strip())
         print("autosave line AFTER reload:", autosave3)
 
-        ok = "58 luật" in rule_count_after or "58" in rule_count_after
+        ok = "58 tuyến" in rule_count_after or "58" in rule_count_after
         print("PERSISTENCE OK:", ok)
 
         # test clear-autosave button
