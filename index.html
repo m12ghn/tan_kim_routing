@@ -794,8 +794,19 @@
 
   // ---------- Leaflet map (live, driven by the same rules) ----------
   var map = L.map('tkmap',{preferCanvas:true, attributionControl:false, minZoom:5, maxZoom:14}).setView([16,107],6);
-  L.geoJSON(DATA.adm2, {interactive:false, style:{color:'#264740', weight:.35, opacity:.8, fill:true, fillColor:'#1b2f2a', fillOpacity:.92}}).addTo(map);
-  L.geoJSON(DATA.prov, {interactive:false, style:{color:'#8fd4c4', weight:2.2, opacity:.95, lineJoin:'round', fill:false}}).addTo(map);
+  // Ranh giới quận/huyện: mờ hơn đường tỉnh (tỉnh vẽ bên dưới dày + sáng), dày dần khi zoom gần
+  var DIST_LINE = '#7fb3a5';
+  function distWeight(){ var z = map.getZoom(); return z>=10 ? 1.5 : (z>=8 ? 1.1 : .7); }
+  var distLayer = L.geoJSON(DATA.adm2, {
+    style:{color:DIST_LINE, weight:distWeight(), opacity:.75, fill:true, fillColor:'#1b2f2a', fillOpacity:.92, dashArray:'4 4'},
+    onEachFeature:function(f, layer){
+      layer.bindTooltip(f.properties.name, {sticky:true, className:'rt'});
+      layer.on('mouseover', function(){ layer.setStyle({fillColor:'#24433b', opacity:.9}); });
+      layer.on('mouseout', function(){ distLayer.resetStyle(layer); layer.setStyle({weight:distWeight()}); });
+    }
+  }).addTo(map);
+  map.on('zoomend', function(){ distLayer.setStyle({weight:distWeight()}); });
+  var provLayer = L.geoJSON(DATA.prov, {interactive:false, style:{color:'#8fd4c4', weight:2.2, opacity:.95, lineJoin:'round', fill:false}}).addTo(map);
   L.marker([TK.lat, TK.lng]).addTo(map).bindTooltip('🏭 '+TK.name, {permanent:true, className:'whlbl', direction:'top', offset:[0,-8]});
   var mapLayer = L.layerGroup().addTo(map);
   var mstate = {prov:'', dist:'', bc:'', lay:true, giao:true};
@@ -806,7 +817,9 @@
     '<label>Bưu cục / Kho</label><select id="mfBC"></select>'+
     '<div class="hr"></div>'+
     '<div class="hk"><input type="checkbox" id="mtLay" checked> LẤY (nét đứt, hàng về TK)</div>'+
-    '<div class="hk"><input type="checkbox" id="mtGiao" checked> GIAO (nét liền, hàng ra TK)</div>';
+    '<div class="hk"><input type="checkbox" id="mtGiao" checked> GIAO (nét liền, hàng ra TK)</div>'+
+    '<div class="hr"></div>'+
+    '<div class="hk"><input type="checkbox" id="mtDist" checked> Ranh giới quận/huyện (nét đứt mờ)</div>';
   var mpanel = document.createElement('div'); mpanel.className='pnl'; mpanel.id='mpanel'; mpanel.innerHTML = mpanelHtml;
   document.getElementById('tkmap').appendChild(mpanel);
   var mstats = document.createElement('div'); mstats.className='pnl'; mstats.id='mstats';
@@ -891,6 +904,9 @@
   document.getElementById('mfDist').addEventListener('change', function(e){ mstate.dist=e.target.value; mstate.bc=''; mRefreshOptions(); renderMap(); });
   document.getElementById('mfBC').addEventListener('change', function(e){ mstate.bc=e.target.value; renderMap();
     if(mstate.bc){ var w = WH[mstate.bc]; if(w) map.setView([w.lat,w.lng],12); } });
+  document.getElementById('mtDist').addEventListener('change', function(e){
+    if(e.target.checked){ distLayer.addTo(map); distLayer.bringToBack(); } else { map.removeLayer(distLayer); }
+  });
   document.getElementById('mtLay').addEventListener('change', function(e){ mstate.lay=e.target.checked; renderMap(); });
   document.getElementById('mtGiao').addEventListener('change', function(e){ mstate.giao=e.target.checked; renderMap(); });
 
