@@ -198,6 +198,12 @@
     font-family:'Be Vietnam Pro',sans-serif; text-shadow:0 0 3px #0a1614,0 0 3px #0a1614,0 0 5px #0a1614; }
   .mlbl-p{ color:#d8f3ec; font-size:12.5px; font-weight:700; letter-spacing:.02em; }
   .mlbl-d{ color:#a9d0c4; font-size:11px; font-weight:500; }
+  .pnl-toggle{ position:absolute; top:8px; right:8px; width:22px; height:22px; padding:0; border:1px solid #2d5047; border-radius:6px;
+    background:#11251f; color:#cdd9e5; font-size:14px; line-height:1; cursor:pointer; font-family:inherit; }
+  .pnl-toggle:hover{ border-color:#25c2a0; color:#25c2a0; }
+  .pnl.collapsed{ width:auto !important; min-width:0; padding:8px 40px 8px 12px; }
+  .pnl.collapsed > *:not(h3):not(.pnl-toggle){ display:none; }
+  .pnl.collapsed h3{ margin:0; white-space:nowrap; }
   .pnl h3{margin:0 0 4px;font-size:13.5px;color:#25c2a0;font-family:'Be Vietnam Pro',sans-serif;}
   .pnl .sub{font-size:11px;color:#8aa0b4;margin-bottom:8px}
   .pnl label{display:block;margin:9px 0 3px;font-weight:600;color:#aebfce;font-size:12px}
@@ -797,7 +803,8 @@
   }
 
   // ---------- Leaflet map (live, driven by the same rules) ----------
-  var map = L.map('tkmap',{preferCanvas:true, attributionControl:false, minZoom:5, maxZoom:14}).setView([16,107],6);
+  var map = L.map('tkmap',{preferCanvas:true, attributionControl:false, zoomControl:false, minZoom:5, maxZoom:14}).setView([16,107],6);
+  L.control.zoom({position:'bottomright'}).addTo(map);
   // Ranh giới quận/huyện: mờ hơn đường tỉnh (tỉnh vẽ bên dưới dày + sáng), dày dần khi zoom gần
   var DIST_LINE = '#7fb3a5';
   function distWeight(){ var z = map.getZoom(); return z>=10 ? 1.5 : (z>=8 ? 1.1 : .7); }
@@ -896,6 +903,29 @@
     return 2*R*Math.asin(Math.sqrt(a));
   }
   function fmtKm(x){ return (x<10 ? x.toFixed(1) : Math.round(x)).toString().replace('.',','); }
+
+  // ---------- nút thu gọn/mở rộng 2 khung menu trên bản đồ ----------
+  (function(){
+    var KEY = 'tk_map_panels_collapsed_v1', state = {};
+    try{ state = JSON.parse(localStorage.getItem(KEY)||'{}') || {}; }catch(e){ state = {}; }
+    [mpanel, mstats].forEach(function(el){
+      L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el);
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'pnl-toggle';
+      function apply(){
+        var c = !!state[el.id];
+        el.classList.toggle('collapsed', c);
+        btn.textContent = c ? '+' : '−';
+        btn.title = c ? 'Mở rộng khung' : 'Thu gọn khung';
+        btn.setAttribute('aria-expanded', c ? 'false' : 'true');
+      }
+      btn.addEventListener('click', function(){
+        state[el.id] = !state[el.id]; apply();
+        try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+      });
+      el.appendChild(btn); apply();
+    });
+  })();
 
   function currentMapRecs(month){
     var recs = [];
