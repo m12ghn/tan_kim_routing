@@ -198,6 +198,12 @@
     font-family:'Be Vietnam Pro',sans-serif; text-shadow:0 0 3px #0a1614,0 0 3px #0a1614,0 0 5px #0a1614; }
   .mlbl-p{ color:#d8f3ec; font-size:12.5px; font-weight:700; letter-spacing:.02em; }
   .mlbl-d{ color:#a9d0c4; font-size:11px; font-weight:500; }
+  .pnl-toggle{ position:absolute; top:8px; right:8px; width:22px; height:22px; padding:0; border:1px solid #2d5047; border-radius:6px;
+    background:#11251f; color:#cdd9e5; font-size:14px; line-height:1; cursor:pointer; font-family:inherit; }
+  .pnl-toggle:hover{ border-color:#25c2a0; color:#25c2a0; }
+  .pnl.collapsed{ width:auto !important; min-width:0; padding:8px 40px 8px 12px; }
+  .pnl.collapsed > *:not(h3):not(.pnl-toggle){ display:none; }
+  .pnl.collapsed h3{ margin:0; white-space:nowrap; }
   .pnl h3{margin:0 0 4px;font-size:13.5px;color:#25c2a0;font-family:'Be Vietnam Pro',sans-serif;}
   .pnl .sub{font-size:11px;color:#8aa0b4;margin-bottom:8px}
   .pnl label{display:block;margin:9px 0 3px;font-weight:600;color:#aebfce;font-size:12px}
@@ -797,7 +803,8 @@
   }
 
   // ---------- Leaflet map (live, driven by the same rules) ----------
-  var map = L.map('tkmap',{preferCanvas:true, attributionControl:false, minZoom:5, maxZoom:14}).setView([16,107],6);
+  var map = L.map('tkmap',{preferCanvas:true, attributionControl:false, zoomControl:false, minZoom:5, maxZoom:14}).setView([16,107],6);
+  L.control.zoom({position:'bottomright'}).addTo(map);
   // Ranh giới quận/huyện: mờ hơn đường tỉnh (tỉnh vẽ bên dưới dày + sáng), dày dần khi zoom gần
   var DIST_LINE = '#7fb3a5';
   function distWeight(){ var z = map.getZoom(); return z>=10 ? 1.5 : (z>=8 ? 1.1 : .7); }
@@ -875,7 +882,7 @@
     '<label>Huyện/Quận</label><select id="mfDist"></select>'+
     '<label>Bưu cục / Kho</label><select id="mfBC"></select>'+
     '<div class="hr"></div>'+
-    '<div class="hk"><input type="checkbox" id="mtLay" checked> <span style="color:#25c2a0">➜</span> LẤY (nét đứt, hàng về TK)</div>'+
+    '<div class="hk"><input type="checkbox" id="mtLay" checked> <span style="color:#4da3ff">➜</span> LẤY (nét đứt, hàng về TK)</div>'+
     '<div class="hk"><input type="checkbox" id="mtGiao" checked> <span style="color:#e07b3a">➜</span> GIAO (nét liền, hàng ra TK)</div>'+
     '<div class="sub" style="margin:4px 0 0">Mũi tên chỉ hướng hàng đi. Rê chuột vào điểm để xem khoảng cách tới Tân Kim.</div>'+
     '<div class="hr"></div>'+
@@ -896,6 +903,29 @@
     return 2*R*Math.asin(Math.sqrt(a));
   }
   function fmtKm(x){ return (x<10 ? x.toFixed(1) : Math.round(x)).toString().replace('.',','); }
+
+  // ---------- nút thu gọn/mở rộng 2 khung menu trên bản đồ ----------
+  (function(){
+    var KEY = 'tk_map_panels_collapsed_v1', state = {};
+    try{ state = JSON.parse(localStorage.getItem(KEY)||'{}') || {}; }catch(e){ state = {}; }
+    [mpanel, mstats].forEach(function(el){
+      L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el);
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'pnl-toggle';
+      function apply(){
+        var c = !!state[el.id];
+        el.classList.toggle('collapsed', c);
+        btn.textContent = c ? '+' : '−';
+        btn.title = c ? 'Mở rộng khung' : 'Thu gọn khung';
+        btn.setAttribute('aria-expanded', c ? 'false' : 'true');
+      }
+      btn.addEventListener('click', function(){
+        state[el.id] = !state[el.id]; apply();
+        try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+      });
+      el.appendChild(btn); apply();
+    });
+  })();
 
   function currentMapRecs(month){
     var recs = [];
@@ -945,7 +975,7 @@
     var nLay=0,nGia=0,sumVL=0,sumVG=0,sumKL=0,sumKG=0; var byProv={};
     recs.forEach(function(r){
       var isLay = r.type==='lấy';
-      var color = isLay ? '#25c2a0' : '#e07b3a';
+      var color = isLay ? '#4da3ff' : '#e07b3a';
       if(isLay){nLay++;sumVL+=r.vol;sumKL+=r.kl_kg;} else {nGia++;sumVG+=r.vol;sumKG+=r.kl_kg;}
       byProv[r.prov] = (byProv[r.prov]||0)+1;
       var path = isLay ? [[r.lat,r.lng],[TK.lat,TK.lng]] : [[TK.lat,TK.lng],[r.lat,r.lng]];
@@ -963,11 +993,11 @@
       m.bindTooltip('<b>'+r.name.slice(0,50)+'</b><br>'+(isLay?'LẤY':'GIAO')+' · hàng: '+r.hang+'<br>'+
         '📏 Cách '+TK.name+': <b>'+fmtKm(km)+' km</b> <span style="color:#8aa0b4">(đường chim bay)</span><br>'+
         '<span style="color:#8aa0b4">≈ '+fmtKm(kmRoad)+' km đường bộ (ước tính)</span><br>'+
-        'Vol T6: '+fmt(r.vol)+' kiện', {sticky:true, className:'rt'});
+        'Vol T6: '+fmt(r.vol)+' đơn', {sticky:true, className:'rt'});
       m.bindPopup('<div><b>'+r.id+'</b> — '+r.name+'<br><span style="color:#8aa0b4">'+r.prov+' / '+r.dist+'</span><br>'+
         (isLay?'⚫ LẤY':'⚫ GIAO')+' · hàng: '+r.hang+'<br>➜ Hướng: '+dirTxt+'<br>'+
         '📏 Khoảng cách tới '+TK.name+': <b>'+fmtKm(km)+' km</b> (đường chim bay, từ toạ độ) · ≈ <b>'+fmtKm(kmRoad)+' km</b> đường bộ (ước tính ×'+String(ROAD_FACTOR).replace('.',',')+')<br>'+
-        'Volume T6: <b>'+fmt(r.vol)+'</b> kiện<br>Weight T6: <b>'+fmt(r.kl_kg)+'</b> kg</div>');
+        'Volume T6: <b>'+fmt(r.vol)+'</b> đơn<br>Weight T6: <b>'+fmt(r.kl_kg)+'</b> kg</div>');
       m.on('mouseover', function(){ line.setStyle({weight:3.5, opacity:1}); });
       m.on('mouseout', function(){ line.setStyle({weight:1.8, opacity:.75}); });
       m.on('click', function(){ mstate.bc = String(r.id); mRefreshOptions(); });
@@ -977,8 +1007,8 @@
     s += '<div class="row"><span class="l">LẤY (nét đứt)</span><span class="v">'+nLay+'</span></div>';
     s += '<div class="row"><span class="l">GIAO (nét liền)</span><span class="v">'+nGia+'</span></div>';
     s += '<div class="sec">Volume T6 baseline</div>';
-    s += '<div class="row"><span class="l">Vol LẤY</span><span class="v">'+fmt(sumVL)+' kiện</span></div>';
-    s += '<div class="row"><span class="l">Vol GIAO</span><span class="v">'+fmt(sumVG)+' kiện</span></div>';
+    s += '<div class="row"><span class="l">Vol LẤY</span><span class="v">'+fmt(sumVL)+' đơn</span></div>';
+    s += '<div class="row"><span class="l">Vol GIAO</span><span class="v">'+fmt(sumVG)+' đơn</span></div>';
     s += '<div class="row"><span class="l">Weight LẤY</span><span class="v">'+fmt(sumKL)+' kg</span></div>';
     s += '<div class="row"><span class="l">Weight GIAO</span><span class="v">'+fmt(sumKG)+' kg</span></div>';
     if(topProv.length){ s += '<div class="sec">Top tỉnh (số BC)</div>'; topProv.forEach(function(p){ s+='<div class="row"><span class="l">'+p[0]+'</span><span class="v">'+p[1]+'</span></div>'; }); }
@@ -1005,7 +1035,7 @@
     {id:'TK',   name:'Tân Kim', color:'#d9501a'}
   ];
   function esc(t){ return String(t).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-  var flowCtx = {scope:{}, tkAll:{}}, flowGroups = [], flowUnit = 'kiện';
+  var flowCtx = {scope:{}, tkAll:{}}, flowGroups = [], flowUnit = 'đơn';
   function flowData(){
     var scope = scopeFor(currentMonth, fl.chieu);
     var volSrc = fl.chieu==='lấy' ? VOL_LAY : VOL_GIAO;
@@ -1042,7 +1072,7 @@
   function renderFlow(){
     var svg = document.getElementById('flowsvg');
     var groups = flowData(); flowGroups = groups;
-    var unit = fl.metric==='vol' ? 'kiện' : 'kg'; flowUnit = unit;
+    var unit = fl.metric==='vol' ? 'đơn' : 'kg'; flowUnit = unit;
     var kho = {'1626':0,'2388':0,'TK':0}, total=0;
     groups.forEach(function(g){ ['1626','2388','TK'].forEach(function(k){ kho[k]+=g.f[k]; }); total+=g.total; });
     document.getElementById('flow-month').textContent = currentMonth;
