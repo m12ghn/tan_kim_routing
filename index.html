@@ -875,8 +875,9 @@
     '<label>Huyện/Quận</label><select id="mfDist"></select>'+
     '<label>Bưu cục / Kho</label><select id="mfBC"></select>'+
     '<div class="hr"></div>'+
-    '<div class="hk"><input type="checkbox" id="mtLay" checked> LẤY (nét đứt, hàng về TK)</div>'+
-    '<div class="hk"><input type="checkbox" id="mtGiao" checked> GIAO (nét liền, hàng ra TK)</div>'+
+    '<div class="hk"><input type="checkbox" id="mtLay" checked> <span style="color:#25c2a0">➜</span> LẤY (nét đứt, hàng về TK)</div>'+
+    '<div class="hk"><input type="checkbox" id="mtGiao" checked> <span style="color:#e07b3a">➜</span> GIAO (nét liền, hàng ra TK)</div>'+
+    '<div class="sub" style="margin:4px 0 0">Mũi tên chỉ hướng hàng đi. Rê chuột vào điểm để xem khoảng cách tới Tân Kim.</div>'+
     '<div class="hr"></div>'+
     '<div class="hk"><input type="checkbox" id="mtDist" checked> Ranh giới quận/huyện (nét đứt mờ)</div>'+
     '<div class="hk"><input type="checkbox" id="mtProvName" checked> Tên tỉnh</div>'+
@@ -886,6 +887,15 @@
   var mstats = document.createElement('div'); mstats.className='pnl'; mstats.id='mstats';
   mstats.innerHTML = '<h3>📊 Thống kê</h3><div id="mstbody"></div>';
   document.getElementById('tkmap').appendChild(mstats);
+
+  // Khoảng cách theo toạ độ (haversine, đường chim bay). Đường bộ thực tế thường dài hơn ~25-40% nên chỉ hiện số ước tính.
+  var ROAD_FACTOR = 1.3;
+  function haversineKm(lat1, lng1, lat2, lng2){
+    var R = 6371, toR = Math.PI/180, dLat = (lat2-lat1)*toR, dLng = (lng2-lng1)*toR;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 2*R*Math.asin(Math.sqrt(a));
+  }
+  function fmtKm(x){ return (x<10 ? x.toFixed(1) : Math.round(x)).toString().replace('.',','); }
 
   function currentMapRecs(month){
     var recs = [];
@@ -939,13 +949,27 @@
       if(isLay){nLay++;sumVL+=r.vol;sumKL+=r.kl_kg;} else {nGia++;sumVG+=r.vol;sumKG+=r.kl_kg;}
       byProv[r.prov] = (byProv[r.prov]||0)+1;
       var path = isLay ? [[r.lat,r.lng],[TK.lat,TK.lng]] : [[TK.lat,TK.lng],[r.lat,r.lng]];
-      var line = L.polyline(path, {color:color, weight:1.3, opacity:0.6, dashArray: isLay?'5 5':null}).addTo(mapLayer);
-      L.polylineDecorator(line, {patterns:[{offset:'100%',repeat:0, symbol:L.Symbol.arrowHead({pixelSize:9, polygon:true, pathOptions:{color:color, fillColor:color, fillOpacity:1, weight:0}})}]}).addTo(mapLayer);
+      var km = haversineKm(r.lat, r.lng, TK.lat, TK.lng), kmRoad = km*ROAD_FACTOR;
+      var line = L.polyline(path, {color:color, weight:1.8, opacity:0.75, dashArray: isLay?'6 5':null}).addTo(mapLayer);
+      // mũi tên lặp dọc tuyến (chỉ hướng hàng đi) + mũi tên to ở điểm đến
+      var arrow = function(px){ return L.Symbol.arrowHead({pixelSize:px, headAngle:50, polygon:true, pathOptions:{color:'#0a1614', weight:1, fillColor:color, fillOpacity:1, opacity:.9}}); };
+      L.polylineDecorator(line, {patterns:[
+        {offset:40, repeat:90, symbol:arrow(10)},
+        {offset:'100%', repeat:0, symbol:arrow(15)}
+      ]}).addTo(mapLayer);
       var sz = r.vol ? Math.max(4, Math.min(20, Math.log10(r.vol+1)*3.5)) : 4;
       var m = L.circleMarker([r.lat,r.lng], {radius:sz, color:color, weight:2, fillColor:color, fillOpacity:0.7}).addTo(mapLayer);
-      m.bindTooltip(r.name.slice(0,50), {sticky:true, className:'rt'});
+      var dirTxt = isLay ? (r.name.slice(0,40)+' → '+TK.name) : (TK.name+' → '+r.name.slice(0,40));
+      m.bindTooltip('<b>'+r.name.slice(0,50)+'</b><br>'+(isLay?'LẤY':'GIAO')+' · hàng: '+r.hang+'<br>'+
+        '📏 Cách '+TK.name+': <b>'+fmtKm(km)+' km</b> <span style="color:#8aa0b4">(đường chim bay)</span><br>'+
+        '<span style="color:#8aa0b4">≈ '+fmtKm(kmRoad)+' km đường bộ (ước tính)</span><br>'+
+        'Vol T6: '+fmt(r.vol)+' kiện', {sticky:true, className:'rt'});
       m.bindPopup('<div><b>'+r.id+'</b> — '+r.name+'<br><span style="color:#8aa0b4">'+r.prov+' / '+r.dist+'</span><br>'+
-        (isLay?'⚫ LẤY':'⚫ GIAO')+' · hàng: '+r.hang+'<br>Volume T6: <b>'+fmt(r.vol)+'</b> kiện<br>Weight T6: <b>'+fmt(r.kl_kg)+'</b> kg</div>');
+        (isLay?'⚫ LẤY':'⚫ GIAO')+' · hàng: '+r.hang+'<br>➜ Hướng: '+dirTxt+'<br>'+
+        '📏 Khoảng cách tới '+TK.name+': <b>'+fmtKm(km)+' km</b> (đường chim bay, từ toạ độ) · ≈ <b>'+fmtKm(kmRoad)+' km</b> đường bộ (ước tính ×'+String(ROAD_FACTOR).replace('.',',')+')<br>'+
+        'Volume T6: <b>'+fmt(r.vol)+'</b> kiện<br>Weight T6: <b>'+fmt(r.kl_kg)+'</b> kg</div>');
+      m.on('mouseover', function(){ line.setStyle({weight:3.5, opacity:1}); });
+      m.on('mouseout', function(){ line.setStyle({weight:1.8, opacity:.75}); });
       m.on('click', function(){ mstate.bc = String(r.id); mRefreshOptions(); });
     });
     var topProv = Object.entries(byProv).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
