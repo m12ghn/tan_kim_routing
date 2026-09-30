@@ -1624,6 +1624,28 @@
     dists.sort(function(a,b){ return b.base.length - a.base.length; });
     return CHAT_IDX = {provs:provs, dists:dists};
   }
+  // Chỉ mục tên bưu cục/kho: khớp TÊN ĐẦY ĐỦ (vd "(HCM) Bình Đông", "Bưu Cục 903B Tạ Quang Bửu-Q.8-HCM") trước khi xét tỉnh/quận,
+  // vì tên BC có thể chứa chữ như HCM/Q.7 làm bộ hiểu câu nhầm sang cả tỉnh/quận.
+  var CHAT_BC = null;
+  function chatBcIdx(){
+    if(CHAT_BC) return CHAT_BC;
+    var full = [], short = {};
+    Object.keys(WH).forEach(function(w){
+      var nm = (WH[w].name||'').trim(); if(!nm) return;
+      var f = nrm(nm).trim();
+      if(f.length >= 8) full.push({wid:w, key:' '+f+' '});
+      var sh = nrm(nm.replace(/^\([^)]*\)\s*/,'')).trim();
+      if(sh.length >= 6){ (short[sh] = short[sh] || []).push(w); }
+    });
+    full.sort(function(a,b){ return b.key.length - a.key.length; });
+    return CHAT_BC = {full:full, short:short};
+  }
+  // trả {wids, rest}: các BC nhận diện theo tên đầy đủ và phần câu còn lại
+  function findBcNames(n){
+    var ix = chatBcIdx(), wids = [];
+    ix.full.forEach(function(b){ if(n.indexOf(b.key) >= 0){ if(wids.indexOf(b.wid) < 0) wids.push(b.wid); n = n.split(b.key).join(' '); } });
+    return {wids:wids, rest:n};
+  }
   var CHAT_ALIAS = [[/ (tp )?hcm /g,' ho chi minh '],[/ tp ho chi minh /g,' ho chi minh '],[/ sai gon | saigon /g,' ho chi minh '],[/ brvt /g,' ba ria vung tau '],[/ hue /g,' thua thien hue '],[/ tk /g,' tan kim ']];
   function aliasFix(n){ CHAT_ALIAS.forEach(function(a){ n = n.replace(a[0], a[1]); }); return n; }
   // tìm tỉnh/quận trong 1 đoạn câu; trả {provs, dists, ambiguous}
@@ -1661,7 +1683,8 @@
     return Object.keys(set);
   }
   function parseCommand(text){
-    var raw = text, n = aliasFix(nrm(text));
+    var raw = text, n0 = nrm(text);
+    var bn = findBcNames(n0), n = aliasFix(bn.rest);
     if(/ (hoan tac|undo|quay lai|huy lan truoc) /.test(n)) return {kind:'undo'};
     if(/ (tro giup|huong dan|help|vi du) /.test(n)) return {kind:'help'};
     // 'bỏ' và 'bộ' đều thành 'bo' khi bỏ dấu: loại 'toàn bộ / cả bộ / tất cả bộ' trước khi nhận diện
@@ -1688,7 +1711,13 @@
     var R = right ? findEntities(' ' + right, L.provs.map(function(p){return p.pid;})) : {provs:[], dists:[], amb:[]};
     if(L.amb.length){ return {kind:'ambiguous', amb:L.amb[0]}; }
     // BC theo mã
-    var wids = []; (raw.match(/\d{4,9}/g) || []).forEach(function(x){ if(WH[x] && wids.indexOf(x) < 0) wids.push(x); });
+    var wids = bn.wids.slice(); (raw.match(/\d{4,9}/g) || []).forEach(function(x){ if(WH[x] && wids.indexOf(x) < 0) wids.push(x); });
+    // không thấy tỉnh/quận/mã/tên đầy đủ: thử tên BC bỏ tiền tố "(HCM)"… nếu duy nhất
+    if(!L.provs.length && !L.dists.length && !wids.length){
+      var sx = chatBcIdx().short, best = null;
+      Object.keys(sx).forEach(function(k){ if(sx[k].length === 1 && n0.indexOf(' '+k+' ') >= 0 && (!best || k.length > best.length)) best = k; });
+      if(best) wids.push(sx[best][0]);
+    }
     var exProv = {}; R.provs.forEach(function(p){ exProv[p.pid] = 1; });
     var exDist = {}; R.dists.forEach(function(d){ exDist[d.did] = 1; });
     // tỉnh không kèm quận cụ thể => cả tỉnh (trừ phần loại trừ)
@@ -1756,7 +1785,7 @@
     t.provNames.forEach(function(pn){ bits.push('<b>'+esc(pn)+'</b> (toàn tỉnh'+(t.excl.length?', trừ '+esc(t.excl.join(', ')):'')+')'); });
     var solo = t.dists.filter(function(d){ return t.provNames.indexOf(d.pname) < 0; });
     if(solo.length) bits.push(solo.slice(0,8).map(function(d){ return '<b>'+esc(d.name)+'</b> ('+esc(d.pname)+')'; }).join(', ') + (solo.length>8 ? ' … +'+(solo.length-8) : ''));
-    if(t.wids.length) bits.push('BC '+t.wids.slice(0,6).map(esc).join(', '));
+    if(t.wids.length) bits.push('BC '+t.wids.slice(0,4).map(function(w){ return '<b>'+esc(w)+'</b> '+esc((WH[w]||{}).name||''); }).join('; ')+(t.wids.length>4 ? ' … +'+(t.wids.length-4) : ''));
     return bits.join(' · ') + ' — ' + chatBcsOf(t).length + ' bưu cục/kho';
   }
   function chip(card, k, v, label, on){ return '<button type="button" class="chipb'+(on?' on':'')+'" data-card="'+card.id+'" data-k="'+k+'" data-v="'+v+'">'+label+'</button>'; }
