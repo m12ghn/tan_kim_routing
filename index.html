@@ -244,6 +244,34 @@
   .khoicon{ width:16px; height:16px; background:#f2c94c; border:2px solid #0a1614; transform:rotate(45deg); box-shadow:0 0 0 2px rgba(242,201,76,.35); }
   .leaflet-tooltip.khotip{ background:#f2c94c; color:#1a1400; border:1px solid #0a1614; font-weight:700; font-size:11px; padding:2px 6px; }
   .leaflet-tooltip.khotip:before{ border-top-color:#f2c94c; }
+  .chat-fab{ position:fixed; right:18px; bottom:18px; z-index:1400; border:none; border-radius:999px; padding:11px 18px; font-family:inherit; font-size:13.5px; font-weight:700;
+    background:var(--accent); color:#fff; cursor:pointer; box-shadow:0 8px 24px -8px rgba(0,0,0,.45); }
+  .chat-fab:hover{ opacity:.92; }
+  .chat-panel{ position:fixed; right:18px; bottom:18px; z-index:1500; width:min(420px, calc(100vw - 24px)); height:min(620px, calc(100vh - 36px)); display:flex; flex-direction:column;
+    background:var(--surface-1); border:1px solid var(--border-strong); border-radius:16px; box-shadow:0 18px 50px -12px rgba(0,0,0,.5); overflow:hidden; }
+  .chat-panel[hidden]{ display:none; }
+  .chat-head{ display:flex; align-items:center; gap:8px; padding:11px 14px; border-bottom:1px solid var(--border); background:var(--surface-2); }
+  .chat-head b{ font-size:14px; } .chat-head .sub{ font-size:11.5px; color:var(--text-muted); flex:1; }
+  .chat-head button{ border:1px solid var(--border-strong); background:var(--surface-1); color:var(--text-secondary); border-radius:8px; width:26px; height:26px; cursor:pointer; }
+  .chat-log{ flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+  .msg{ max-width:92%; padding:8px 11px; border-radius:12px; font-size:13px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word; }
+  .msg.me{ align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+  .msg.bot{ align-self:flex-start; background:var(--surface-2); border:1px solid var(--border); border-bottom-left-radius:4px; }
+  .msg.bot b{ color:var(--text-primary); }
+  .card-opts{ margin-top:8px; display:flex; flex-direction:column; gap:6px; }
+  .card-opts .row{ display:flex; flex-wrap:wrap; gap:4px; align-items:center; font-size:11.5px; color:var(--text-muted); }
+  .card-opts .row > span{ min-width:54px; font-weight:600; }
+  .chipb{ border:1px solid var(--border-strong); background:var(--surface-1); color:var(--text-secondary); border-radius:999px; padding:3px 10px; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; }
+  .chipb.on{ background:var(--accent-soft); color:var(--accent); border-color:var(--accent); }
+  .card-prev{ margin-top:6px; font-size:12px; color:var(--text-secondary); }
+  .card-act{ display:flex; gap:8px; margin-top:8px; }
+  .card-act button{ border-radius:8px; padding:6px 12px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; border:1px solid var(--border-strong); background:var(--surface-1); color:var(--text-secondary); }
+  .card-act button.go{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .card-act button:disabled{ opacity:.45; cursor:default; }
+  .chat-chips{ display:flex; flex-wrap:wrap; gap:6px; padding:0 12px 8px; }
+  .chat-form{ display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border); }
+  .chat-form input{ flex:1; border:1px solid var(--border-strong); background:var(--surface-2); border-radius:10px; padding:8px 11px; font-family:inherit; font-size:13px; color:var(--text-primary); }
+  .chat-form button{ border:none; background:var(--accent); color:#fff; border-radius:10px; padding:0 14px; font-family:inherit; font-weight:700; cursor:pointer; }
   .pnl h3{margin:0 0 4px;font-size:13.5px;color:#25c2a0;font-family:'Be Vietnam Pro',sans-serif;}
   .pnl .sub{font-size:11px;color:#8aa0b4;margin-bottom:8px}
   .pnl label{display:block;margin:9px 0 3px;font-weight:600;color:#aebfce;font-size:12px}
@@ -411,6 +439,14 @@
       </div>
       <p class="map-note">Số liệu là <b>trung bình/ngày của tháng đang chọn</b>: tổng AOP của HCM01/HCM20 (khớp KPI ở tab Cấu hình) được chia về từng nhóm bưu cục theo tỷ trọng volume/weight T6. Chiều cao mỗi khối là cố định (không tỷ lệ volume) để biểu đồ gọn; lượng ghi bằng số trên nhãn, còn độ dày dải thể hiện tương đối (căn bậc hai, dùng chung một mốc cho hai biểu đồ nên so sánh trực tiếp được). ① là trước khi có Tân Kim, ② là sau khi áp bộ tuyến. <b>Lấy</b>: hàng từ nhóm BC đi về kho HCM01 / HCM20 hoặc Tân Kim. <b>Giao</b>: hàng từ kho ra nhóm BC. Phần nằm trong tuyến đã cấu hình (đúng loại hàng Normal/Bulky) chuyển sang Tân Kim, phần còn lại giữ ở kho gốc. Rê chuột vào dải màu để xem số; rê vào <b>Tân Kim</b> (hoặc dải cam / nhóm bưu cục) để xem danh sách bưu cục và loại hàng đã cấu hình.</p>
     </section>
+  </div>
+
+  <button type="button" class="chat-fab" id="chat-fab">💬 Chat cấu hình tuyến</button>
+  <div class="chat-panel" id="chat-panel" hidden role="dialog" aria-label="Chat cấu hình tuyến">
+    <div class="chat-head"><b>Chat cấu hình tuyến</b><span class="sub" id="chat-ctx"></span><button type="button" id="chat-close" title="Đóng">✕</button></div>
+    <div class="chat-log" id="chat-log"></div>
+    <div class="chat-chips" id="chat-chips"></div>
+    <form class="chat-form" id="chat-form" autocomplete="off"><input id="chat-input" placeholder="vd: toàn bộ hàng từ Bà Rịa - Vũng Tàu về Tân Kim"><button type="submit">Gửi</button></form>
   </div>
 
   <footer>Cụm M12 · HRBP GHN — công cụ cấu hình &amp; mô phỏng, xem ghi chú "Lưu tuyến" phía trên trước khi dùng làm số chính thức</footer>
@@ -699,7 +735,7 @@
     ruleListEl.innerHTML = rows.map(function(row){
       if(q && stripDia(row.label).indexOf(q)===-1) return '';
       var tagChieu = '<span class="tag '+(row.chieu==='lấy'?'lay':'giao')+'">'+row.chieu.toUpperCase()+'</span>';
-      var tagHang = '<span class="tag hang">'+row.hang+'</span>';
+      var tagHang = '<span class="tag hang">'+(row.hang==='__remove__' ? 'BỎ' : row.hang)+'</span>';
       var tagOrigin = '<span class="tag origin">'+(row.kind==='default'?'config_v3':'mới')+'</span>';
       var rmAttr = row.kind==='default' ? ('data-default-key="'+row.key+'"') : ('data-custom-idx="'+row.idx+'"');
       return '<div class="rule-row'+(row.excluded?' excluded':'')+'">'+tagChieu+tagHang+
@@ -809,7 +845,7 @@
         if(r.capdo==='quan'){
           lines.push([m, r.chieu, 'quận', r.pname, r.dname, '', '', r.hang, 'Tân Kim', 'thêm qua công cụ cấu hình'].join('\t'));
         } else {
-          lines.push([m, r.chieu, 'bưu_cục', WH[r.wid].pname, WH[r.wid].dname, r.wid, WH[r.wid].name, r.hang, 'Tân Kim', 'thêm qua công cụ cấu hình'].join('\t'));
+          lines.push([m, r.chieu, 'bưu_cục', (WH[r.wid]||{}).pname||'', (WH[r.wid]||{}).dname||'', r.wid, (WH[r.wid]||{}).name||'', r.hang==='__remove__' ? '(BỎ khỏi Tân Kim)' : r.hang, r.hang==='__remove__' ? 'Khác' : 'Tân Kim', 'thêm qua công cụ cấu hình'].join('\t'));
         }
       });
       excludedDefault[m].forEach(function(key){
@@ -833,7 +869,7 @@
     b.addEventListener('click', function(){
       currentMonth = m;
       monthGroup.querySelectorAll('.month-btn').forEach(function(x){x.classList.toggle('active', x.dataset.month===m);});
-      selEff.value = m; updateProxLabel();
+      selEff.value = m; updateProxLabel(); if(typeof chatCtx==='function') chatCtx();
       renderRuleList(); recompute(); syncMap();
     });
     monthGroup.appendChild(b);
@@ -1566,6 +1602,243 @@
   document.getElementById('fl-top').addEventListener('change', renderFlow);
   document.getElementById('fl-restrict').addEventListener('change', function(e){ fl.restrict = e.target.checked; renderFlow(); });
   document.getElementById('fl-month').innerHTML = 'Tháng: <b id="flow-month"></b>';
+
+
+  // ---------- CHAT CẤU HÌNH TUYẾN — hiểu câu lệnh tiếng Việt (quy tắc, không cần AI/API), xem trước rồi mới áp dụng ----------
+  var chatLog = document.getElementById('chat-log'), chatInput = document.getElementById('chat-input');
+  var chatCards = {}, chatSeq = 1, chatLastSnap = null, CHAT_IDX = null;
+  var CHAT_EXAMPLES = ['Toàn bộ hàng từ Bà Rịa - Vũng Tàu về Tân Kim','Bỏ Quận 7 khỏi Tân Kim','Đưa Gò Công về Tân Kim tháng 11 và 12','Tiền Giang trừ Gò Công không về Tân Kim','Hoàn tác'];
+  function nrm(t){ return ' ' + stripDia(t||'').replace(/[^a-z0-9]+/g,' ').trim() + ' '; }
+  function chatIdx(){
+    if(CHAT_IDX) return CHAT_IDX;
+    var provs = PROV_LIST.map(function(p){ return {pid:p.pid, name:p.pname, key:nrm(p.pname.replace(/^(Tỉnh|Thành phố)\s+/,''))}; })
+      .sort(function(a,b){ return b.key.length - a.key.length; });
+    var dists = [];
+    Object.keys(DIST_BY_PROV).forEach(function(pid){
+      var pn = (PROV_LIST.filter(function(p){return p.pid===pid;})[0]||{}).pname || '';
+      DIST_BY_PROV[pid].forEach(function(d){
+        var base = d.dname.replace(/^(Quận|Huyện đảo|Huyện|Thành phố|Thị xã|Thị Xã|Thị trấn)\s+/i,'').trim();
+        dists.push({pid:pid, pname:pn, did:d.did, name:d.dname, base:nrm(base).trim(), num:/^\d+$/.test(base), type:stripDia((d.dname.match(/^(Quận|Huyện|Thành phố|Thị xã|Thị Xã)/i)||[''])[0])});
+      });
+    });
+    dists.sort(function(a,b){ return b.base.length - a.base.length; });
+    return CHAT_IDX = {provs:provs, dists:dists};
+  }
+  var CHAT_ALIAS = [[/ (tp )?hcm /g,' ho chi minh '],[/ tp ho chi minh /g,' ho chi minh '],[/ sai gon | saigon /g,' ho chi minh '],[/ brvt /g,' ba ria vung tau '],[/ hue /g,' thua thien hue '],[/ tk /g,' tan kim ']];
+  function aliasFix(n){ CHAT_ALIAS.forEach(function(a){ n = n.replace(a[0], a[1]); }); return n; }
+  // tìm tỉnh/quận trong 1 đoạn câu; trả {provs, dists, ambiguous}
+  function findEntities(n, restrictPids){
+    var ix = chatIdx(), provs = [], dists = [], amb = [];
+    ix.provs.forEach(function(p){ if(n.indexOf(p.key) >= 0){ provs.push(p); n = n.split(p.key).join(' '); } });
+    var pids = (restrictPids && restrictPids.length) ? restrictPids : provs.map(function(p){ return p.pid; });
+    var found = {};   // base -> danh sách ứng viên
+    ix.dists.forEach(function(d){
+      var hit = false;
+      if(d.num){ hit = n.indexOf(' quan '+d.base+' ')>=0 || n.indexOf(' q '+d.base+' ')>=0 || n.indexOf(' q'+d.base+' ')>=0; }
+      else { hit = n.indexOf(' '+d.base+' ') >= 0; }
+      if(hit){ (found[d.base] = found[d.base] || []).push(d); }
+    });
+    Object.keys(found).forEach(function(base){
+      var c = found[base];
+      var inP = c.filter(function(d){ return pids.indexOf(d.pid) >= 0; });
+      if(inP.length) c = inP;
+      var pset = {}; c.forEach(function(d){ pset[d.pid] = 1; });
+      if(Object.keys(pset).length > 1){ amb.push({base:base, options:c}); return; }
+      var typed = c.filter(function(d){ return d.type && n.indexOf(' '+d.type+' '+d.base+' ') >= 0; });
+      (typed.length ? typed : c).forEach(function(d){ dists.push(d); });
+    });
+    // "Gò Công" => gồm cả Gò Công Đông / Tây (quận cùng tỉnh có tên bắt đầu bằng cụm đã nêu)
+    var extra = [];
+    dists.forEach(function(d){ ix.dists.forEach(function(x){ if(x.pid===d.pid && x.did!==d.did && x.base.indexOf(d.base+' ')===0) extra.push(x); }); });
+    extra.forEach(function(x){ if(!dists.some(function(d){ return d.did===x.did; })) dists.push(x); });
+    return {provs:provs, dists:dists, amb:amb};
+  }
+  function chatBcsOf(t){
+    var set = {};
+    t.dists.forEach(function(d){ widsForDist(d.did).forEach(function(w){ set[w] = 1; }); });
+    t.wholeProv.forEach(function(p){ Object.keys(WH).forEach(function(w){ if(WH[w].pid === p.pid) set[w] = 1; }); });
+    t.wids.forEach(function(w){ set[w] = 1; });
+    return Object.keys(set);
+  }
+  function parseCommand(text){
+    var raw = text, n = aliasFix(nrm(text));
+    if(/ (hoan tac|undo|quay lai|huy lan truoc) /.test(n)) return {kind:'undo'};
+    if(/ (tro giup|huong dan|help|vi du) /.test(n)) return {kind:'help'};
+    // 'bỏ' và 'bộ' đều thành 'bo' khi bỏ dấu: loại 'toàn bộ / cả bộ / tất cả bộ' trước khi nhận diện
+    var nIntent = n.replace(/ (toan|ca|tat ca|nguyen) bo /g,' toanbo ');
+    var intent = / (bo|loai|xoa|huy|rut|thoi) | khong (ve|di|chuyen|sang|dua)| khoi tan kim |tra ve /.test(nIntent) ? 'remove' : 'add';
+    // chiều
+    var hasL = / lay /.test(n), hasG = / (giao|phat) /.test(n), chieu = 'both';
+    if(hasL && !hasG) chieu = 'lấy'; else if(hasG && !hasL) chieu = 'giao'; else if(!hasL && !hasG && / tu /.test(n)) chieu = 'lấy';
+    if(/ (ca hai chieu|hai chieu|2 chieu|lay va giao|lay giao|toan bo hang) /.test(n) && !/ tu /.test(n)) chieu = 'both';
+    var hang = / (bulky|hang nang|cong kenh) /.test(n) ? 'Bulky' : (/ (normal|hang thuong) /.test(n) ? 'Normal' : 'Cả hai');
+    // tháng
+    var months = [];
+    var re = / thang (\d{1,2}) /g, mm;
+    var tmp = n; while((mm = / thang (\d{1,2}) /.exec(tmp))){ months.push('T'+mm[1]); tmp = tmp.replace(mm[0], ' '); }
+    tmp = n; while((mm = / t(10|11|12) /.exec(tmp))){ months.push('T'+mm[1]); tmp = tmp.replace(mm[0], ' '); }
+    months = months.filter(function(m){ return MONTHS.indexOf(m) >= 0; });
+    if(/ (ca 3 thang|ca ba thang|tat ca cac thang|moi thang|3 thang) /.test(n)) months = MONTHS.slice();
+    else if(/ tu thang (\d{1,2}) /.test(n) && !/ den /.test(n) && months.length === 1){ months = MONTHS.slice(MONTHS.indexOf(months[0])); }
+    months = MONTHS.filter(function(m){ return months.indexOf(m) >= 0; });
+    if(!months.length) months = [currentMonth];
+    // vế "trừ"
+    var parts = n.split(/ (?:ngoai tru|tru) /), left = parts[0], right = parts.slice(1).join(' ');
+    var L = findEntities(left + ' ');
+    var R = right ? findEntities(' ' + right, L.provs.map(function(p){return p.pid;})) : {provs:[], dists:[], amb:[]};
+    if(L.amb.length){ return {kind:'ambiguous', amb:L.amb[0]}; }
+    // BC theo mã
+    var wids = []; (raw.match(/\d{4,9}/g) || []).forEach(function(x){ if(WH[x] && wids.indexOf(x) < 0) wids.push(x); });
+    var exProv = {}; R.provs.forEach(function(p){ exProv[p.pid] = 1; });
+    var exDist = {}; R.dists.forEach(function(d){ exDist[d.did] = 1; });
+    // tỉnh không kèm quận cụ thể => cả tỉnh (trừ phần loại trừ)
+    var distProvs = {}; L.dists.forEach(function(d){ distProvs[d.pid] = 1; });
+    var wholeProv = L.provs.filter(function(p){ return !distProvs[p.pid] && !exProv[p.pid]; });
+    var dists = L.dists.filter(function(d){ return !exDist[d.did] && !exProv[d.pid]; });
+    wholeProv.forEach(function(p){
+      // cả tỉnh: mở rộng thành các quận (trừ quận bị loại trừ); giữ wholeProv để phủ cả BC chưa có mã quận
+      (DIST_BY_PROV[p.pid] || []).forEach(function(d){ if(!exDist[d.did] && !dists.some(function(x){ return x.did===d.did; })) dists.push({pid:p.pid, pname:p.name, did:d.did, name:d.dname}); });
+    });
+    var whole = wholeProv.filter(function(){ return !Object.keys(exDist).length; });
+    if(!dists.length && !wids.length) return {kind:'none'};
+    return {kind:'card', intent:intent, chieu:chieu, hang:hang, months:months, targets:{dists:dists, wholeProv:whole, wids:wids, provNames:wholeProv.map(function(p){return p.name;}), excl:R.dists.map(function(d){return d.name;}).concat(R.provs.map(function(p){return p.name;}))}};
+  }
+  // ---- áp dụng lên trạng thái Version B (dùng cho cả xem trước = chạy thử rồi khôi phục) ----
+  function stSnap(){ var o = {}; MONTHS.forEach(function(m){ o[m] = {ex:Array.from(excludedDefault[m]), cu:JSON.parse(JSON.stringify(customRules[m]))}; }); return {st:o, seq:ruleSeq, bInit:bInit}; }
+  function stRestore(sn){ MONTHS.forEach(function(m){ excludedDefault[m] = new Set(sn.st[m].ex); customRules[m] = JSON.parse(JSON.stringify(sn.st[m].cu)); }); ruleSeq = sn.seq; bInit = sn.bInit; }
+  function chieuList(card){ return card.chieu==='both' ? ['lấy','giao'] : [card.chieu]; }
+  function applyOne(card, m, c){
+    var hang = card.hang, bcs = chatBcsOf(card.targets), before = scopeFor(m, c, 'B'), desired = {}, isT = {};
+    bcs.forEach(function(w){
+      isT[w] = 1; var cur = before[w];
+      if(card.intent === 'add') desired[w] = cur ? mergeHang(cur, hang) : hang;
+      else if(!cur) desired[w] = null;
+      else if(hang === 'Cả hai') desired[w] = null;
+      else desired[w] = cur === 'Cả hai' ? (hang === 'Normal' ? 'Bulky' : 'Normal') : (cur === hang ? null : cur);
+    });
+    customRules[m] = customRules[m].filter(function(r){ return !(r.chieu===c && r.capdo==='bc' && isT[String(r.wid)]); });
+    if(card.intent === 'add'){
+      card.targets.dists.forEach(function(d){
+        var need = widsForDist(d.did).some(function(w){ return before[w] !== desired[w]; });
+        if(need && !customRules[m].some(function(r){ return r.capdo==='quan' && r.chieu===c && r.did===d.did && r.hang===hang; }))
+          customRules[m].push({capdo:'quan', chieu:c, hang:hang, pid:d.pid, pname:d.pname, did:d.did, dname:d.name, eff:m, seq:ruleSeq++});
+      });
+    } else {
+      if(hang === 'Cả hai'){ var dset = {}; card.targets.dists.forEach(function(d){ dset[d.did] = 1; });
+        customRules[m] = customRules[m].filter(function(r){ return !(r.capdo==='quan' && r.chieu===c && dset[r.did]); }); }
+      var defHas = {}; (DEFAULT_RULES[m]||[]).forEach(function(r){ if(r.chieu===c) defHas[String(r.wid)] = 1; });
+      bcs.forEach(function(w){ if(desired[w] === null && defHas[w]) excludedDefault[m].add(c+':'+w); });
+    }
+    var after = scopeFor(m, c, 'B');   // kiểm tra rồi ép đúng kết quả mong muốn bằng tuyến cấp BC nếu cần
+    bcs.forEach(function(w){
+      var want = desired[w] || undefined;
+      if(after[w] !== want) customRules[m].push({capdo:'bc', chieu:c, hang:want || '__remove__', wid:w, eff:m, seq:ruleSeq++});
+    });
+    var fin = scopeFor(m, c, 'B'), res = {added:0, removed:0, changed:0};
+    bcs.forEach(function(w){ var b = before[w], a = fin[w]; if(!b && a) res.added++; else if(b && !a) res.removed++; else if(b && a && a !== b) res.changed++; });
+    return res;
+  }
+  function tkDay(m){ var r = computeAll(m, 'B'); return (r['1626'].vol.shifted + r['2388'].vol.shifted) / DAYS[m]; }
+  function runCard(card, dry){
+    var snap = stSnap(), out = [];
+    card.months.forEach(function(m){
+      var b = tkDay(m), per = {};
+      chieuList(card).forEach(function(c){ per[c] = applyOne(card, m, c); });
+      out.push({m:m, per:per, tkBefore:b, tkAfter:tkDay(m)});
+    });
+    if(dry) stRestore(snap);
+    return {out:out, snap:snap};
+  }
+  // ---- giao diện chat ----
+  function chatAdd(html, cls){ var d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight; return d; }
+  function targetText(t){
+    var bits = [];
+    t.provNames.forEach(function(pn){ bits.push('<b>'+esc(pn)+'</b> (toàn tỉnh'+(t.excl.length?', trừ '+esc(t.excl.join(', ')):'')+')'); });
+    var solo = t.dists.filter(function(d){ return t.provNames.indexOf(d.pname) < 0; });
+    if(solo.length) bits.push(solo.slice(0,8).map(function(d){ return '<b>'+esc(d.name)+'</b> ('+esc(d.pname)+')'; }).join(', ') + (solo.length>8 ? ' … +'+(solo.length-8) : ''));
+    if(t.wids.length) bits.push('BC '+t.wids.slice(0,6).map(esc).join(', '));
+    return bits.join(' · ') + ' — ' + chatBcsOf(t).length + ' bưu cục/kho';
+  }
+  function chip(card, k, v, label, on){ return '<button type="button" class="chipb'+(on?' on':'')+'" data-card="'+card.id+'" data-k="'+k+'" data-v="'+v+'">'+label+'</button>'; }
+  function renderCard(card){
+    if(card.done){ card.el.querySelectorAll('button').forEach(function(b){ b.disabled = true; }); return; }
+    var el = card.el, prev = runCard(card, true).out;
+    var pt = prev.map(function(o){
+      var parts = chieuList(card).map(function(c){ var r = o.per[c]; var seg = [];
+        if(r.added) seg.push('+'+r.added+' BC'); if(r.removed) seg.push('−'+r.removed+' BC'); if(r.changed) seg.push('đổi loại hàng '+r.changed+' BC');
+        return (c==='lấy'?'LẤY':'GIAO')+': '+(seg.length ? seg.join(', ') : 'không đổi'); }).join(' · ');
+      var d = o.tkAfter - o.tkBefore;
+      return '<b>'+o.m+'</b> · '+parts+' → Tân Kim '+fmt(o.tkBefore)+' → <b>'+fmt(o.tkAfter)+'</b> đơn/ngày ('+(d>=0?'+':'−')+fmt(Math.abs(d))+')';
+    }).join('<br>');
+    el.innerHTML = '<b>Mình hiểu:</b> '+(card.intent==='add' ? '<b style="color:var(--accent)">ĐƯA VỀ Tân Kim</b>' : '<b style="color:#c0392b">BỎ KHỎI Tân Kim</b>')+' — '+targetText(card.targets)+
+      '<div class="card-opts">'+
+      '<div class="row"><span>Hành động</span>'+chip(card,'intent','add','Đưa về Tân Kim',card.intent==='add')+chip(card,'intent','remove','Bỏ khỏi Tân Kim',card.intent==='remove')+'</div>'+
+      '<div class="row"><span>Chiều</span>'+chip(card,'chieu','lấy','Lấy',card.chieu==='lấy')+chip(card,'chieu','giao','Giao',card.chieu==='giao')+chip(card,'chieu','both','Cả hai chiều',card.chieu==='both')+'</div>'+
+      '<div class="row"><span>Hàng</span>'+['Cả hai','Normal','Bulky'].map(function(h){ return chip(card,'hang',h,h,card.hang===h); }).join('')+'</div>'+
+      '<div class="row"><span>Tháng</span>'+MONTHS.map(function(m){ return chip(card,'month',m,m,card.months.indexOf(m)>=0); }).join('')+'</div>'+
+      '</div><div class="card-prev">'+pt+'</div>'+
+      '<div class="card-act"><button type="button" class="go" data-card="'+card.id+'" data-act="apply"'+(card.done?' disabled':'')+'>Áp dụng</button><button type="button" data-card="'+card.id+'" data-act="cancel"'+(card.done?' disabled':'')+'>Huỷ</button></div>';
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+  function chatApply(card){
+    if(isLocked()){ chatAdd('Version A đang khoá, chỉ xem. Chuyển sang Version B để chỉnh tuyến.', 'bot'); return; }
+    var res = runCard(card, false);
+    chatLastSnap = res.snap; card.done = true;
+    var msg = res.out.map(function(o){
+      var parts = chieuList(card).map(function(c){ var r = o.per[c], seg = [];
+        if(r.added) seg.push('+'+r.added); if(r.removed) seg.push('−'+r.removed); if(r.changed) seg.push('~'+r.changed);
+        return (c==='lấy'?'lấy':'giao')+' '+(seg.length ? seg.join('/') : '0')+' BC'; }).join(', ');
+      var d = o.tkAfter - o.tkBefore, pc = o.tkBefore ? ' ('+(d>=0?'+':'−')+pct1(d/o.tkBefore*100)+')' : '';
+      return '• <b>'+o.m+'</b>: '+parts+' · Tân Kim nhận '+fmt(o.tkBefore)+' → <b>'+fmt(o.tkAfter)+'</b> đơn/ngày'+pc;
+    }).join('<br>');
+    if(card.months.indexOf(currentMonth) < 0){ var mb = monthGroup.querySelector('.month-btn[data-month="'+card.months[0]+'"]'); if(mb) mb.click(); }
+    refreshAll(); persist(); renderCard(card);
+    chatAdd('✅ <b>Đã áp dụng</b> và lưu vào bản chung.<br>'+msg+'<br><button type="button" class="chipb" data-act="undo">↶ Hoàn tác</button>', 'bot');
+  }
+  function chatUndo(){
+    if(!chatLastSnap){ chatAdd('Chưa có thao tác nào từ chat để hoàn tác.', 'bot'); return; }
+    stRestore(chatLastSnap); chatLastSnap = null; refreshAll(); persist();
+    chatAdd('↶ Đã hoàn tác thao tác chat gần nhất.', 'bot');
+  }
+  function chatHelp(){
+    chatAdd('Mình hiểu các câu như:<br>• <b>Toàn bộ hàng từ Bà Rịa - Vũng Tàu về Tân Kim</b><br>• <b>Bỏ Quận 7 khỏi Tân Kim</b> · <b>Bulky của Bình Chánh không về Tân Kim</b><br>• <b>Đưa Gò Công về Tân Kim tháng 11 và 12</b> · <b>cả 3 tháng</b><br>• <b>Tiền Giang trừ Gò Công không về Tân Kim</b><br>• <b>Đưa BC 22957000 về Tân Kim</b> (theo mã kho/BC)<br>• <b>Hoàn tác</b><br>Mình luôn cho xem trước và bạn bấm <b>Áp dụng</b> mới lưu; có thể chỉnh chiều, loại hàng, tháng ngay trên thẻ. Không nêu chiều thì áp cả lấy và giao; không nêu tháng thì áp tháng đang xem.', 'bot');
+  }
+  function chatSubmit(text){
+    text = (text||'').trim(); if(!text) return;
+    chatAdd(esc(text), 'me');
+    var r = parseCommand(text);
+    if(r.kind === 'undo') return chatUndo();
+    if(r.kind === 'help') return chatHelp();
+    if(r.kind === 'ambiguous'){ chatAdd('“'+esc(r.amb.options[0].base)+'” có ở nhiều tỉnh: '+r.amb.options.slice(0,6).map(function(d){ return esc(d.name)+' ('+esc(d.pname)+')'; }).join('; ')+(r.amb.options.length>6 ? ' …' : '')+'. Bạn nêu thêm tên tỉnh giúp mình nhé (vd: “Châu Thành, Tiền Giang”).', 'bot'); return; }
+    if(r.kind === 'none'){ chatAdd('Mình chưa nhận ra tỉnh/quận/bưu cục nào trong câu này. Thử ví dụ: <b>Toàn bộ hàng từ Bà Rịa - Vũng Tàu về Tân Kim</b> (gõ <b>trợ giúp</b> để xem thêm).', 'bot'); return; }
+    if(isLocked()){ chatAdd('Version A đang khoá, chỉ xem. Chuyển sang Version B để chỉnh tuyến.', 'bot'); return; }
+    r.id = 'c' + (chatSeq++); r.done = false;
+    r.el = chatAdd('', 'bot'); chatCards[r.id] = r; renderCard(r);
+  }
+  chatLog.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    if(b.dataset.act === 'undo'){ chatUndo(); return; }
+    var card = chatCards[b.dataset.card]; if(!card || card.done) return;
+    if(b.dataset.act === 'apply'){ chatApply(card); return; }
+    if(b.dataset.act === 'cancel'){ card.done = true; card.el.innerHTML = '<i>Đã huỷ.</i>'; return; }
+    var k = b.dataset.k, v = b.dataset.v;
+    if(k === 'month'){ var i = card.months.indexOf(v); if(i >= 0){ if(card.months.length > 1) card.months.splice(i,1); } else { card.months.push(v); card.months = MONTHS.filter(function(m){ return card.months.indexOf(m) >= 0; }); } }
+    else card[k] = v;
+    renderCard(card);
+  });
+  document.getElementById('chat-form').addEventListener('submit', function(e){ e.preventDefault(); var t = chatInput.value; chatInput.value = ''; chatSubmit(t); });
+  function chatCtx(){ document.getElementById('chat-ctx').textContent = 'Tháng đang xem: ' + currentMonth + ' · lưu vào bản chung'; }
+  var chatOpened = false;
+  function chatOpen(open){
+    document.getElementById('chat-panel').hidden = !open; document.getElementById('chat-fab').style.display = open ? 'none' : '';
+    if(open){ chatCtx(); if(!chatOpened){ chatOpened = true; chatAdd('Xin chào! Bạn gõ yêu cầu cấu hình tuyến bằng tiếng Việt, ví dụ: <b>toàn bộ hàng từ Bà Rịa - Vũng Tàu về Tân Kim</b>. Mình sẽ cho xem trước tác động lên Tân Kim rồi mới áp dụng.', 'bot'); }
+      chatInput.focus(); }
+  }
+  document.getElementById('chat-chips').innerHTML = CHAT_EXAMPLES.map(function(t){ return '<button type="button" class="chipb" data-ex="'+esc(t)+'">'+esc(t)+'</button>'; }).join('');
+  document.getElementById('chat-chips').addEventListener('click', function(e){ var b = e.target.closest('[data-ex]'); if(b) chatSubmit(b.getAttribute('data-ex')); });
+  document.getElementById('chat-fab').addEventListener('click', function(){ chatOpen(true); });
+  document.getElementById('chat-close').addEventListener('click', function(){ chatOpen(false); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !document.getElementById('chat-panel').hidden) chatOpen(false); });
 
   // ---------- tab switching ----------
   var btnSim = document.getElementById('tab-btn-sim'), btnMap = document.getElementById('tab-btn-map');
