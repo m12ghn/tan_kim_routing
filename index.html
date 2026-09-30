@@ -386,7 +386,7 @@
         <div class="grp">Chiều <div class="seg" id="fl-chieu"><button type="button" data-v="lấy" class="active">Lấy</button><button type="button" data-v="giao">Giao</button></div></div>
         <div class="grp">Nhóm theo <div class="seg" id="fl-level"><button type="button" data-v="hier" class="active">Tỉnh → quận</button><button type="button" data-v="pname">Tỉnh</button><button type="button" data-v="dname">Quận/huyện</button></div></div>
         <div class="grp">Chỉ số <div class="seg" id="fl-metric"><button type="button" data-v="vol" class="active">Volume</button><button type="button" data-v="kl">Weight</button></div></div>
-        <div class="grp"><span id="fl-top-lbl">Mỗi tỉnh hiển thị top</span> <select id="fl-top"><option>4</option><option>6</option><option selected>8</option><option>12</option><option>20</option></select></div>
+        <div class="grp"><span id="fl-top-lbl">Mỗi tỉnh hiển thị top</span> <select id="fl-top"><option>4</option><option selected>6</option><option>8</option><option>12</option><option>20</option></select></div>
         <label class="grp" style="cursor:pointer"><input type="checkbox" id="fl-restrict" checked> Chỉ hiện HCM, Long An, Tây Ninh, Đồng Nai (còn lại vào Khác)</label>
         <div class="grp" id="fl-month"></div>
       </div>
@@ -402,7 +402,7 @@
         </div>
         <div id="flow-tip" class="flow-tip"></div>
       </div>
-      <p class="map-note">Số liệu là <b>trung bình/ngày của tháng đang chọn</b>: tổng AOP của HCM01/HCM20 (khớp KPI ở tab Cấu hình) được chia về từng nhóm bưu cục theo tỷ trọng volume/weight T6. Hai biểu đồ dùng chung một thang đo nên độ dày dải so sánh trực tiếp được. ① là trước khi có Tân Kim, ② là sau khi áp bộ tuyến. <b>Lấy</b>: hàng từ nhóm BC đi về kho HCM01 / HCM20 hoặc Tân Kim. <b>Giao</b>: hàng từ kho ra nhóm BC. Phần nằm trong tuyến đã cấu hình (đúng loại hàng Normal/Bulky) chuyển sang Tân Kim, phần còn lại giữ ở kho gốc. Rê chuột vào dải màu để xem số; rê vào <b>Tân Kim</b> (hoặc dải cam / nhóm bưu cục) để xem danh sách bưu cục và loại hàng đã cấu hình.</p>
+      <p class="map-note">Số liệu là <b>trung bình/ngày của tháng đang chọn</b>: tổng AOP của HCM01/HCM20 (khớp KPI ở tab Cấu hình) được chia về từng nhóm bưu cục theo tỷ trọng volume/weight T6. Chiều cao mỗi khối là cố định (không tỷ lệ volume) để biểu đồ gọn; lượng ghi bằng số trên nhãn, còn độ dày dải thể hiện tương đối (căn bậc hai, dùng chung một mốc cho hai biểu đồ nên so sánh trực tiếp được). ① là trước khi có Tân Kim, ② là sau khi áp bộ tuyến. <b>Lấy</b>: hàng từ nhóm BC đi về kho HCM01 / HCM20 hoặc Tân Kim. <b>Giao</b>: hàng từ kho ra nhóm BC. Phần nằm trong tuyến đã cấu hình (đúng loại hàng Normal/Bulky) chuyển sang Tân Kim, phần còn lại giữ ở kho gốc. Rê chuột vào dải màu để xem số; rê vào <b>Tân Kim</b> (hoặc dải cam / nhóm bưu cục) để xem danh sách bưu cục và loại hàng đã cấu hình.</p>
     </section>
   </div>
 
@@ -1358,6 +1358,7 @@
     return {kho:kho, total:total};
   }
   var UNIT = {vol:'đơn/ngày', kl:'kg/ngày'};
+  var NODE_H = 24, NODE_PAD = 4, HDR_H = 22, KHO_H = 150;
   function renderFlow(){
     var cal = calibFor(currentMonth), m = fl.metric, om = m==='vol' ? 'kl' : 'vol';
     var after = flowData(true, cal, m), before = flowData(false, cal, m);
@@ -1395,17 +1396,17 @@
     // --- 2 biểu đồ dùng chung thang đo ---
     var hdrs = 0, lastP = null;
     before.groups.forEach(function(g){ if(g.prov && g.prov!==lastP){ hdrs++; } lastP = g.prov; });
-    var n = before.groups.length, padL = 6, padR = 40;
-    var H = Math.max(380, n*34 + hdrs*30 + 60);
-    var sb = sumKho(before.groups), sa = sumKho(after.groups);
-    var total = Math.max(sb.total, sa.total);
-    var k = total ? Math.min((H-40-(n+hdrs)*padL)/total, (H-40-padR*2)/total) : 1;
+    var n = before.groups.length;
+    var H = Math.max(360, n*(NODE_H+NODE_PAD) + hdrs*(HDR_H+2) + 40 + 30);
+    // độ dày dải chỉ để so sánh tương đối (căn bậc hai), dùng chung một mốc cho cả hai biểu đồ; KHÔNG tỷ lệ với chiều cao node
+    var vmax = 0;
+    [before.groups, after.groups].forEach(function(gs){ gs.forEach(function(g){ ['1626','2388','TK'].forEach(function(kk){ if(g.f[kk] > vmax) vmax = g.f[kk]; }); }); });
     function khoVals(bg, ag){ var b = sumKho(bg).kho, a = sumKho(ag).kho; return {b:b, a:a}; }
     var info = {prim:khoVals(before.groups, after.groups), oth:khoVals(beforeO.groups, afterO.groups), pu:UNIT[m], ou:UNIT[om]};
-    drawSankey(document.getElementById('flowsvg-before'), before.groups, false, unit, k, H, info);
-    drawSankey(document.getElementById('flowsvg'), after.groups, true, unit, k, H, info);
+    drawSankey(document.getElementById('flowsvg-before'), before.groups, false, unit, vmax, H, info);
+    drawSankey(document.getElementById('flowsvg'), after.groups, true, unit, vmax, H, info);
   }
-  function drawSankey(svg, groups, withTK, unit, k, H, info){
+  function drawSankey(svg, groups, withTK, unit, vmax, H, info){
     var KH = withTK ? KHO : KHO.filter(function(c){ return c.id!=='TK'; });
     var sm = sumKho(groups), kho = sm.kho, total = sm.total;
     if(!total){ svg.setAttribute('viewBox','0 0 640 80'); svg.innerHTML='<text x="20" y="40">Chưa có dữ liệu.</text>'; return; }
@@ -1423,29 +1424,42 @@
     });
     var khoList = KH.map(function(c){ return {key:c.id, label:c.name, total:kho[c.id], color:c.color, isKho:true}; });
     var srcList = lay ? gl : khoList, dstList = lay ? khoList : gl;
-    var padS = lay ? padL : padR, padD = lay ? padR : padL, MINH = 26, HDRH = 22;
-    function place(list, pad){
-      var y = 20;
-      list.forEach(function(nd){
-        if(nd.hdr){ nd.y = y; nd.h = HDRH; y += HDRH + 2; return; }
-        var minh = nd.isKho ? 46 : MINH;
-        nd.y = y; nd.h = Math.max(nd.total*k, minh); nd.off = (nd.h - nd.total*k)/2; y += nd.h + pad;
-      });
-      return y;
-    }
-    var srcEnd = place(srcList, padS), dstEnd = place(dstList, padD);
+    var HDRH = HDR_H;
+    // node có chiều cao CỐ ĐỊNH (không tỷ lệ volume) để biểu đồ gọn; lượng thể hiện bằng số ghi trên nhãn và độ dày dải (căn bậc hai)
+    var y = 20;
+    gl.forEach(function(nd){
+      if(nd.hdr){ nd.y = y; nd.h = HDRH; y += HDRH + 2; return; }
+      nd.y = y; nd.h = NODE_H; y += NODE_H + NODE_PAD;
+    });
+    var glEnd = y;
+    var blk = khoList.length * KHO_H + (khoList.length-1) * 30, ky = 20 + Math.max(0, (glEnd - 20 - blk) / 2);
+    khoList.forEach(function(nd){ nd.y = ky; nd.h = KHO_H; ky += KHO_H + 30; });
+    var srcList = lay ? gl : khoList, dstList = lay ? khoList : gl;
+    var srcEnd = Math.max(glEnd, ky);
+    var dstEnd = srcEnd;
     var links = [];
     srcList.forEach(function(s){ if(s.hdr) return; dstList.forEach(function(d){ if(d.hdr) return;
       var v = lay ? s.g.f[d.key] : d.g.f[s.key]; if(v>0) links.push({s:s,d:d,v:v}); }); });
+    // vị trí đầu/cuối dải: rải đều trong node theo thứ tự đối diện để ít cắt nhau
+    function spread(nodeKey, oppKey){
+      var by = {};
+      links.forEach(function(l){ var nd = l[nodeKey]; (by[nd.key] = by[nd.key] || []).push(l); });
+      Object.keys(by).forEach(function(kk){
+        var arr = by[kk].sort(function(a,b){ return a[oppKey].y - b[oppKey].y; });
+        arr.forEach(function(l, i){ l[nodeKey+'Y'] = l[nodeKey].y + (i+0.5)/arr.length * l[nodeKey].h; });
+      });
+    }
+    spread('s','d'); spread('d','s');
+    var WMIN = 1.6, WMAX = 15;
     var out = '', tkLinks = '';
     links.forEach(function(l){
-      var t = l.v*k, y0 = l.s.y+l.s.off+t/2, y1 = l.d.y+l.d.off+t/2; l.s.off+=t; l.d.off+=t;
+      var t = WMIN + (WMAX-WMIN) * Math.sqrt(l.v / (vmax || 1)), y0 = l.sY, y1 = l.dY;
       var c = KH.filter(function(c){return c.id===(lay?l.d.key:l.s.key);})[0];
       var x0 = xL+nodeW, x1 = xR, mx = (x0+x1)/2;
       var isTK = withTK && c.id==='TK';
       var gi = lay ? l.s.gi : l.d.gi;
       var tipAttr = isTK ? ' data-tip="g:'+gi+'"' : '';
-      var el = '<path class="rib"'+tipAttr+' style="'+(isTK?'opacity:.8':'opacity:.38')+'" d="M'+x0+','+y0+' C'+mx+','+y0+' '+mx+','+y1+' '+x1+','+y1+'" stroke="'+c.color+'" stroke-width="'+Math.max(t,isTK?2:0.8)+'">'+(isTK ? '' : '<title>'+esc(l.s.label)+' → '+esc(l.d.label)+': '+fmt(l.v)+' '+unit+'</title>')+'</path>';
+      var el = '<path class="rib"'+tipAttr+' style="'+(isTK?'opacity:.85':'opacity:.42')+'" d="M'+x0+','+y0+' C'+mx+','+y0+' '+mx+','+y1+' '+x1+','+y1+'" stroke="'+c.color+'" stroke-width="'+(isTK ? Math.max(t,2.5) : t).toFixed(2)+'">'+(isTK ? '' : '<title>'+esc(l.s.label)+' → '+esc(l.d.label)+': '+fmt(l.v)+' '+unit+'</title>')+'</path>';
       if(isTK) tkLinks += el; else out += el;
     });
     out += tkLinks;
