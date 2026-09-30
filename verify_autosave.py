@@ -11,7 +11,7 @@ async def main():
         page = await context.new_page()
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
-        await page.goto(f"file://{FILE}")
+        await page.goto(f"file://{FILE}?showA=1")
         await page.wait_for_timeout(400)
 
         autosave1 = await page.text_content("#autosave-line")
