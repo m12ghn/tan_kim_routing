@@ -29,6 +29,7 @@ async def main():
         mode11 = await page.text_content("#mode-line")
         print("T11 default mode:", mode11.strip())
 
+        await page.click("#ver-B")  # Version A khoá (chỉ xem); chỉnh tuyến phải ở Version B
         await page.select_option("#sel-prov", label="Hồ Chí Minh")
         await page.wait_for_timeout(150)
         await page.select_option("#sel-dist", label="Quận Tân Bình")

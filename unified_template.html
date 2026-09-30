@@ -82,6 +82,18 @@
   .toolbar button.ghost:hover{ border-color:var(--accent); color:var(--accent); }
   .toolbar button.primary{ border:1px solid var(--accent); background:var(--accent); color:#fff;
     font-size:12.5px; font-weight:700; padding:7px 13px; border-radius:9px; cursor:pointer; font-family:inherit; }
+  .ver-group{ display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; }
+  .ver-group button{ border:none; background:transparent; padding:6px 12px; border-radius:7px; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--text-secondary); cursor:pointer; }
+  .ver-group button.active{ background:var(--surface-1); color:var(--accent); box-shadow:var(--shadow); }
+  .locked .add-form, .locked .export-box{ opacity:.4; pointer-events:none; }
+  .locked #btn-reset, .locked #btn-proximity{ opacity:.4; pointer-events:none; }
+  .lock-note{ display:none; padding:8px 16px; font-size:12px; background:var(--accent-soft); color:var(--accent); font-weight:600; border-bottom:1px solid var(--border); }
+  .locked .lock-note{ display:block; }
+  .cmp-box{ margin-top:12px; background:var(--surface-1); border:1px solid var(--border); border-radius:12px; padding:10px 14px; font-size:12.5px; color:var(--text-secondary); box-shadow:var(--shadow); }
+  .cmp-box b{ color:var(--text-primary); }
+  .cmp-box summary{ cursor:pointer; font-weight:600; color:var(--text-primary); }
+  .cmp-box ul{ margin:6px 0 0; padding-left:18px; max-height:220px; overflow:auto; }
+  .cmp-box .mono{ font-size:12px; }
   .mode-line{ margin-bottom:12px; }
   .mode-badge{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
     padding:5px 11px; border-radius:20px; letter-spacing:.01em; }
@@ -245,6 +257,10 @@
 
   <section>
     <div class="toolbar">
+      <div class="ver-group" id="ver-group" title="Version A: đúng config_v3 (khoá) · Version B: theo quy tắc gần kho">
+        <button type="button" id="ver-A" data-ver="A">A · config_v3 🔒</button>
+        <button type="button" id="ver-B" data-ver="B">B · gần kho</button>
+      </div>
       <div class="month-group" id="month-group"></div>
       <div class="spacer"></div>
       <button class="ghost" id="btn-proximity" title="Áp quy tắc: BC phía Nam về Tân Kim; BC gần kho trung chuyển/chuyển tiếp khác hơn Tân Kim thì về kho đó">📍 Áp quy tắc gần kho (T10)</button>
@@ -254,6 +270,7 @@
     <div class="mode-line" id="mode-line"></div>
     <div id="autosave-line" style="font-size:12px;color:#8aa0b4;margin:-6px 0 10px;"></div>
     <div class="kpi-row" id="kpi-row"></div>
+    <div class="cmp-box" id="cmp-box" style="display:none"></div>
   </section>
 
   <section>
@@ -264,6 +281,7 @@
     <div class="rules-grid">
       <div class="panel">
         <div class="phead"><span class="ptitle">Danh sách tuyến (tháng đang xem)</span><span class="pcount" id="rule-count"></span></div>
+        <div class="lock-note">🔒 Version A (config_v3) đang khoá, chỉ xem — khớp AOP trên Sheet. Chuyển sang Version B để chỉnh tuyến.</div>
         <div class="rule-search"><input id="rule-search" placeholder="Tìm theo tên quận/BC…"></div>
         <div class="rule-list" id="rule-list"></div>
       </div>
@@ -390,6 +408,13 @@
   // ---------- per-month rule state ----------
   var excludedDefault = {}, customRules = {};
   MONTHS.forEach(function(m){ excludedDefault[m] = new Set(); customRules[m] = []; });
+  // Phiên bản: A = đúng config_v3 (khoá, chỉ xem, không lưu gì); B = config_v3 + quy tắc gần kho + chỉnh tay (lưu chung)
+  var VER_KEY = 'tk_version_v1', currentVersion = 'A', bInit = false;
+  try{ var sv = localStorage.getItem(VER_KEY); if(sv==='A' || sv==='B') currentVersion = sv; }catch(e){}
+  var EMPTY_SET = new Set(), EMPTY_ARR = [];
+  function verEx(m, ver){ return (ver||currentVersion)==='A' ? EMPTY_SET : excludedDefault[m]; }
+  function verCu(m, ver){ return (ver||currentVersion)==='A' ? EMPTY_ARR : customRules[m]; }
+  function isLocked(){ return currentVersion==='A'; }
   var currentMonth = 'T10';
   var ruleSeq = 1;
 
@@ -402,7 +427,7 @@
     return p2(d.getDate())+'/'+p2(d.getMonth()+1)+' '+p2(d.getHours())+':'+p2(d.getMinutes());
   }
   function snapshot(){
-    var data = { savedAt: Date.now(), ruleSeq: ruleSeq, months: {} };
+    var data = { savedAt: Date.now(), ruleSeq: ruleSeq, bInit: bInit, months: {} };
     MONTHS.forEach(function(m){
       data.months[m] = { excluded: Array.from(excludedDefault[m]), custom: customRules[m] };
     });
@@ -416,6 +441,7 @@
       customRules[m] = (md && md.custom) || [];
     });
     if(data.ruleSeq) ruleSeq = Math.max(ruleSeq, data.ruleSeq);
+    bInit = !!data.bInit;
     return true;
   }
   function setStatus(t){ if(autosaveEl) autosaveEl.textContent = t; }
@@ -523,20 +549,20 @@
   // 2 tuyến cùng cấp trùng 1 đối tượng (vd Normal + Bulky) thì gộp lại thành 'Cả hai', không để tuyến sau đè tuyến trước
   function mergeHang(a, b){ return !a ? b : (a===b ? a : 'Cả hai'); }
 
-  function scopeFor(month, chieu){
+  function scopeFor(month, chieu, ver){
     var m = {};
-    var q = {};
-    customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='quan';}).forEach(function(r){
+    var q = {}, cu = verCu(month, ver), ex = verEx(month, ver);
+    cu.filter(function(r){return r.chieu===chieu && r.capdo==='quan';}).forEach(function(r){
       widsForDist(r.did).forEach(function(wid){ q[wid] = mergeHang(q[wid], r.hang); });
     });
     Object.keys(q).forEach(function(wid){ m[wid] = q[wid]; });
     (DEFAULT_RULES[month]||[]).forEach(function(r){
       if(r.chieu!==chieu) return;
-      if(excludedDefault[month].has(chieu+':'+r.wid)) return;
+      if(ex.has(chieu+':'+r.wid)) return;
       m[String(r.wid)] = 'Cả hai';
     });
     var b = {};
-    customRules[month].filter(function(r){return r.chieu===chieu && r.capdo==='bc';}).forEach(function(r){
+    cu.filter(function(r){return r.chieu===chieu && r.capdo==='bc';}).forEach(function(r){
       var k = String(r.wid);
       b[k] = r.hang === '__remove__' ? '__remove__' : (b[k]==='__remove__' ? r.hang : mergeHang(b[k], r.hang));
     });
@@ -569,12 +595,12 @@
     return {pVol:pVol, pKl:pKl};
   }
 
-  function isOfficialScope(month){
-    return excludedDefault[month].size===0 && customRules[month].length===0;
+  function isOfficialScope(month, ver){
+    return verEx(month, ver).size===0 && verCu(month, ver).length===0;
   }
 
-  function computeAll(month){
-    var curLay = scopeFor(month,'lấy'), curGiao = scopeFor(month,'giao');
+  function computeAll(month, ver){
+    var curLay = scopeFor(month,'lấy',ver), curGiao = scopeFor(month,'giao',ver);
     var defLay = defaultScopeFor(month,'lấy'), defGiao = defaultScopeFor(month,'giao');
     var mIdx = MONTH_IDX[month];
     var out = {};
@@ -614,10 +640,10 @@
     var rows = [];
     (DEFAULT_RULES[month]||[]).forEach(function(r){
       var key = r.chieu+':'+r.wid;
-      var excluded = excludedDefault[month].has(key);
+      var excluded = verEx(month).has(key);
       rows.push({kind:'default', chieu:r.chieu, hang:'Cả hai', label: bcLabel(r.wid), sub: bcSub(r.wid), excluded: excluded, key: key});
     });
-    customRules[month].forEach(function(r, idx){
+    verCu(month).forEach(function(r, idx){
       var label, sub;
       if(r.capdo==='quan'){ label = r.dname+' ('+r.pname+')'; sub = (widsForDist(r.did).length)+' bưu cục/kho'; }
       else { label = bcLabel(r.wid); sub = bcSub(r.wid); }
@@ -634,14 +660,14 @@
       return '<div class="rule-row'+(row.excluded?' excluded':'')+'">'+tagChieu+tagHang+
         '<div class="main"><span class="nm">'+row.label+'</span><span class="sub">'+row.sub+'</span></div>'+
         tagOrigin+
-        '<button class="rm" '+rmAttr+' title="'+(row.excluded?'Khôi phục':'Bỏ tuyến này')+'">'+(row.excluded?'↺':'✕')+'</button></div>';
+        (isLocked() ? '' : '<button class="rm" '+rmAttr+' title="'+(row.excluded?'Khôi phục':'Bỏ tuyến này')+'">'+(row.excluded?'↺':'✕')+'</button>')+'</div>';
     }).join('');
   }
   document.getElementById('rule-search').addEventListener('input', renderRuleList);
 
   ruleListEl.addEventListener('click', function(e){
     var btn = e.target.closest('.rm');
-    if(!btn) return;
+    if(!btn || isLocked()) return;
     if(btn.dataset.defaultKey){
       var key = btn.dataset.defaultKey;
       if(excludedDefault[currentMonth].has(key)) excludedDefault[currentMonth].delete(key);
@@ -708,6 +734,7 @@
   });
 
   document.getElementById('btn-add-rule').addEventListener('click', function(){
+    if(isLocked()){ alert('Version A (config_v3) đang khoá, chỉ xem. Chuyển sang Version B để thêm tuyến.'); return; }
     var hang = document.getElementById('sel-hang').value;
     var eff = selEff.value;
     var rule;
@@ -761,13 +788,12 @@
     b.addEventListener('click', function(){
       currentMonth = m;
       monthGroup.querySelectorAll('.month-btn').forEach(function(x){x.classList.toggle('active', x.dataset.month===m);});
-      selEff.value = m;
+      selEff.value = m; updateProxLabel();
       renderRuleList(); recompute(); syncMap();
     });
     monthGroup.appendChild(b);
   });
   // ---------- quy tắc T10: BC phía Nam về Tân Kim; BC gần kho trung chuyển/chuyển tiếp khác hơn thì về kho đó (chiều LẤY) ----------
-  var PROX_MONTH = 'T10';
   var PROX_SOUTH = ['Nhà Bè','Cần Giờ','Nhơn Trạch','Cần Đước'];               // luôn về Tân Kim
   var PROX_HUBS = [{id:'1626',n:'HCM01'},{id:'2388',n:'HCM20'},{id:'22883000',n:'Sóng Thần'},{id:'20757000',n:'Đồng Nai'}];
   function isSouth(w){ return PROX_SOUTH.some(function(k){ return (w.dname||'').indexOf(k) !== -1; }); }
@@ -780,8 +806,8 @@
     });
     return best;
   }
-  function planProximity(){
-    var m = PROX_MONTH, drop = [], add = [], restore = [];
+  function planProximity(m){
+    var drop = [], add = [], restore = [];
     var haveCustom = {};
     customRules[m].forEach(function(r){ if(r.chieu==='lấy' && r.capdo==='bc') haveCustom[String(r.wid)] = 1; });
     var defSet = {};
@@ -803,27 +829,73 @@
     return {drop:drop, add:add, restore:restore};
   }
   document.getElementById('btn-proximity').addEventListener('click', function(){
-    var m = PROX_MONTH, plan = planProximity();
+    if(isLocked()){ alert('Version A đang khoá. Chuyển sang Version B để áp quy tắc gần kho.'); return; }
+    var m = currentMonth, plan = planProximity(m);
     if(!plan.drop.length && !plan.add.length && !plan.restore.length){ alert('Quy tắc gần kho đã được áp dụng cho '+m+' rồi — không có thay đổi nào thêm.'); return; }
     function list(arr, f){ return arr.slice(0,12).map(f).join('\n') + (arr.length>12 ? '\n… và '+(arr.length-12)+' BC khác' : ''); }
     var msg = 'Áp quy tắc gần kho cho '+m+' (chiều LẤY):\n\n' +
       '• LOẠI khỏi Tân Kim ('+plan.drop.length+' BC, gần kho khác hơn Tân Kim):\n' + (plan.drop.length ? list(plan.drop, function(x){ return '   - '+x.w.name+' (TK '+Math.round(x.dTK)+' km, '+x.nh.n+' '+Math.round(x.nh.km)+' km)'; }) : '   (không có)') + '\n\n' +
       '• THÊM vào Tân Kim ('+plan.add.length+' BC phía Nam còn thiếu):\n' + (plan.add.length ? list(plan.add, function(x){ return '   - '+x.w.name+' ('+x.w.dname+')'; }) : '   (không có)') + '\n\n' +
       (plan.restore.length ? '• KHÔI PHỤC '+plan.restore.length+' BC phía Nam đang bị loại.\n\n' : '') +
-      'Thay đổi được lưu vào bản chung, có thể hoàn tác từng BC bằng ↺/✕ hoặc nút "Về scope mặc định". Áp dụng?';
+      'Chỉ áp dụng cho Version B, tháng '+m+'. Có thể hoàn tác từng BC bằng ↺/✕ hoặc nút "Về scope mặc định". Áp dụng?';
     if(!confirm(msg)) return;
     plan.drop.forEach(function(x){ excludedDefault[m].add(x.key); });
     plan.restore.forEach(function(x){ excludedDefault[m].delete(x.key); });
     plan.add.forEach(function(x){ customRules[m].push({capdo:'bc', chieu:'lấy', hang:'Cả hai', wid:x.wid, eff:m, seq:ruleSeq++}); });
-    var mb = monthGroup.querySelector('.month-btn[data-month="'+m+'"]'); if(mb && currentMonth!==m) mb.click();
+    bInit = true;
     renderRuleList(); recompute(); syncMap(); persist();
   });
   document.getElementById('btn-reset').addEventListener('click', function(){
+    if(isLocked()) return;
     if(remoteState==='on' && !confirm('Đưa tháng '+currentMonth+' về scope mặc định? Thao tác này lưu vào bản chung và ảnh hưởng tất cả mọi người.')) return;
     excludedDefault[currentMonth] = new Set();
     customRules[currentMonth] = [];
     renderRuleList(); recompute(); syncMap(); persist();
   });
+
+  // ---------- phiên bản A/B ----------
+  function updateProxLabel(){
+    document.getElementById('btn-proximity').textContent = '📍 Áp quy tắc gần kho cho ' + currentMonth;
+  }
+  function applyVersionUI(){
+    document.getElementById('ver-A').classList.toggle('active', currentVersion==='A');
+    document.getElementById('ver-B').classList.toggle('active', currentVersion==='B');
+    document.getElementById('panel-sim').classList.toggle('locked', isLocked());
+    document.getElementById('btn-export').disabled = isLocked();
+    updateProxLabel();
+  }
+  function setVersion(v){
+    currentVersion = v;
+    try{ localStorage.setItem(VER_KEY, v); }catch(e){}
+    applyVersionUI(); renderRuleList(); recompute(); syncMap();
+  }
+  document.getElementById('ver-A').addEventListener('click', function(){ setVersion('A'); });
+  document.getElementById('ver-B').addEventListener('click', function(){ setVersion('B'); });
+
+  // So sánh B với A (tháng đang xem): số nhường Tân Kim + BC khác nhau
+  function renderCompare(res){
+    var box = document.getElementById('cmp-box');
+    if(currentVersion !== 'B'){ box.style.display = 'none'; return; }
+    var a = computeAll(currentMonth, 'A'), m = currentMonth;
+    function pc(x){ return (x*100).toFixed(1).replace('.',',')+'%'; }
+    function tkSum(r){ return r['1626'].vol.shifted + r['2388'].vol.shifted; }
+    var diffs = [];
+    ['lấy','giao'].forEach(function(ch){
+      var sa = scopeFor(m, ch, 'A'), sb = scopeFor(m, ch, 'B');
+      Object.keys(sa).forEach(function(w){ if(!(w in sb)) diffs.push({t:'rm', ch:ch, w:w}); else if(sa[w]!==sb[w]) diffs.push({t:'hang', ch:ch, w:w, h:sb[w]}); });
+      Object.keys(sb).forEach(function(w){ if(!(w in sa)) diffs.push({t:'add', ch:ch, w:w, h:sb[w]}); });
+    });
+    var nRm = diffs.filter(function(d){return d.t==='rm';}).length, nAdd = diffs.filter(function(d){return d.t==='add';}).length;
+    var rows = diffs.map(function(d){
+      var w = WH[d.w] || {name:'BC '+d.w, pname:'', dname:''};
+      var tag = d.t==='rm' ? '<span style="color:#c0392b">− Loại khỏi Tân Kim</span>' : (d.t==='add' ? '<span style="color:#1e8449">+ Thêm vào Tân Kim</span>' : '≈ Đổi loại hàng → '+esc(d.h));
+      return '<li>'+tag+' · '+d.ch.toUpperCase()+' · <b>'+esc(d.w)+'</b> '+esc(w.name)+' <span style="color:var(--text-muted)">('+esc(w.dname)+(w.pname?', '+esc(w.pname):'')+')</span></li>';
+    }).join('');
+    box.innerHTML = '<b>So với Version A (config_v3) — '+m+':</b> HCM01 nhường '+pc(res['1626'].pctVol)+' <span class="mono">(A: '+pc(a['1626'].pctVol)+')</span> · HCM20 nhường '+pc(res['2388'].pctVol)+' <span class="mono">(A: '+pc(a['2388'].pctVol)+')</span> · Tân Kim nhận '+fmt(tkSum(res))+' đơn <span class="mono">(A: '+fmt(tkSum(a))+')</span>'+
+      (diffs.length ? '<details style="margin-top:6px"><summary>'+nRm+' BC bị loại · '+nAdd+' BC được thêm · '+(diffs.length-nRm-nAdd)+' đổi loại hàng — xem danh sách</summary><ul>'+rows+'</ul></details>' : '<div style="margin-top:4px">Không có BC nào khác Version A ở tháng này.</div>')+
+      '<div style="margin-top:6px;color:var(--text-muted)">Số của B là <b>ước tính theo tỷ lệ</b> (nhân % nhường AOP của config_v3 với tỷ trọng volume T6 của các BC còn trong tuyến), chưa phải AOP tính lại từ forecast từng BC. Chỉ tính 3 cụm HCM01, HCM20, Tân Kim; Sóng Thần / Đồng Nai chỉ dùng để xét khoảng cách, không tính AOP.</div>';
+    box.style.display = 'block';
+  }
 
   // ---------- KPI ----------
   var kpiRow = document.getElementById('kpi-row');
@@ -834,9 +906,12 @@
     var v2=res['2388'].vol, w2=res['2388'].w_nhap, t2=res['2388'].w_4t;
     var tkVol=v1.shifted+v2.shifted, tkW=w1.shifted+w2.shifted, tkT=t1.shifted+t2.shifted;
 
-    document.getElementById('mode-line').innerHTML = official
-      ? '<span class="mode-badge official">✓ Khớp chính thức — đúng scope config_v3 (' + currentMonth + ')</span>'
-      : '<span class="mode-badge estimate">◐ Ước tính what-if — đã đổi tuyến so với config_v3</span>';
+    document.getElementById('mode-line').innerHTML = isLocked()
+      ? '<span class="mode-badge official">🔒 Version A · ✓ Khớp chính thức — đúng scope config_v3 (' + currentMonth + ')</span>'
+      : (official
+        ? '<span class="mode-badge official">Version B · chưa đổi so với config_v3 (' + currentMonth + ')</span>'
+        : '<span class="mode-badge estimate">◐ Version B · ước tính what-if — theo quy tắc gần kho / chỉnh tay, không khớp AOP Sheet</span>');
+    renderCompare(res);
 
     kpiRow.innerHTML =
       '<div class="kpi" style="--kpi-color:var(--s-hcm01);"><div class="name"><span class="swatch"></span>HCM01</div>'+
@@ -1079,7 +1154,7 @@
       m.on('click', function(){ mstate.bc = String(r.id); mRefreshOptions(); });
     });
     var topProv = Object.entries(byProv).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
-    var s = '<div class="sec">Tháng '+currentMonth+' · '+recs.length+' BC</div>';
+    var s = '<div class="sec">Tháng '+currentMonth+' · Version '+currentVersion+' · '+recs.length+' BC</div>';
     s += '<div class="row"><span class="l">LẤY (nét đứt)</span><span class="v">'+nLay+'</span></div>';
     s += '<div class="row"><span class="l">GIAO (nét liền)</span><span class="v">'+nGia+'</span></div>';
     s += '<div class="sec">Volume T6 baseline</div>';
@@ -1154,7 +1229,7 @@
     var unit = fl.metric==='vol' ? 'đơn' : 'kg'; flowUnit = unit;
     var kho = {'1626':0,'2388':0,'TK':0}, total=0;
     groups.forEach(function(g){ ['1626','2388','TK'].forEach(function(k){ kho[k]+=g.f[k]; }); total+=g.total; });
-    document.getElementById('flow-month').textContent = currentMonth;
+    document.getElementById('flow-month').textContent = currentMonth + ' · Version ' + currentVersion;
     document.getElementById('flow-sum').innerHTML = KHO.map(function(k){
       var lbl = k.id==='TK' ? 'Tân Kim nhận' : k.name+' giữ lại';
       return '<div class="c" style="--c:'+k.color+'"><div class="n">'+lbl+'</div><div class="v mono">'+fmt(kho[k.id])+' <span style="font-size:12px;font-weight:600">'+unit+'</span></div><div class="p">'+(total?(kho[k.id]/total*100).toFixed(1).replace('.',','):'0')+'% tổng luồng '+(fl.chieu==='lấy'?'lấy':'giao')+' (nhóm đang hiển thị)</div></div>';
@@ -1280,7 +1355,19 @@
     var t0 = saveLocal();
     setStatus('💾 Đang kiểm tra bản chung…');
   }
+  applyVersionUI();
+  // Lần đầu dùng Version B: tự áp quy tắc gần kho cho T10 (một lần; sau đó B lưu chung như bình thường)
+  function ensureBInit(){
+    if(bInit) return;
+    var m = 'T10', plan = planProximity(m);
+    plan.drop.forEach(function(x){ excludedDefault[m].add(x.key); });
+    plan.restore.forEach(function(x){ excludedDefault[m].delete(x.key); });
+    plan.add.forEach(function(x){ customRules[m].push({capdo:'bc', chieu:'lấy', hang:'Cả hai', wid:x.wid, eff:m, seq:ruleSeq++}); });
+    bInit = true;
+    renderRuleList(); recompute(); syncMap(); persist();
+  }
   pullRemote(true).then(function(){
+    ensureBInit();
     if(remoteState === 'off'){
       var t = restoredAt || saveLocal();
       setStatus(restoredAt ? '↺ Đã khôi phục cấu hình lưu tạm trên trình duyệt này lúc ' + fmtTime(restoredAt) + ' — chưa có kết nối lưu chung.'

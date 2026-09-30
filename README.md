@@ -14,6 +14,11 @@ Công cụ có 2 tab trong cùng 1 trang, dùng chung 1 bộ luật cấu hình 
 
 Mặc định mỗi tháng (T10/T11/T12) hiện đúng scope theo `config_v3` (tab Google Sheet "[TK] Config network") — khớp chính xác số AOP chính thức. Thêm/bớt luật sẽ chuyển sang chế độ ước tính "what-if".
 
+**Hai phiên bản A / B (tab Cấu hình & mô phỏng):**
+- **Version A** = đúng `config_v3` (khớp AOP trên Sheet), **khoá chỉ xem**, không lưu gì.
+- **Version B** = `config_v3` + quy tắc gần kho + chỉnh tay, lưu chung (Supabase/localStorage). Lần đầu mở B tự áp quy tắc cho T10 (BC huyện Nhà Bè/Cần Giờ/Nhơn Trạch/Cần Đước luôn về Tân Kim; BC gần kho HCM01/HCM20/Sóng Thần/Đồng Nai hơn Tân Kim thì loại khỏi Tân Kim, chỉ chiều lấy). T11/T12 ở B chưa áp; bấm "📍 Áp quy tắc gần kho cho <tháng>" để áp theo yêu cầu.
+- Số của B là **ước tính theo tỷ lệ** (không phải AOP tính lại từ forecast từng BC), có ô so sánh với A. Không ghi gì vào Sheet.
+
 **Lưu chung (Supabase):** khi đã cấu hình theo `supabase/SETUP.md`, mọi thay đổi tự lưu vào bảng `tk_config` qua `api/config.js` (có version để phát hiện sửa cùng lúc, có bảng lịch sử). Chưa cấu hình thì trang tự rơi về chế độ chỉ lưu tạm trên trình duyệt.
 
 **Autosave (localStorage):** mọi luật thêm/xoá được tự lưu vào `localStorage` của trình duyệt đang mở — F5 lại trang không mất. Đây CHỈ là lưu tạm trên máy/trình duyệt đó, không phải lưu chung nhiều người. Muốn lưu chính thức thì bấm nút "Xuất luật mới để lưu Sheet" (hiện xuất ra text để copy tay dán vào Google Sheet — phần tự động ghi thẳng vào Sheet đã chuẩn bị code sẵn nhưng CHƯA kích hoạt, xem mục "Việc còn dang dở" bên dưới).

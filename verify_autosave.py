@@ -20,6 +20,7 @@ async def main():
         # switch to T11, add a quan-level rule
         await page.click('button.month-btn:has-text("T11")')
         await page.wait_for_timeout(150)
+        await page.click("#ver-B")  # Version A khoá (chỉ xem); chỉnh tuyến phải ở Version B
         await page.select_option("#sel-prov", label="Hồ Chí Minh")
         await page.wait_for_timeout(100)
         await page.select_option("#sel-dist", label="Quận Tân Bình")
