@@ -893,7 +893,7 @@
     }).join('');
     box.innerHTML = '<b>So với Version A (config_v3) — '+m+':</b> HCM01 nhường '+pc(res['1626'].pctVol)+' <span class="mono">(A: '+pc(a['1626'].pctVol)+')</span> · HCM20 nhường '+pc(res['2388'].pctVol)+' <span class="mono">(A: '+pc(a['2388'].pctVol)+')</span> · Tân Kim nhận '+fmt(tkSum(res))+' đơn <span class="mono">(A: '+fmt(tkSum(a))+')</span>'+
       (diffs.length ? '<details style="margin-top:6px"><summary>'+nRm+' BC bị loại · '+nAdd+' BC được thêm · '+(diffs.length-nRm-nAdd)+' đổi loại hàng — xem danh sách</summary><ul>'+rows+'</ul></details>' : '<div style="margin-top:4px">Không có BC nào khác Version A ở tháng này.</div>')+
-      '<div style="margin-top:6px;color:var(--text-muted)">Số của B là <b>ước tính theo tỷ lệ</b> (nhân % nhường AOP của config_v3 với tỷ trọng volume T6 của các BC còn trong tuyến), chưa phải AOP tính lại từ forecast từng BC. Sóng Thần / Đồng Nai chưa được tính như kho nhận riêng.</div>';
+      '<div style="margin-top:6px;color:var(--text-muted)">Số của B là <b>ước tính theo tỷ lệ</b> (nhân % nhường AOP của config_v3 với tỷ trọng volume T6 của các BC còn trong tuyến), chưa phải AOP tính lại từ forecast từng BC. Chỉ tính 3 cụm HCM01, HCM20, Tân Kim; Sóng Thần / Đồng Nai chỉ dùng để xét khoảng cách, không tính AOP.</div>';
     box.style.display = 'block';
   }
 
