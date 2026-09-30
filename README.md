@@ -15,9 +15,10 @@ Công cụ có 2 tab trong cùng 1 trang, dùng chung 1 bộ luật cấu hình 
 Mặc định mỗi tháng (T10/T11/T12) hiện đúng scope theo `config_v3` (tab Google Sheet "[TK] Config network") — khớp chính xác số AOP chính thức. Thêm/bớt luật sẽ chuyển sang chế độ ước tính "what-if".
 
 **Hai phiên bản A / B (tab Cấu hình & mô phỏng):**
+- (Hiện **ẩn Version A**; trang chỉ chạy Version B. Mở trang với `?showA=1` để hiện lại nút chuyển A/B.)
 - **Version A** = đúng `config_v3` (khớp AOP trên Sheet), **khoá chỉ xem**, không lưu gì.
 - **Version B** = `config_v3` + quy tắc gần kho + chỉnh tay, lưu chung (Supabase/localStorage). Lần đầu mở B tự áp quy tắc cho T10 (BC huyện Nhà Bè/Cần Giờ/Nhơn Trạch/Cần Đước và khu vực Gò Công — TX Gò Công, Gò Công Đông, Gò Công Tây — luôn về Tân Kim; BC còn lại của Tiền Giang bị loại khỏi Tân Kim cả lấy và giao; BC gần kho HCM01/HCM20/Sóng Thần/Đồng Nai/Tân Thuận hơn Tân Kim thì loại khỏi Tân Kim, chỉ chiều lấy). Đổi quy tắc thì tăng `BRULE_VER` để bản đã lưu tự áp lại cho T10. T11/T12 ở B chưa áp; bấm "📍 Áp quy tắc gần kho cho <tháng>" để áp theo yêu cầu.
-- Mọi số hiển thị là **trung bình/ngày** (AOP ÷ số ngày của tháng; baseline T6 ÷ 30). Tab Phân bổ luồng hàng có 2 flow chart: ① trước khi có Tân Kim, ② sau khi áp bộ tuyến.
+- Mọi số hiển thị là **trung bình/ngày** (AOP ÷ số ngày của tháng; baseline T6 ÷ 30). Tab Phân bổ luồng hàng: bảng thay đổi trước → sau (khớp KPI, cả vol và weight) + 2 flow chart đặt cạnh nhau, dùng chung thang đo: ① trước khi có Tân Kim, ② sau khi áp bộ tuyến. Số trong flow chart được hiệu chỉnh về tổng AOP (KPI) rồi chia cho từng nhóm BC theo tỷ trọng T6.
 - Số của B là **ước tính theo tỷ lệ** (không phải AOP tính lại từ forecast từng BC), có ô so sánh với A. Không ghi gì vào Sheet.
 
 **Lưu chung (Supabase):** khi đã cấu hình theo `supabase/SETUP.md`, mọi thay đổi tự lưu vào bảng `tk_config` qua `api/config.js` (có version để phát hiện sửa cùng lúc, có bảng lịch sử). Chưa cấu hình thì trang tự rơi về chế độ chỉ lưu tạm trên trình duyệt.

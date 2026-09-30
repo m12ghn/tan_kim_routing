@@ -10,7 +10,7 @@ async def main():
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.on("console", lambda m: errors.append("console:"+m.text) if m.type=="error" else None)
-        await page.goto(f"file://{FILE}")
+        await page.goto(f"file://{FILE}?showA=1")
         await page.wait_for_timeout(600)
 
         mode = await page.text_content("#mode-line")
