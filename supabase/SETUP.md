@@ -23,3 +23,6 @@ Rồi **Redeploy** để biến có hiệu lực.
 - Mỗi lần lưu tăng `version`. Nếu 2 người sửa cùng lúc, người lưu sau nhận cảnh báo, trang tự tải bản mới nhất; người đó cần làm lại thay đổi vừa rồi.
 - Khôi phục bản cũ: xem `tk_config_history` trong Supabase Table Editor, copy cột `data` của bản muốn quay lại, cập nhật vào `tk_config` (nhớ tăng `version`).
 - Nút "Về scope mặc định" giờ ảnh hưởng tất cả mọi người nên có hỏi xác nhận.
+
+## Nhật ký thay đổi
+Không cần thêm bảng/cột: nhật ký được tính từ `tk_config_history` (mỗi lần lưu 1 dòng, có `created_at`), nguồn + ghi chú nằm trong `data._meta`. Mở nhật ký bằng nút "🕘 Nhật ký thay đổi" trên trang, hoặc gọi `GET /api/config?log=1&limit=40`. Các lần lưu trước khi có tính năng này vẫn hiện nhưng ghi "không rõ nguồn".
