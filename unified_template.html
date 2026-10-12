@@ -272,6 +272,27 @@
   .chat-form{ display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border); }
   .chat-form input{ flex:1; border:1px solid var(--border-strong); background:var(--surface-2); border-radius:10px; padding:8px 11px; font-family:inherit; font-size:13px; color:var(--text-primary); }
   .chat-form button{ border:none; background:var(--accent); color:#fff; border-radius:10px; padding:0 14px; font-family:inherit; font-weight:700; cursor:pointer; }
+  .logbtn{ border:1px solid var(--border-strong); background:var(--surface-1); color:var(--text-secondary); border-radius:9px; padding:6px 11px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer; margin-right:6px; }
+  .logbtn:hover{ border-color:var(--accent); color:var(--accent); }
+  .log-drawer{ position:fixed; top:0; right:0; bottom:0; width:min(560px,100vw); z-index:1600; background:var(--surface-1); border-left:1px solid var(--border-strong);
+    box-shadow:-18px 0 50px -16px rgba(0,0,0,.45); display:flex; flex-direction:column; }
+  .log-drawer[hidden]{ display:none; }
+  .log-head{ display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--border); background:var(--surface-2); }
+  .log-head b{ font-size:14.5px; flex:1; }
+  .log-head button{ border:1px solid var(--border-strong); background:var(--surface-1); color:var(--text-secondary); border-radius:8px; padding:4px 10px; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; }
+  .log-tools{ padding:10px 14px; border-bottom:1px solid var(--border); }
+  .log-tools input{ width:100%; border:1px solid var(--border-strong); background:var(--surface-2); border-radius:8px; padding:7px 10px; font-family:inherit; font-size:13px; color:var(--text-primary); }
+  .log-list{ flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:12px; }
+  .lg{ border:1px solid var(--border); border-radius:12px; padding:10px 12px; background:var(--surface-1); }
+  .lg-h{ font-size:12.5px; color:var(--text-secondary); display:flex; flex-wrap:wrap; gap:4px 8px; align-items:center; }
+  .lg-h b{ color:var(--text-primary); font-size:13px; }
+  .lg-src{ background:var(--accent-soft); color:var(--accent); border-radius:6px; padding:1px 7px; font-size:11px; font-weight:700; }
+  .lg-note{ margin:6px 0 2px; font-size:12.5px; color:var(--text-primary); font-style:italic; }
+  .lg ul{ margin:6px 0 0; padding-left:0; list-style:none; font-size:12.5px; line-height:1.55; }
+  .lg li{ padding:1px 0; } .lg li.add b{ color:#1e8449; } .lg li.rm b{ color:#c0392b; }
+  .lg .lgm{ display:inline-block; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:0 5px; border-radius:4px; background:var(--surface-2); border:1px solid var(--border); color:var(--text-secondary); }
+  .lg details summary{ cursor:pointer; font-size:12px; color:var(--text-muted); margin-top:4px; }
+  .log-empty{ color:var(--text-muted); font-size:13px; padding:14px 4px; line-height:1.6; }
   .pnl h3{margin:0 0 4px;font-size:13.5px;color:#25c2a0;font-family:'Be Vietnam Pro',sans-serif;}
   .pnl .sub{font-size:11px;color:#8aa0b4;margin-bottom:8px}
   .pnl label{display:block;margin:9px 0 3px;font-weight:600;color:#aebfce;font-size:12px}
@@ -306,7 +327,7 @@
       <button class="view-tab" id="tab-btn-map" role="tab" aria-selected="false">Bản đồ mạng lưới (live)</button>
       <button class="view-tab" id="tab-btn-flow" role="tab" aria-selected="false">Phân bổ luồng hàng</button>
     </div>
-    <div class="month-wrap" title="Tháng đang xem — áp dụng cho cả 3 tab"><span class="month-lbl">Tháng</span><div class="month-group" id="month-group"></div></div>
+    <div class="month-wrap" title="Tháng đang xem — áp dụng cho cả 3 tab"><button type="button" class="logbtn" id="btn-log" title="Xem nhật ký: giờ nào, thay đổi gì">🕘 Nhật ký thay đổi</button><span class="month-lbl">Tháng</span><div class="month-group" id="month-group"></div></div>
   </div>
 
   <div class="tab-panel" id="panel-sim">
@@ -441,6 +462,12 @@
     </section>
   </div>
 
+  <aside class="log-drawer" id="log-drawer" hidden aria-label="Nhật ký thay đổi">
+    <div class="log-head"><b>🕘 Nhật ký thay đổi tuyến</b><button type="button" id="log-csv">⬇ CSV</button><button type="button" id="log-reload">↻</button><button type="button" id="log-close">✕</button></div>
+    <div class="log-tools"><input id="log-search" placeholder="Lọc theo tên BC, quận, tỉnh, tháng, nội dung chat…"></div>
+    <div class="log-list" id="log-list"></div>
+  </aside>
+
   <button type="button" class="chat-fab" id="chat-fab">💬 Chat cấu hình tuyến</button>
   <div class="chat-panel" id="chat-panel" hidden role="dialog" aria-label="Chat cấu hình tuyến">
     <div class="chat-head"><b>Chat cấu hình tuyến</b><span class="sub" id="chat-ctx"></span><button type="button" id="chat-close" title="Đóng">✕</button></div>
@@ -547,7 +574,15 @@
   // remoteState: 'unknown' (đang thử) | 'on' (kết nối được) | 'off' (không có API -> chỉ lưu tạm trên máy)
   var remoteState = 'unknown', remoteVersion = 0, saveTimer = null, saving = false, dirty = false, restoredAtGlobal = null;
   function refreshAll(){ renderRuleList(); recompute(); syncMap(); }
-  function persist(){
+  var pendingMeta = [];
+  function mergeMeta(arr){
+    if(!arr.length) return null;
+    var src = [], notes = [];
+    arr.forEach(function(m){ if(m.src && src.indexOf(m.src) < 0) src.push(m.src); if(m.note && notes.indexOf(m.note) < 0) notes.push(m.note); });
+    return {src: src.join('+'), note: notes.join(' | ').slice(0,300)};
+  }
+  function persist(meta){
+    if(meta) pendingMeta.push(meta);
     var t = saveLocal();
     if(remoteState === 'off'){
       setStatus(t ? '💾 Đã tự lưu tạm trên trình duyệt này lúc ' + fmtTime(t) + ' — chưa có kết nối lưu chung, mất nếu đổi máy/trình duyệt.'
@@ -562,24 +597,25 @@
   function pushRemote(){
     if(saving){ saveTimer = setTimeout(pushRemote, 400); return; }
     saving = true; dirty = false;
-    var data = snapshot();
-    fetch('/api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({data:data, baseVersion:remoteVersion})})
+    var data = snapshot(), sentMeta = pendingMeta; pendingMeta = [];
+    fetch('/api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({data:data, baseVersion:remoteVersion, meta:mergeMeta(sentMeta)})})
       .then(function(r){ return r.json().then(function(j){ return {status:r.status, j:j}; }); })
       .then(function(res){
         saving = false;
         if(res.status === 200 && res.j.ok){
-          remoteVersion = res.j.version; remoteState = 'on';
+          remoteVersion = res.j.version; remoteState = 'on'; if(typeof logRefresh==='function') logRefresh();
           if(!dirty) setStatus('☁ Đã lưu vào bản chung (Supabase) lúc ' + fmtTime(data.savedAt) + ' · phiên bản ' + remoteVersion + '.');
         } else if(res.status === 409 && res.j.conflict){
-          clearTimeout(saveTimer); dirty = false;
+          clearTimeout(saveTimer); dirty = false; pendingMeta = [];
           applyData(res.j.data); remoteVersion = res.j.version; saveLocal(); refreshAll();
           setStatus('⚠ Người khác vừa lưu trước bạn — đã tải bản mới nhất (phiên bản ' + remoteVersion + '). Thay đổi vừa rồi của bạn chưa được lưu, hãy làm lại nếu cần.');
         } else {
+          pendingMeta = sentMeta.concat(pendingMeta);
           setStatus('⚠ Lưu lên bản chung thất bại (' + (res.j.error || res.status) + ') — đã lưu tạm trên máy này, sẽ thử lại ở lần sửa sau.');
         }
       })
       .catch(function(){
-        saving = false;
+        saving = false; pendingMeta = sentMeta.concat(pendingMeta);
         setStatus('⚠ Mất kết nối khi lưu bản chung — đã lưu tạm trên máy này, sẽ thử lại ở lần sửa sau.');
       });
   }
@@ -597,7 +633,7 @@
           } else {
             remoteVersion = j.version;
             setStatus('☁ Đã kết nối bản chung (Supabase) — chưa có bản nào được lưu, sửa gì đó để lưu bản đầu tiên.');
-            if(restoredAtGlobal) persist();   // máy này đang có bản lưu tạm -> đẩy lên làm bản chung đầu tiên
+            if(restoredAtGlobal) persist({src:'init', note:'Đẩy bản lưu tạm trên máy lên làm bản chung đầu tiên'});   // máy này đang có bản lưu tạm -> đẩy lên làm bản chung đầu tiên
           }
         } else if(hasRemote && j.version > remoteVersion && !dirty && !saving){
           applyData(j.data); remoteVersion = j.version; saveLocal(); refreshAll();
@@ -756,7 +792,7 @@
     } else if(btn.dataset.customIdx !== undefined){
       customRules[currentMonth].splice(parseInt(btn.dataset.customIdx,10), 1);
     }
-    renderRuleList(); recompute(); syncMap(); persist();
+    renderRuleList(); recompute(); syncMap(); persist({src:'remove'});
   });
 
   // ---------- add-rule form ----------
@@ -834,7 +870,7 @@
       var mb = monthGroup.querySelector('.month-btn[data-month="'+eff+'"]');
       if(mb) mb.click();
     }
-    renderRuleList(); recompute(); syncMap(); persist();
+    renderRuleList(); recompute(); syncMap(); persist({src:'form'});
   });
 
   // ---------- export (interim — copy/paste vào Sheet, chưa auto-ghi) ----------
@@ -930,14 +966,14 @@
     plan.restore.forEach(function(x){ excludedDefault[m].delete(x.key); });
     plan.add.forEach(function(x){ customRules[m].push({capdo:'bc', chieu:'lấy', hang:'Cả hai', wid:x.wid, eff:m, seq:ruleSeq++}); });
     bInit = true;
-    renderRuleList(); recompute(); syncMap(); persist();
+    renderRuleList(); recompute(); syncMap(); persist({src:'prox', note:'Áp quy tắc gần kho cho '+m});
   });
   document.getElementById('btn-reset').addEventListener('click', function(){
     if(isLocked()) return;
     if(remoteState==='on' && !confirm('Đưa tháng '+currentMonth+' về scope mặc định? Thao tác này lưu vào bản chung và ảnh hưởng tất cả mọi người.')) return;
     excludedDefault[currentMonth] = new Set();
     customRules[currentMonth] = [];
-    renderRuleList(); recompute(); syncMap(); persist();
+    renderRuleList(); recompute(); syncMap(); persist({src:'reset', note:'Về scope mặc định '+currentMonth});
   });
 
   // ---------- phiên bản A/B ----------
@@ -1821,12 +1857,12 @@
       return '• <b>'+o.m+'</b>: '+parts+' · Tân Kim nhận '+fmt(o.tkBefore)+' → <b>'+fmt(o.tkAfter)+'</b> đơn/ngày'+pc;
     }).join('<br>');
     if(card.months.indexOf(currentMonth) < 0){ var mb = monthGroup.querySelector('.month-btn[data-month="'+card.months[0]+'"]'); if(mb) mb.click(); }
-    refreshAll(); persist(); renderCard(card);
+    refreshAll(); persist({src:'chat', note:card.text||''}); renderCard(card);
     chatAdd('✅ <b>Đã áp dụng</b> và lưu vào bản chung.<br>'+msg+'<br><button type="button" class="chipb" data-act="undo">↶ Hoàn tác</button>', 'bot');
   }
   function chatUndo(){
     if(!chatLastSnap){ chatAdd('Chưa có thao tác nào từ chat để hoàn tác.', 'bot'); return; }
-    stRestore(chatLastSnap); chatLastSnap = null; refreshAll(); persist();
+    stRestore(chatLastSnap); chatLastSnap = null; refreshAll(); persist({src:'undo', note:'Hoàn tác thao tác chat gần nhất'});
     chatAdd('↶ Đã hoàn tác thao tác chat gần nhất.', 'bot');
   }
   function chatHelp(){
@@ -1841,7 +1877,7 @@
     if(r.kind === 'ambiguous'){ chatAdd('“'+esc(r.amb.options[0].base)+'” có ở nhiều tỉnh: '+r.amb.options.slice(0,6).map(function(d){ return esc(d.name)+' ('+esc(d.pname)+')'; }).join('; ')+(r.amb.options.length>6 ? ' …' : '')+'. Bạn nêu thêm tên tỉnh giúp mình nhé (vd: “Châu Thành, Tiền Giang”).', 'bot'); return; }
     if(r.kind === 'none'){ chatAdd('Mình chưa nhận ra tỉnh/quận/bưu cục nào trong câu này. Thử ví dụ: <b>Toàn bộ hàng từ Bà Rịa - Vũng Tàu về Tân Kim</b> (gõ <b>trợ giúp</b> để xem thêm).', 'bot'); return; }
     if(isLocked()){ chatAdd('Version A đang khoá, chỉ xem. Chuyển sang Version B để chỉnh tuyến.', 'bot'); return; }
-    r.id = 'c' + (chatSeq++); r.done = false;
+    r.id = 'c' + (chatSeq++); r.done = false; r.text = text;
     r.el = chatAdd('', 'bot'); chatCards[r.id] = r; renderCard(r);
   }
   chatLog.addEventListener('click', function(e){
@@ -1868,6 +1904,77 @@
   document.getElementById('chat-fab').addEventListener('click', function(){ chatOpen(true); });
   document.getElementById('chat-close').addEventListener('click', function(){ chatOpen(false); });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !document.getElementById('chat-panel').hidden) chatOpen(false); });
+
+
+  // ---------- NHẬT KÝ THAY ĐỔI: giờ nào, thay đổi gì (server so sánh các bản lưu liên tiếp, /api/config?log=1) ----------
+  var LOG_SRC = {form:'Form thêm tuyến', remove:'Nút ✕/↺ trong danh sách', reset:'Về scope mặc định', prox:'Áp quy tắc gần kho', auto:'Tự áp quy tắc B (lần đầu)', chat:'Chat cấu hình', undo:'Hoàn tác (chat)', init:'Đẩy bản lưu tạm lên bản chung'};
+  var logData = [], logState = 'idle', logErr = '';
+  function logTime(iso){
+    try{ return new Date(iso).toLocaleString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh', hour12:false, day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit'}); }
+    catch(e){ return iso; }
+  }
+  function bcNm(w){ var x = WH[w]; return x ? x.name : ''; }
+  function chL(c){ return c==='lấy' ? 'LẤY' : (c==='giao' ? 'GIAO' : String(c||'').toUpperCase()); }
+  function changeText(c){
+    var tag = '<span class="lgm">'+esc(c.m)+'</span> ', bc = 'BC '+esc(c.wid)+' '+esc(bcNm(c.wid)), cl = chL(c.chieu);
+    var hang = c.hang && c.hang !== '__remove__' ? ' · '+esc(c.hang) : '', dist = esc(c.dname||'')+' ('+esc(c.pname||'')+')', h;
+    if(c.t==='ex_add') return {cls:'rm', html: tag+'<b>BỎ</b> '+bc+' khỏi Tân Kim · '+cl+' <i>(tuyến mặc định config_v3)</i>'};
+    if(c.t==='ex_del') return {cls:'add', html: tag+'<b>KHÔI PHỤC</b> '+bc+' về Tân Kim · '+cl+' <i>(tuyến mặc định config_v3)</i>'};
+    if(c.t==='rule_add'){
+      if(c.capdo==='quan') return {cls:'add', html: tag+'<b>THÊM</b> tuyến cấp quận/huyện '+dist+' · '+cl+hang};
+      if(c.hang==='__remove__') return {cls:'rm', html: tag+'<b>BỎ</b> '+bc+' khỏi Tân Kim · '+cl+' <i>(ghi đè)</i>'};
+      return {cls:'add', html: tag+'<b>THÊM</b> '+bc+' · '+cl+hang};
+    }
+    if(c.capdo==='quan') return {cls:'rm', html: tag+'<b>XOÁ</b> tuyến cấp quận/huyện '+dist+' · '+cl+hang};
+    if(c.hang==='__remove__') return {cls:'add', html: tag+'<b>HUỶ loại trừ</b> '+bc+' · '+cl};
+    return {cls:'rm', html: tag+'<b>XOÁ</b> tuyến '+bc+' · '+cl+hang};
+  }
+  function plain(h){ return h.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>'); }
+  function logEntryText(e){ return stripDia([logTime(e.at), 'v'+e.version, LOG_SRC[(e.source||'').split('+')[0]]||e.source, e.note].concat(e.changes.map(function(c){ return plain(changeText(c).html); })).join(' ')); }
+  function renderLog(){
+    var box = document.getElementById('log-list');
+    if(logState === 'loading'){ box.innerHTML = '<div class="log-empty">Đang tải nhật ký…</div>'; return; }
+    if(logState === 'error'){ box.innerHTML = '<div class="log-empty">Không tải được nhật ký ('+esc(logErr)+').<br>Nhật ký chỉ có khi trang chạy trên Vercel và đã kết nối Supabase (bảng <code>tk_config_history</code>).</div>'; return; }
+    var q = stripDia((document.getElementById('log-search').value||'').trim());
+    var list = logData.filter(function(e){ return !q || logEntryText(e).indexOf(q) >= 0; });
+    if(!list.length){ box.innerHTML = '<div class="log-empty">'+(logData.length ? 'Không có mục nào khớp bộ lọc.' : 'Chưa có thay đổi nào được ghi lại.')+'</div>'; return; }
+    box.innerHTML = list.map(function(e){
+      var srcs = (e.source||'').split('+').filter(Boolean).map(function(x){ return LOG_SRC[x] || x; }).join(' + ');
+      var items = e.changes.map(function(c){ var t = changeText(c); return '<li class="'+t.cls+'">'+t.html+'</li>'; });
+      var first = items.slice(0, 8).join(''), more = items.slice(8).join('');
+      return '<div class="lg"><div class="lg-h"><b>'+esc(logTime(e.at))+'</b><span>phiên bản '+e.version+'</span>'+(srcs ? '<span class="lg-src">'+esc(srcs)+'</span>' : '<span class="lg-src" style="background:var(--surface-2);color:var(--text-muted)">không rõ nguồn</span>')+'<span>'+e.nChanges+' thay đổi'+(e.first ? ' · bản đầu tiên' : '')+'</span></div>'+
+        (e.note ? '<div class="lg-note">“'+esc(e.note)+'”</div>' : '')+
+        '<ul>'+first+'</ul>'+(more ? '<details><summary>… và '+(items.length-8)+' thay đổi khác</summary><ul>'+more+'</ul></details>' : '')+
+        (e.nChanges > e.changes.length ? '<div class="log-empty">(chỉ hiện '+e.changes.length+' thay đổi đầu)</div>' : '')+'</div>';
+    }).join('');
+  }
+  function logRefresh(){
+    if(document.getElementById('log-drawer').hidden){ logState = 'stale'; return; }
+    logState = 'loading'; renderLog();
+    fetch('/api/config?log=1&limit=60', {cache:'no-store'})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+      .then(function(res){ if(!res.ok || !res.j.ok) throw new Error(res.j.error || 'lỗi'); logData = res.j.log || []; logState = 'ok'; renderLog(); })
+      .catch(function(e){ logState = 'error'; logErr = String((e && e.message) || e); renderLog(); });
+  }
+  function logToggle(open){
+    var d = document.getElementById('log-drawer'); d.hidden = !open;
+    if(open) logRefresh();
+  }
+  document.getElementById('btn-log').addEventListener('click', function(){ logToggle(document.getElementById('log-drawer').hidden); });
+  document.getElementById('log-close').addEventListener('click', function(){ logToggle(false); });
+  document.getElementById('log-reload').addEventListener('click', logRefresh);
+  document.getElementById('log-search').addEventListener('input', renderLog);
+  document.getElementById('log-csv').addEventListener('click', function(){
+    var rows = [['Thời gian (giờ VN)','Phiên bản','Nguồn','Ghi chú / lệnh chat','Thay đổi']];
+    logData.forEach(function(e){
+      var srcs = (e.source||'').split('+').filter(Boolean).map(function(x){ return LOG_SRC[x] || x; }).join(' + ');
+      if(!e.changes.length) rows.push([logTime(e.at), e.version, srcs, e.note, '']);
+      e.changes.forEach(function(c){ rows.push([logTime(e.at), e.version, srcs, e.note, plain(changeText(c).html)]); });
+    });
+    var csv = '﻿' + rows.map(function(r){ return r.map(function(x){ return '"'+String(x==null?'':x).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); a.download = 'nhat_ky_thay_doi_tuyen.csv'; a.click();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !document.getElementById('log-drawer').hidden) logToggle(false); });
 
   // ---------- tab switching ----------
   var btnSim = document.getElementById('tab-btn-sim'), btnMap = document.getElementById('tab-btn-map');
@@ -1906,7 +2013,7 @@
     plan.restore.forEach(function(x){ excludedDefault[m].delete(x.key); });
     plan.add.forEach(function(x){ customRules[m].push({capdo:'bc', chieu:'lấy', hang:'Cả hai', wid:x.wid, eff:m, seq:ruleSeq++}); });
     bInit = true;
-    renderRuleList(); recompute(); syncMap(); persist();
+    renderRuleList(); recompute(); syncMap(); persist({src:'auto', note:'Tự áp quy tắc Version B cho T10 (lần đầu)'});
   }
   pullRemote(true).then(function(){
     ensureBInit();
