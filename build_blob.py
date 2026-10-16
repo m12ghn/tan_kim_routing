@@ -237,6 +237,18 @@ def build():
 
     label_adm2(adm2, wh)
 
+    # Số thực tế (trung bình/ngày) theo BC, tách Normal/Bulky: data/actual_<tháng>.csv
+    actual = {}
+    for fn in sorted(os.listdir(DATA)):
+        if not (fn.startswith("actual_") and fn.endswith(".csv")): continue
+        a = pd.read_csv(os.path.join(DATA, fn))
+        for _, r in a.iterrows():
+            d = float(r["days"]) or 1.0
+            e = actual.setdefault(r["month"], {}).setdefault(r["chieu"], {}).setdefault(str(int(r["warehouse_id"])), {})
+            for sv, sk in (("Normal", "normal"), ("Bulky", "bulky")):
+                e[sv] = {"vol": float(r["don_" + sk]) / d, "kl": float(r["kg_" + sk]) / d}
+        print(f"  actual {fn}: {len(a)} dòng")
+
     print("[6/6] Ghi unified_blob.json...")
     blob = {
         "wh": {str(k): v for k, v in wh.items()},
@@ -244,7 +256,7 @@ def build():
         "volGiao": {str(k): v for k, v in vol_giao.items()},
         "totals": totals,
         "defaultRules": default_rules,
-        "official": official,
+        "official": official, "actual": actual,
         "prov": prov, "adm2": adm2, "tk": tk,
     }
     with open(OUT, "w", encoding="utf-8") as f:

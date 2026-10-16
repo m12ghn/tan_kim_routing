@@ -483,7 +483,7 @@
 <script>
 (function(){
   var DATA = JSON.parse(document.getElementById('blob').textContent);
-  var WH = DATA.wh, VOL_LAY = DATA.volLay, VOL_GIAO = DATA.volGiao, TOTALS = DATA.totals;
+  var WH = DATA.wh, VOL_LAY = DATA.volLay, VOL_GIAO = DATA.volGiao, TOTALS = DATA.totals, ACTUAL = DATA.actual || {};
   var DEFAULT_RULES = DATA.defaultRules, OFFICIAL = DATA.official, TK = DATA.tk;
   var MONTHS = ['T10','T11','T12'], MONTH_IDX = {T10:0,T11:1,T12:2};
   var OWNERS = ['1626','2388'];
@@ -703,6 +703,56 @@
 
   function unionPair(pA, pB){ return pA + pB - pA*pB; }
 
+  // ---------- Số thực tế (data/actual_<tháng>.csv): BC có số thực tế thì dùng thay cho tỷ trọng T6 ----------
+  // ACTUAL[tháng][chiều][wid][Normal|Bulky] = {vol: đơn/ngày, kl: kg/ngày} (weight nhập). Tách theo kho chủ theo tỷ lệ T6.
+  var _actFb = {};
+  function actualOf(month, chieu, wid){ var a = ACTUAL[month]; return a && a[chieu] && a[chieu][String(wid)]; }
+  function t6Of(volSrc, wid, o, sv, m){ var e = volSrc[wid] && volSrc[wid][o], v = e && e[sv]; return v ? (m==='vol' ? v.vol : v.kl) : 0; }
+  function actualSplit(month, chieu, wid, m){
+    var a = actualOf(month, chieu, wid); if(!a) return null;
+    var volSrc = chieu==='lấy' ? VOL_LAY : VOL_GIAO, out = {};
+    OWNERS.forEach(function(o){ out[o] = {}; });
+    ['Normal','Bulky'].forEach(function(sv){
+      var val = a[sv] ? a[sv][m] : 0; if(!val) return;
+      var w = OWNERS.map(function(o){ return t6Of(volSrc, wid, o, sv, m); }), sum = w[0]+w[1];
+      if(!sum){
+        var ck = month+'|'+chieu+'|'+m+'|'+sv, fb = _actFb[ck];
+        if(!fb){ fb = OWNERS.map(function(o){ var t=0; Object.keys(ACTUAL[month][chieu]).forEach(function(x){ t += t6Of(volSrc, x, o, sv, m); }); return t; }); _actFb[ck] = fb; }
+        w = fb; sum = w[0]+w[1];
+      }
+      OWNERS.forEach(function(o, i){ out[o][sv] = sum ? val*w[i]/sum : (i===0 ? val : 0); });
+    });
+    return out;
+  }
+  function svOf(h){ return h==='Cả hai' ? ['Normal','Bulky'] : [h]; }
+  // Với 1 kho chủ + chỉ số (vol|kl), mỗi chiều: phần mô hình T6 của các BC có số thực tế (mp) và phần thực tế (ap) — đơn vị/ngày
+  function actualParts(month, o, m, scope, chieu, B, k){
+    var r = {mp:0, ap:0};
+    if(!ACTUAL[month]) return r;
+    var volSrc = chieu==='lấy' ? VOL_LAY : VOL_GIAO, tot = TOTALS[o][m];
+    Object.keys(scope).forEach(function(wid){
+      var a = actualSplit(month, chieu, wid, m); if(!a) return;
+      svOf(scope[wid]).forEach(function(sv){
+        r.mp += tot ? t6Of(volSrc, wid, o, sv, m)/tot*B*k : 0;
+        r.ap += (a[o] && a[o][sv]) || 0;
+      });
+    });
+    return r;
+  }
+  // Điều chỉnh theo số thực tế: trả {TKl, TKg, Sh, k0} (đơn vị/ngày). Sh0 = số nhường theo AOP×tỷ trọng (mô hình cũ)
+  function adjTK(month, o, m, Sh0, B, scL, scG){
+    var tot = TOTALS[o][m];
+    var pL = tot ? sumScope(scL, VOL_LAY, o)[m]/tot : 0, pG = tot ? sumScope(scG, VOL_GIAO, o)[m]/tot : 0;
+    var pU = unionPair(pL, pG), k0 = (pU*B) ? Sh0/(pU*B) : 0;
+    var TKl = pL*B*k0, TKg = pG*B*k0, Sh = Sh0;
+    if(ACTUAL[month]){
+      var l = actualParts(month, o, m, scL, 'lấy', B, k0), g = actualParts(month, o, m, scG, 'giao', B, k0);
+      TKl = Math.max(0, TKl - l.mp + l.ap); TKg = Math.max(0, TKg - g.mp + g.ap);
+      Sh = Math.min(B, TKl + TKg - ((k0*B) ? TKl*TKg/(k0*B) : 0));
+    }
+    return {TKl:TKl, TKg:TKg, Sh:Sh, k0:k0};
+  }
+
   function matchPct(scopeLay, scopeGiao, owner){
     var lay = sumScope(scopeLay, VOL_LAY, owner);
     var giao = sumScope(scopeGiao, VOL_GIAO, owner);
@@ -712,11 +762,32 @@
     return {pVol:pVol, pKl:pKl};
   }
 
+
+  // KPI cuối cùng: mô hình AOP×tỷ trọng, rồi thay phần của các BC có số thực tế bằng số thực tế
+  function computeAll(month, ver){
+    var out = computeBase(month, ver);
+    if(!ACTUAL[month] || ver==='A') return out;   // Version A / "gốc" = số AOP Sheet, không chỉnh theo thực tế
+    var scL = scopeFor(month,'lấy',ver), scG = scopeFor(month,'giao',ver), mIdx = MONTH_IDX[month], D = DAYS[month];
+    OWNERS.forEach(function(o){
+      var r = out[o], ratio = {};
+      [['vol','vol'],['kl','w_nhap']].forEach(function(mk){
+        var m = mk[0], key = mk[1], B = r[key].before/D, Sh0 = r[key].shifted/D;
+        var a = adjTK(month, o, m, Sh0, B, scL, scG), Sh = a.Sh;
+        ratio[key] = Sh0 ? Sh/Sh0 : 1;
+        r[key] = {before:r[key].before, after:(B-Sh)*D, shifted:Sh*D};
+        if(m==='vol') r.pctVol = B ? Sh/B : 0;
+      });
+      var b4 = r.w_4t.before, s4 = Math.min(b4, r.w_4t.shifted*ratio.w_nhap);
+      r.w_4t = {before:b4, after:b4-s4, shifted:s4};
+    });
+    return out;
+  }
+
   function isOfficialScope(month, ver){
     return verEx(month, ver).size===0 && verCu(month, ver).length===0;
   }
 
-  function computeAll(month, ver){
+  function computeBase(month, ver){
     var curLay = scopeFor(month,'lấy',ver), curGiao = scopeFor(month,'giao',ver);
     var defLay = defaultScopeFor(month,'lấy'), defGiao = defaultScopeFor(month,'giao');
     var mIdx = MONTH_IDX[month];
@@ -1017,7 +1088,7 @@
     }).join('');
     box.innerHTML = '<b>So với '+(SHOW_VER_A?'Version A (config_v3)':'config_v3 gốc (khớp AOP Sheet)')+' — '+m+':</b> HCM01 nhường '+pc(res['1626'].pctVol)+' <span class="mono">(gốc: '+pc(a['1626'].pctVol)+')</span> · HCM20 nhường '+pc(res['2388'].pctVol)+' <span class="mono">(gốc: '+pc(a['2388'].pctVol)+')</span> · Tân Kim nhận '+fmt(tkSum(res))+' đơn/ngày <span class="mono">(gốc: '+fmt(tkSum(a))+')</span>'+
       (diffs.length ? '<details style="margin-top:6px"><summary>'+nRm+' BC bị loại · '+nAdd+' BC được thêm · '+(diffs.length-nRm-nAdd)+' đổi loại hàng — xem danh sách</summary><ul>'+rows+'</ul></details>' : '<div style="margin-top:4px">Không có BC nào khác Version A ở tháng này.</div>')+
-      '<div style="margin-top:6px;color:var(--text-muted)">Số của B là <b>ước tính theo tỷ lệ</b> (nhân % nhường AOP của config_v3 với tỷ trọng volume T6 của các BC còn trong tuyến), chưa phải AOP tính lại từ forecast từng BC. Chỉ tính 3 cụm HCM01, HCM20, Tân Kim; Sóng Thần / Đồng Nai chỉ dùng để xét khoảng cách, không tính AOP.</div>';
+      '<div style="margin-top:6px;color:var(--text-muted)">Số của B là <b>ước tính</b>: BC có số thực tế (1–15/10) dùng số thực tế; BC còn lại nhân % nhường AOP của config_v3 với tỷ trọng volume T6 của các BC còn trong tuyến), chưa phải AOP tính lại từ forecast từng BC. Chỉ tính 3 cụm HCM01, HCM20, Tân Kim; Sóng Thần / Đồng Nai chỉ dùng để xét khoảng cách, không tính AOP.</div>';
     box.style.display = 'block';
   }
 
@@ -1030,7 +1101,7 @@
     var v2=res['2388'].vol, w2=res['2388'].w_nhap, t2=res['2388'].w_4t;
     var tkVol=v1.shifted+v2.shifted, tkW=w1.shifted+w2.shifted, tkT=t1.shifted+t2.shifted;
     var D = DAYS[currentMonth]; function fd(x){ return fmt(x/D); }
-    var cap = document.getElementById('kpi-cap'); if(cap) cap.textContent = 'Số liệu là trung bình/ngày = tổng tháng ÷ '+D+' ngày ('+currentMonth+'). Vol: đơn/ngày · Weight: kg/ngày.';
+    var cap = document.getElementById('kpi-cap'); if(cap) cap.textContent = 'Số liệu là trung bình/ngày = tổng tháng ÷ '+D+' ngày ('+currentMonth+'). Vol: đơn/ngày · Weight: kg/ngày.' + (ACTUAL[currentMonth] ? ' BC có số thực tế (1–15/10) dùng số thực tế thay cho tỷ trọng T6.' : '');
 
     document.getElementById('mode-line').innerHTML = isLocked()
       ? '<span class="mode-badge official">🔒 Version A · ✓ Khớp chính thức — đúng scope config_v3 (' + currentMonth + ')</span>'
@@ -1207,16 +1278,16 @@
   // Lượng chuyển sang Tân Kim của từng BC, đã hiệu chỉnh về tổng AOP/KPI (cùng cơ sở với KPI và flow chart)
   function calibTkByBc(month, chieu, m, cal){
     var lay = chieu==='lấy', scope = scopeFor(month, chieu), volSrc = lay ? VOL_LAY : VOL_GIAO;
-    var movedTot = {}, tkc = {}, out = {};
-    OWNERS.forEach(function(o){ movedTot[o] = sumScope(scope, volSrc, o)[m]; tkc[o] = lay ? cal[o+'|'+m].TKl : cal[o+'|'+m].TKg; });
+    var ctx = distCtx(month, chieu, m, scope, volSrc, cal), out = {};
     Object.keys(scope).forEach(function(wid){
-      var h = scope[wid], byOwner = volSrc[wid] || {}, sum = 0;
+      var h = scope[wid], byOwner = volSrc[wid] || {}, sum = 0, act = ctx.act(wid);
       OWNERS.forEach(function(o){
-        var e = byOwner[o]; if(!e) return; var c = cal[o+'|'+m];
-        (h==='Cả hai' ? ['Normal','Bulky'] : [h]).forEach(function(sv){
-          var v = e[sv]; if(!v) return;
+        var c = cal[o+'|'+m];
+        svOf(h).forEach(function(sv){
+          if(act){ sum += (act[o] && act[o][sv]) || 0; return; }
+          var e = byOwner[o], v = e && e[sv]; if(!v) return;
           var t6 = m==='vol' ? v.vol : v.kl, total = c.tot ? t6 / c.tot * c.B : 0;
-          sum += movedTot[o] ? Math.min(total, t6 / movedTot[o] * tkc[o]) : 0;
+          sum += ctx.movedNA[o] ? Math.min(total, t6 / ctx.movedNA[o] * ctx.tkcNA[o]) : 0;
         });
       });
       out[wid] = sum;
@@ -1338,19 +1409,35 @@
   // Hiệu chỉnh để khớp KPI ở tab Cấu hình: với mỗi kho chủ (HCM01/HCM20) và chỉ số (vol|kl):
   //  B = tổng AOP trước/ngày, Sh = số nhường Tân Kim (lấy ∪ giao) theo KPI, TK từng chiều = share chiều × B × k
   function calibFor(month){
-    var res = computeAll(month), scL = scopeFor(month,'lấy'), scG = scopeFor(month,'giao'), out = {};
+    var res = computeBase(month), scL = scopeFor(month,'lấy'), scG = scopeFor(month,'giao'), out = {};
     OWNERS.forEach(function(o){
       [['vol','vol'],['kl','w_nhap']].forEach(function(mk){
         var m = mk[0], key = mk[1];
-        var B = res[o][key].before / DAYS[month], Sh = res[o][key].shifted / DAYS[month];
+        var B = res[o][key].before / DAYS[month], Sh0 = res[o][key].shifted / DAYS[month];
         var tot = TOTALS[o][m];
         var L = sumScope(scL, VOL_LAY, o)[m], G = sumScope(scG, VOL_GIAO, o)[m];
         var pL = tot ? L/tot : 0, pG = tot ? G/tot : 0, pU = unionPair(pL, pG);
-        var k = (pU*B) ? Sh/(pU*B) : 0;
-        out[o+'|'+m] = {B:B, Sh:Sh, after:B-Sh, tot:tot, pL:pL, pG:pG, pU:pU, k:k, TKl:pL*B*k, TKg:pG*B*k};
+        var a = adjTK(month, o, m, Sh0, B, scL, scG), Sh = a.Sh, k = a.k0;
+        out[o+'|'+m] = {B:B, Sh:Sh, after:B-Sh, tot:tot, pL:pL, pG:pG, pU:pU, k:k, TKl:a.TKl, TKg:a.TKg,
+          lp: actualParts(month, o, m, scL, 'lấy', B, k), gp: actualParts(month, o, m, scG, 'giao', B, k)};
       });
     });
     return out;
+  }
+
+  // Chia lượng chuyển sang Tân Kim cho từng BC: BC có số thực tế lấy đúng số thực tế; các BC còn lại chia phần còn lại theo tỷ trọng T6
+  function distCtx(month, chieu, m, scope, volSrc, cal){
+    var lay = chieu==='lấy', c = {movedNA:{}, tkcNA:{}};
+    OWNERS.forEach(function(o){
+      var cc = cal[o+'|'+m], na = 0, part = lay ? cc.lp : cc.gp;
+      Object.keys(scope).forEach(function(wid){
+        if(actualOf(month, chieu, wid)) return;
+        svOf(scope[wid]).forEach(function(sv){ na += t6Of(volSrc, wid, o, sv, m); });
+      });
+      c.movedNA[o] = na; c.tkcNA[o] = Math.max(0, (lay ? cc.TKl : cc.TKg) - (part ? part.ap : 0));
+    });
+    c.act = function(wid){ return actualSplit(month, chieu, wid, m); };
+    return c;
   }
   function mergeInto(dst, g){
     ['1626','2388','TK'].forEach(function(k){ dst.f[k]+=g.f[k]; });
@@ -1363,10 +1450,11 @@
     var lay = fl.chieu==='lấy', level = fl.level, restrict = fl.restrict;
     var scope = scopeFor(currentMonth, fl.chieu);
     var volSrc = lay ? VOL_LAY : VOL_GIAO;
-    var movedTot = {}, tkc = {};
-    OWNERS.forEach(function(o){ movedTot[o] = sumScope(scope, volSrc, o)[m]; tkc[o] = lay ? cal[o+'|'+m].TKl : cal[o+'|'+m].TKg; });
+    var ctx = distCtx(currentMonth, fl.chieu, m, scope, volSrc, cal);
     var groups = {}, tkAll = {}, OTHER = '__other__';
-    Object.keys(volSrc).forEach(function(wid){
+    var widList = Object.keys(volSrc);
+    if(ACTUAL[currentMonth] && ACTUAL[currentMonth][fl.chieu]) Object.keys(ACTUAL[currentMonth][fl.chieu]).forEach(function(x){ if(widList.indexOf(x)<0) widList.push(x); });
+    widList.forEach(function(wid){
       var w = WH[wid] || {}, prov = w.pname || '', dist = w.dname || '?';
       var other = !prov || (restrict && FLOW_PROVS.indexOf(prov) === -1);
       var key, name, gprov = '';
@@ -1376,15 +1464,17 @@
       else { key = prov+'|'+dist; name = shortAdm(dist); gprov = prov; }
       var g = groups[key] || (groups[key] = newGroup(name, gprov));
       var h = scope[wid];
+      var act = h ? ctx.act(wid) : null;
       OWNERS.forEach(function(o){
-        var e = volSrc[wid][o]; if(!e) return;
+        var e = (volSrc[wid] && volSrc[wid][o]) || (act ? {} : null); if(!e) return;
         var c = cal[o+'|'+m];
         ['Normal','Bulky'].forEach(function(sv){
-          var v = e[sv]; if(!v) return;
+          var v = e[sv] || ((act && act[o] && act[o][sv]) ? {vol:0, kl:0} : null); if(!v) return;
           var t6 = m==='vol' ? v.vol : v.kl;
           var total = c.tot ? t6 / c.tot * c.B : 0;
           var moved = h && (h==='Cả hai' || h===sv);
-          var tk = (moved && movedTot[o]) ? Math.min(total, t6 / movedTot[o] * tkc[o]) : 0;
+          var tk = !moved ? 0 : (act ? ((act[o] && act[o][sv]) || 0) : (ctx.movedNA[o] ? Math.min(total, t6 / ctx.movedNA[o] * ctx.tkcNA[o]) : 0));
+          if(tk > total) total = tk;
           g.f[o] += total - tk; g.f.TK += tk;
           if(moved){ g.bc[wid] = (g.bc[wid]||0) + tk; tkAll[wid] = (tkAll[wid]||0) + tk; g.tkBy[o] += tk; }
         });

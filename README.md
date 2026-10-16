@@ -77,3 +77,7 @@ Nút "Xuất luật mới để lưu Sheet" hiện chỉ xuất text để copy 
 ## Bối cảnh dự án lớn hơn
 
 Đây là 1 phần trong dự án Tân Kim của M12 (HRBP Cụm M12, GHN) — dự án lớn hơn còn có: demo Excel `Config_Rules` schema (mixed quận/BC granularity, độc lập lấy/giao và Normal/Bulky/Cả hai, BC luôn thắng quận), và phân tích gap giữa `vol_from`/`vol_to` hiện tại với nhu cầu cấu hình mới. Nếu cần dựng lại các phần đó, tham khảo lịch sử chat trước — không có trong zip này vì không còn liên quan trực tiếp tới việc vận hành app.
+
+## Số liệu thực tế (override)
+
+`data/actual_T10.csv` (month, chieu, warehouse_id, days, đơn/kg Normal/Bulky) — số thực tế 1–15/10 của 22 BC. `build_blob.py` đọc mọi `data/actual_*.csv` vào `blob.actual` (chia trung bình/ngày). BC có số thực tế dùng số này thay cho tỷ trọng T6 trong KPI, flow và bản đồ; BC còn lại giữ cách tính cũ. Version A / “gốc” vẫn là số AOP Sheet. Muốn revert: nhánh `backup/before-actual-T10`, hoặc xoá file CSV rồi `python3 build_blob.py && python3 build_app.py`.
