@@ -104,3 +104,5 @@ Tab "Bản đồ khoanh vùng": mỗi quận/huyện (adm2) tô màu theo kho nh
 `data/dist_cover.json`: quận/huyện không có BC đặt trong ranh giới nhưng do BC khác phục vụ (vd Mộc Hóa ← (LAN) Kiến Tường 22912000); bản đồ khoanh vùng tô theo kho của BC phục vụ.
 
 `plan_2027.json` → `force_north`: quận về HCM01 toàn bộ dù nằm phía nam đường ranh (Thủ Thừa, Bến Lức). Bản đồ khoanh vùng (tháng 2027) vẽ đường ranh và cắt đôi các quận bị đường ranh đi qua (Bình Chánh, Bình Tân, Tân Phú…), mỗi nửa tô theo BC nằm ở nửa đó.
+
+`data/detach.json` (min_share = 5%): tuyến BC × kho mà kho phụ chiếm < 5% lượng của BC (theo chiều) coi là đi nhầm và gộp về kho chính khi build; danh sách ở `data/detached_routes.csv`.
