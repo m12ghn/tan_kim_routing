@@ -274,6 +274,24 @@ def build():
         if hit is None: n_out += 1
         else: bc_dist[str(wid)] = hit; n_in += 1
     print(f"  bcDist: {n_in} BC nằm trong polygon quận/huyện, {n_out} ngoài polygon")
+    # Quận không có BC nhưng do BC khác phục vụ (data/dist_cover.json) -> {chỉ số polygon: [wid]}
+    dist_cover = {}
+    cover_path = os.path.join(DATA, "dist_cover.json")
+    if os.path.exists(cover_path):
+        prov_rings = {f["properties"]["name"]: _rings(f["geometry"]) for f in prov["features"]}
+        for wid, items in json.load(open(cover_path, encoding="utf-8")).items():
+            if wid.startswith("_"): continue
+            for it in items:
+                dn, pn = it.split("|")
+                prs = next((r for k, r in prov_rings.items() if k.endswith(pn)), [])
+                for i, f, rings in feats:
+                    if f["properties"].get("vn") != dn: continue
+                    r = max(rings, key=len); x = sum(q[0] for q in r) / len(r); y = sum(q[1] for q in r) / len(r)
+                    if any(_inside(x, y, pr) for pr in prs):
+                        dist_cover.setdefault(str(i), []).append(str(wid)); break
+                else:
+                    print(f"  ! dist_cover: không tìm thấy polygon {it}")
+        print(f"  distCover: {sum(len(v) for v in dist_cover.values())} quận được gán BC phục vụ")
 
     # ---- Số AOP T11/T12 theo KA v3 (data/aop_T11_T12_KA_v3.csv: vol = đơn, kg = weight nhập, tổng 3 tầng của kho) ----
     ka_path = os.path.join(DATA, "aop_T11_T12_KA_v3.csv")
@@ -363,7 +381,7 @@ def build():
         "volGiao": {str(k): v for k, v in vol_giao.items()},
         "totals": totals,
         "defaultRules": default_rules,
-        "official": official, "actual": actual, "plan": plan, "bcDist": bc_dist,
+        "official": official, "actual": actual, "plan": plan, "bcDist": bc_dist, "distCover": dist_cover,
         "prov": prov, "adm2": adm2, "tk": tk,
     }
     with open(OUT, "w", encoding="utf-8") as f:

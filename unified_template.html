@@ -2200,7 +2200,7 @@
 
 
   // ---------- bản đồ khoanh vùng: quận/huyện tô màu theo kho quản (HCM01 / HCM20 / Tân Kim) ----------
-  var BC_DIST = DATA.bcDist || {};
+  var BC_DIST = DATA.bcDist || {}, DIST_COVER = DATA.distCover || {};
   var ZCOL = {'1626':'#3987e5', '2388':'#19c98a', 'TK':'#e8672f'}, ZNAME = {'1626':'HCM01', '2388':'HCM20', 'TK':'Tân Kim'};
   var zmap = null, zDist = null, zKho = null, zProvSet = null, zDistSet = null, zTip = {}, zstate = {when:'after', chieu:'both'};
   // Phân bổ lượng hàng của từng BC cho 3 kho (theo cùng cơ sở với KPI / flow chart / bản đồ mũi tên); after=false: chưa có Tân Kim
@@ -2240,7 +2240,15 @@
         var a = byDist[di] || (byDist[di] = {'1626':0, '2388':0, 'TK':0});
         ['1626','2388','TK'].forEach(function(k){ a[k] += d[k]; });
       });
-      res[m] = {byDist:byDist, tot:tot};
+      // quận không có BC: tô theo BC phục vụ (chỉ để hiển thị, không cộng vào tổng)
+      var cover = {};
+      Object.keys(DIST_COVER).forEach(function(di){
+        if(byDist[di]) return;
+        var a = {'1626':0, '2388':0, 'TK':0}, any = false;
+        DIST_COVER[di].forEach(function(wid){ var d = per[wid]; if(d){ any = true; ['1626','2388','TK'].forEach(function(k){ a[k] += d[k]; }); } });
+        if(any){ byDist[di] = a; cover[di] = DIST_COVER[di]; }
+      });
+      res[m] = {byDist:byDist, tot:tot, cover:cover};
     });
     return res;
   }
@@ -2307,7 +2315,8 @@
       var best = keys[0]; keys.forEach(function(x){ if(a[x] > a[best]) best = x; });
       var share = a[best]/sum; cnt[best]++;
       l.setStyle({fillColor:ZCOL[best], fillOpacity: Math.min(.92, .3 + .62*share)});
-      zTip[i] = '<b>'+(f.properties.vn || f.properties.name)+'</b><br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
+      var cv = r.vol.cover[i];
+      zTip[i] = '<b>'+(f.properties.vn || f.properties.name)+'</b>'+(cv ? '<br><span style="color:#8aa0b4">không có BC đặt tại đây · do '+cv.map(function(w){ return (WH[w]||{}).name || w; }).join(', ')+' phục vụ (số dưới là của BC đó)</span>' : '')+'<br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
         return '<span style="color:'+ZCOL[x]+'">■</span> '+ZNAME[x]+': '+fmt(a[x])+' đơn/ngày ('+Math.round(a[x]/sum*100)+'%) · '+fmt(k ? k[x] : 0)+' kg/ngày';
       }).join('<br>');
     });
