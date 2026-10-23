@@ -237,6 +237,50 @@ def build():
 
     label_adm2(adm2, wh)
 
+    # ---- Kế hoạch 2027 (05/27–12/27): data/plan_2027.json + data/aop_2027.csv ----
+    plan_path = os.path.join(DATA, "plan_2027.json")
+    plan = None
+    if os.path.exists(plan_path):
+        cfgp = json.load(open(plan_path, encoding="utf-8"))
+        aop27 = pd.read_csv(os.path.join(DATA, "aop_2027.csv"), dtype={"owner": str})
+        for o in ("1626", "2388"):
+            ratio4t = official[o]["w_4t"]["before"][2] / official[o]["w_nhap"]["before"][2]
+            for m in cfgp["months"]:
+                r = aop27[(aop27.owner == o) & (aop27.month == m)].iloc[0]
+                for key, val in (("vol", float(r.vol)), ("w_nhap", float(r.kl)), ("w_4t", float(r.kl) * ratio4t)):
+                    official[o][key]["before"].append(val); official[o][key]["after"].append(val)
+        # đường thẳng nối kho Sóng Thần – Tân Tạo chia TP.HCM: phía chứa Tân Kim = Nam, còn lại = Bắc
+        A = wh[int(cfgp["line"]["a"])] if int(cfgp["line"]["a"]) in wh else wh[cfgp["line"]["a"]]
+        Bk = wh[int(cfgp["line"]["b"])] if int(cfgp["line"]["b"]) in wh else wh[cfgp["line"]["b"]]
+        def side(lat, lng):
+            return (Bk["lng"] - A["lng"]) * (lat - A["lat"]) - (Bk["lat"] - A["lat"]) * (lng - A["lng"])
+        tk_side = side(tk["lat"], tk["lng"])
+        north, south, nocoord = [], [], []
+        dside = {}
+        for wid, w in wh.items():
+            if w.get("pname") != "Hồ Chí Minh": continue
+            if w.get("lat") is None: nocoord.append(wid); continue
+            is_s = side(w["lat"], w["lng"]) * tk_side > 0
+            (south if is_s else north).append(str(wid))
+            dside.setdefault(w["dname"], []).append(is_s)
+        # BC không có toạ độ: theo phía chiếm đa số của quận (mặc định Nam nếu quận không có BC nào có toạ độ)
+        for wid in nocoord:
+            v = dside.get(wh[wid]["dname"], [True])
+            (south if sum(v) * 2 >= len(v) else north).append(str(wid))
+        nocoord = len(nocoord)
+        print(f"  plan 2027: HCM bắc {len(north)} BC ({nocoord} BC không toạ độ xếp theo quận), nam {len(south)} BC")
+        base = {(r["chieu"], str(r["wid"])): r for r in default_rules[cfgp["inherit"]]}
+        for m in cfgp["months"]:
+            rules = dict(base)
+            for chieu, src in (("lấy", vol_lay), ("giao", vol_giao)):
+                for wid in src:
+                    w = wh.get(wid) or wh.get(str(wid)) or wh.get(int(wid)) or {}
+                    if w.get("pname") in cfgp["mientay"] or str(wid) in set(south):
+                        rules[(chieu, str(wid))] = {"chieu": chieu, "capdo": "bc", "wid": int(wid), "hang": "Cả hai"}
+            default_rules[m] = list(rules.values())
+            print(f"  {m}: {len(default_rules[m])} default rules")
+        plan = {"months": cfgp["months"], "days": cfgp["days"], "north": north, "full": cfgp["full"]}
+
     # Số thực tế (trung bình/ngày) theo BC, tách Normal/Bulky: data/actual_<tháng>.csv
     actual = {}
     for fn in sorted(os.listdir(DATA)):
@@ -256,7 +300,7 @@ def build():
         "volGiao": {str(k): v for k, v in vol_giao.items()},
         "totals": totals,
         "defaultRules": default_rules,
-        "official": official, "actual": actual,
+        "official": official, "actual": actual, "plan": plan,
         "prov": prov, "adm2": adm2, "tk": tk,
     }
     with open(OUT, "w", encoding="utf-8") as f:

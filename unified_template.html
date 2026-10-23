@@ -489,6 +489,14 @@
   var OWNERS = ['1626','2388'];
   // Hiển thị trung bình/ngày: AOP (T10/T11/T12) chia số ngày của tháng; baseline T6 (bản đồ, flow chart) chia 30 ngày
   var DAYS = {T10:31, T11:30, T12:31}, BASE_DAYS = 30;
+  // Kế hoạch 2027 (05/27–12/27): AOP 2027 (sheet Topline), HCM20 chuyển 100% sang Tân Kim (BC phía bắc đường Sóng Thần–Tân Tạo → HCM01)
+  var PLAN = DATA.plan || null, PLAN_NORTH = {};
+  if(PLAN){
+    PLAN.months.forEach(function(m, i){ MONTHS.push(m); MONTH_IDX[m] = 3 + i; DAYS[m] = PLAN.days[m]; });
+    PLAN.north.forEach(function(w){ PLAN_NORTH[w] = 1; });
+  }
+  function isPlan(m){ return !!(PLAN && PLAN.months.indexOf(m) >= 0); }
+  function planFull(m, o){ return isPlan(m) && !!(PLAN.full && PLAN.full[o]); }
 
   function fmt(n){ return Math.round(n||0).toLocaleString('vi-VN'); }
   function clamp01(x){ return x<0?0:(x>1?1:x); }
@@ -787,7 +795,45 @@
     return verEx(month, ver).size===0 && verCu(month, ver).length===0;
   }
 
+  // Tỷ trọng T6 của các BC phía bắc TP.HCM trong tổng của 1 kho chủ (theo chiều)
+  function planNorth(o, m, chieu){
+    var src = chieu==='lấy' ? VOL_LAY : VOL_GIAO, tot = TOTALS[o][m], s = 0;
+    Object.keys(PLAN_NORTH).forEach(function(w){
+      var e = src[w] && src[w][o]; if(!e) return;
+      ['Normal','Bulky'].forEach(function(sv){ if(e[sv]) s += (m==='vol' ? e[sv].vol : e[sv].kl); });
+    });
+    return tot ? s/tot : 0;
+  }
+  // Tháng thuộc kế hoạch 2027: HCM01 chuyển các BC trong scope (miền Tây + nửa nam TP.HCM + kế thừa T12) sang Tân Kim, hệ số k = 1;
+  // HCM20 chuyển hết: phần BC phía bắc TP.HCM về HCM01, còn lại sang Tân Kim
+  function computePlan(month, ver){
+    var scL = scopeFor(month,'lấy',ver), scG = scopeFor(month,'giao',ver), mIdx = MONTH_IDX[month], keyOf = {vol:'vol', kl:'w_nhap'}, info = {}, out = {};
+    OWNERS.forEach(function(o){
+      info[o] = {};
+      ['vol','kl'].forEach(function(m){
+        var B = OFFICIAL[o][keyOf[m]].before[mIdx], tot = TOTALS[o][m], leave, x = 0;
+        if(planFull(month, o)){ leave = B; x = B * unionPair(planNorth(o,m,'lấy'), planNorth(o,m,'giao')); }
+        else { var L = sumScope(scL, VOL_LAY, o)[m], G = sumScope(scG, VOL_GIAO, o)[m]; leave = B * unionPair(tot ? L/tot : 0, tot ? G/tot : 0); }
+        info[o][m] = {B:B, leave:leave, x:x};
+      });
+    });
+    OWNERS.forEach(function(o){
+      var other = o==='1626' ? '2388' : '1626', r = {recv:{}, xfer:{}};
+      function build(key, m, scaleB, scaleFrom){
+        var B = OFFICIAL[o][key].before[mIdx], i = info[o][m], j = info[other][m];   // x = phần chuyển sang kho kia
+        var f = i.B ? B/i.B : 0, leave = i.leave*f, x = i.x*f, recv = j.x*(j.B ? OFFICIAL[other][key].before[mIdx]/j.B : 0);
+        r.recv[key] = recv; r.xfer[key] = x;
+        return {before:B, after:B-leave+recv, shifted:leave-x};
+      }
+      r.vol = build('vol','vol'); r.w_nhap = build('w_nhap','kl'); r.w_4t = build('w_4t','kl');
+      r.pctVol = r.vol.before ? r.vol.shifted/r.vol.before : 0;
+      out[o] = r;
+    });
+    return out;
+  }
+
   function computeBase(month, ver){
+    if(isPlan(month)) return computePlan(month, ver);
     var curLay = scopeFor(month,'lấy',ver), curGiao = scopeFor(month,'giao',ver);
     var defLay = defaultScopeFor(month,'lấy'), defGiao = defaultScopeFor(month,'giao');
     var mIdx = MONTH_IDX[month];
@@ -1070,7 +1116,7 @@
   // So sánh B với A (tháng đang xem): số nhường Tân Kim + BC khác nhau
   function renderCompare(res){
     var box = document.getElementById('cmp-box');
-    if(currentVersion !== 'B'){ box.style.display = 'none'; return; }
+    if(currentVersion !== 'B' || isPlan(currentMonth)){ box.style.display = 'none'; return; }
     var a = computeAll(currentMonth, 'A'), m = currentMonth;
     function pc(x){ return (x*100).toFixed(1).replace('.',',')+'%'; }
     function tkSum(r){ return (r['1626'].vol.shifted + r['2388'].vol.shifted) / DAYS[m]; }
@@ -1103,7 +1149,9 @@
     var D = DAYS[currentMonth]; function fd(x){ return fmt(x/D); }
     var cap = document.getElementById('kpi-cap'); if(cap) cap.textContent = 'Số liệu là trung bình/ngày = tổng tháng ÷ '+D+' ngày ('+currentMonth+'). Vol: đơn/ngày · Weight: kg/ngày.' + (ACTUAL[currentMonth] ? ' BC có số thực tế (1–15/10) dùng số thực tế thay cho tỷ trọng T6.' : '');
 
-    document.getElementById('mode-line').innerHTML = isLocked()
+    document.getElementById('mode-line').innerHTML = isPlan(currentMonth)
+      ? '<span class="mode-badge estimate">◐ Kế hoạch 2027 (' + currentMonth + ') — AOP 2027 × tỷ trọng T6; HCM20 chuyển 100% sang Tân Kim (BC phía bắc đường Sóng Thần–Tân Tạo → HCM01), HCM01 chuyển miền Tây + nửa nam TP.HCM</span>'
+      : isLocked()
       ? '<span class="mode-badge official">🔒 Version A · ✓ Khớp chính thức — đúng scope config_v3 (' + currentMonth + ')</span>'
       : (official
         ? '<span class="mode-badge official">' + vlabel() + 'chưa đổi so với config_v3 (' + currentMonth + ')</span>'
@@ -1115,19 +1163,21 @@
       '<div class="row"><span class="lbl">Vol nhập TB/ngày</span><span class="val mono">'+fd(v1.before)+' → '+fd(v1.after)+'</span></div>'+
       '<div class="row"><span class="lbl">Weight nhập TB/ngày</span><span class="val mono">'+fd(w1.before)+' → '+fd(w1.after)+'</span></div>'+
       '<div class="row"><span class="lbl">Weight 4TT TB/ngày</span><span class="val mono">'+fd(t1.before)+' → '+fd(t1.after)+'</span></div>'+
+      (isPlan(currentMonth) && res['1626'].recv.vol ? '<div class="row"><span class="lbl">Nhận thêm từ HCM20 (bắc TP.HCM)</span><span class="val mono">+'+fd(res['1626'].recv.vol)+' đơn · '+fd(res['1626'].recv.w_nhap)+' kg</span></div>' : '')+
       '<div class="delta"><span class="lbl">Nhường cho Tân Kim</span><span class="pct">−'+(res['1626'].pctVol*100).toFixed(1).replace('.',',')+'%</span></div></div>'+
 
       '<div class="kpi" style="--kpi-color:var(--s-hcm20);"><div class="name"><span class="swatch"></span>HCM20</div>'+
       '<div class="row"><span class="lbl">Vol nhập TB/ngày</span><span class="val mono">'+fd(v2.before)+' → '+fd(v2.after)+'</span></div>'+
       '<div class="row"><span class="lbl">Weight nhập TB/ngày</span><span class="val mono">'+fd(w2.before)+' → '+fd(w2.after)+'</span></div>'+
       '<div class="row"><span class="lbl">Weight 4TT TB/ngày</span><span class="val mono">'+fd(t2.before)+' → '+fd(t2.after)+'</span></div>'+
+      (isPlan(currentMonth) && res['2388'].xfer.vol ? '<div class="row"><span class="lbl">Chuyển sang HCM01 (bắc TP.HCM)</span><span class="val mono">−'+fd(res['2388'].xfer.vol)+' đơn · '+fd(res['2388'].xfer.w_nhap)+' kg</span></div>' : '')+
       '<div class="delta"><span class="lbl">Nhường cho Tân Kim</span><span class="pct">−'+(res['2388'].pctVol*100).toFixed(1).replace('.',',')+'%</span></div></div>'+
 
       '<div class="kpi" style="--kpi-color:var(--s-tk);"><div class="name"><span class="swatch"></span>Tân Kim (mới nhận)</div>'+
       '<div class="row"><span class="lbl">Vol nhập TB/ngày</span><span class="val mono">0 → '+fd(tkVol)+'</span></div>'+
       '<div class="row"><span class="lbl">Weight nhập TB/ngày</span><span class="val mono">0 → '+fd(tkW)+'</span></div>'+
       '<div class="row"><span class="lbl">Weight 4TT TB/ngày</span><span class="val mono">0 → '+fd(tkT)+'</span></div>'+
-      '<div class="delta"><span class="lbl">% tổng volume mạng lưới</span><span class="pct">'+(tkVol/(TOTALS['1626'].vol+TOTALS['2388'].vol)*100).toFixed(1).replace('.',',')+'%</span></div></div>';
+      '<div class="delta"><span class="lbl">% tổng volume mạng lưới</span><span class="pct">'+(tkVol/(isPlan(currentMonth) ? (v1.before+v2.before) : (TOTALS['1626'].vol+TOTALS['2388'].vol))*100).toFixed(1).replace('.',',')+'%</span></div></div>';
   }
 
   // ---------- Leaflet map (live, driven by the same rules) ----------
@@ -1279,10 +1329,20 @@
   function calibTkByBc(month, chieu, m, cal){
     var lay = chieu==='lấy', scope = scopeFor(month, chieu), volSrc = lay ? VOL_LAY : VOL_GIAO;
     var ctx = distCtx(month, chieu, m, scope, volSrc, cal), out = {};
-    Object.keys(scope).forEach(function(wid){
+    var wids = Object.keys(scope), seen = {};
+    wids.forEach(function(w){ seen[w] = 1; });
+    OWNERS.forEach(function(o){ if(planFull(month, o)) Object.keys(volSrc).forEach(function(w){ if(!seen[w] && volSrc[w][o] && !PLAN_NORTH[w]){ seen[w] = 1; wids.push(w); } }); });
+    wids.forEach(function(wid){
       var h = scope[wid], byOwner = volSrc[wid] || {}, sum = 0, act = ctx.act(wid);
       OWNERS.forEach(function(o){
         var c = cal[o+'|'+m];
+        if(planFull(month, o)){
+          if(PLAN_NORTH[wid]) return;
+          var ef = byOwner[o]; if(!ef) return;
+          ['Normal','Bulky'].forEach(function(sv){ var vf = ef[sv]; if(vf) sum += c.tot ? (m==='vol' ? vf.vol : vf.kl) / c.tot * c.B : 0; });
+          return;
+        }
+        if(!h) return;
         svOf(h).forEach(function(sv){
           if(act){ sum += (act[o] && act[o][sv]) || 0; return; }
           var e = byOwner[o], v = e && e[sv]; if(!v) return;
@@ -1299,11 +1359,13 @@
     ['lấy','giao'].forEach(function(chieu){
       var scope = scopeFor(month, chieu);
       var vMap = calibTkByBc(month, chieu, 'vol', cal), kMap = calibTkByBc(month, chieu, 'kl', cal);
-      Object.keys(scope).forEach(function(wid){
+      var ids = Object.keys(scope);
+      Object.keys(vMap).forEach(function(w){ if(!(w in scope) && (vMap[w] > 0 || (kMap[w]||0) > 0)) ids.push(w); });
+      ids.forEach(function(wid){
         var w = WH[wid];
         if(!w || w.lat==null) return;
         recs.push({id:wid, lat:w.lat, lng:w.lng, name:w.name, prov:w.pname, dist:w.dname, dept:w.dept,
-          vol:vMap[wid]||0, kl_kg: Math.round((kMap[wid]||0)*10)/10, type:chieu, hang: scope[wid]});
+          vol:vMap[wid]||0, kl_kg: Math.round((kMap[wid]||0)*10)/10, type:chieu, hang: scope[wid] || 'Cả hai'});
       });
     });
     return recs;
@@ -1417,6 +1479,16 @@
         var tot = TOTALS[o][m];
         var L = sumScope(scL, VOL_LAY, o)[m], G = sumScope(scG, VOL_GIAO, o)[m];
         var pL = tot ? L/tot : 0, pG = tot ? G/tot : 0, pU = unionPair(pL, pG);
+        if(isPlan(month)){
+          var rp = computeAll(month)[o][key];
+          if(planFull(month, o)){
+            out[o+'|'+m] = {B:B, Sh:rp.shifted/DAYS[month], after:rp.after/DAYS[month], tot:tot, pL:1, pG:1, pU:1, k:1,
+              TKl:B*(1-planNorth(o,m,'lấy')), TKg:B*(1-planNorth(o,m,'giao'))};
+          } else {
+            out[o+'|'+m] = {B:B, Sh:rp.shifted/DAYS[month], after:rp.after/DAYS[month], tot:tot, pL:pL, pG:pG, pU:pU, k:1, TKl:pL*B, TKg:pG*B};
+          }
+          return;
+        }
         var a = adjTK(month, o, m, Sh0, B, scL, scG), Sh = a.Sh, k = a.k0;
         out[o+'|'+m] = {B:B, Sh:Sh, after:B-Sh, tot:tot, pL:pL, pG:pG, pU:pU, k:k, TKl:a.TKl, TKg:a.TKg,
           lp: actualParts(month, o, m, scL, 'lấy', B, k), gp: actualParts(month, o, m, scG, 'giao', B, k)};
@@ -1442,9 +1514,10 @@
   function mergeInto(dst, g){
     ['1626','2388','TK'].forEach(function(k){ dst.f[k]+=g.f[k]; });
     OWNERS.forEach(function(o){ dst.tkBy[o]+=g.tkBy[o]; });
+    dst.xf += g.xf;
     Object.keys(g.bc).forEach(function(w){ dst.bc[w]=(dst.bc[w]||0)+g.bc[w]; });
   }
-  function newGroup(name, prov){ return {name:name, prov:prov, f:{'1626':0,'2388':0,'TK':0}, bc:{}, tkBy:{'1626':0,'2388':0}}; }
+  function newGroup(name, prov){ return {name:name, prov:prov, f:{'1626':0,'2388':0,'TK':0}, bc:{}, tkBy:{'1626':0,'2388':0}, xf:0}; }
   // withTK=false: chưa có Tân Kim (mọi luồng về HCM01/HCM20); withTK=true: áp bộ tuyến hiện tại. m: 'vol' | 'kl'
   function flowData(withTK, cal, m){
     var lay = fl.chieu==='lấy', level = fl.level, restrict = fl.restrict;
@@ -1472,6 +1545,11 @@
           var v = e[sv] || ((act && act[o] && act[o][sv]) ? {vol:0, kl:0} : null); if(!v) return;
           var t6 = m==='vol' ? v.vol : v.kl;
           var total = c.tot ? t6 / c.tot * c.B : 0;
+          if(planFull(currentMonth, o)){   // HCM20 chuyển hết: BC phía bắc TP.HCM về HCM01, còn lại sang Tân Kim
+            if(PLAN_NORTH[wid]){ g.f['1626'] += total; g.xf += total; }
+            else { g.f.TK += total; g.bc[wid] = (g.bc[wid]||0) + total; tkAll[wid] = (tkAll[wid]||0) + total; g.tkBy[o] += total; }
+            return;
+          }
           var moved = h && (h==='Cả hai' || h===sv);
           var tk = !moved ? 0 : (act ? ((act[o] && act[o][sv]) || 0) : (ctx.movedNA[o] ? Math.min(total, t6 / ctx.movedNA[o] * ctx.tkcNA[o]) : 0));
           if(tk > total) total = tk;
@@ -1485,7 +1563,7 @@
     Object.keys(groups).concat(groups[OTHER] ? [OTHER] : []).forEach(function(key){
       var g = groups[key]; if(!g) return;
       g.rk = g.f.TK;
-      if(!withTK){ OWNERS.forEach(function(o){ g.f[o] += g.tkBy[o]; g.tkBy[o] = 0; }); g.f.TK = 0; g.bc = {}; }
+      if(!withTK){ OWNERS.forEach(function(o){ g.f[o] += g.tkBy[o]; g.tkBy[o] = 0; }); g.f['1626'] -= g.xf; g.f['2388'] += g.xf; g.xf = 0; g.f.TK = 0; g.bc = {}; }
     });
     if(!withTK) tkAll = {};
     function tot(g){ return g.f['1626']+g.f['2388']+g.f.TK; }
@@ -1822,13 +1900,14 @@
     if(/ (ca hai chieu|hai chieu|2 chieu|lay va giao|lay giao|toan bo hang) /.test(n) && !/ tu /.test(n)) chieu = 'both';
     var hang = / (bulky|hang nang|cong kenh) /.test(n) ? 'Bulky' : (/ (normal|hang thuong) /.test(n) ? 'Normal' : 'Cả hai');
     // tháng
-    var months = [];
-    var re = / thang (\d{1,2}) /g, mm;
-    var tmp = n; while((mm = / thang (\d{1,2}) /.exec(tmp))){ months.push('T'+mm[1]); tmp = tmp.replace(mm[0], ' '); }
-    tmp = n; while((mm = / t(10|11|12) /.exec(tmp))){ months.push('T'+mm[1]); tmp = tmp.replace(mm[0], ' '); }
+    var months = [], mm;
+    var n27 = n;   // tháng của năm 2027 (vd 'tháng 5/2027', 't6/27'): tách trước để không lẫn với T10–T12/2026
+    while((mm = / (?:thang |t)(\d{1,2}) (?:nam )?(?:20)?27 /.exec(n27))){ months.push(('0'+mm[1]).slice(-2)+'/27'); n27 = n27.replace(mm[0], ' '); }
+    var tmp = n27; while((mm = / thang (\d{1,2}) /.exec(tmp))){ months.push('T'+mm[1]); tmp = tmp.replace(mm[0], ' '); }
+    tmp = n27; while((mm = / t(10|11|12) /.exec(tmp))){ months.push('T'+mm[1]); tmp = tmp.replace(mm[0], ' '); }
     months = months.filter(function(m){ return MONTHS.indexOf(m) >= 0; });
-    if(/ (ca 3 thang|ca ba thang|tat ca cac thang|moi thang|3 thang) /.test(n)) months = MONTHS.slice();
-    else if(/ tu thang (\d{1,2}) /.test(n) && !/ den /.test(n) && months.length === 1){ months = MONTHS.slice(MONTHS.indexOf(months[0])); }
+    if(/ (ca 3 thang|ca ba thang|tat ca cac thang|moi thang|3 thang) /.test(n)) months = MONTHS.slice(0, 3);
+    else if(/ tu thang (\d{1,2}) /.test(n) && !/ den /.test(n) && months.length === 1){ months = MONTHS.slice(MONTHS.indexOf(months[0]), MONTHS.indexOf(months[0]) >= 3 ? MONTHS.length : 3); }
     months = MONTHS.filter(function(m){ return months.indexOf(m) >= 0; });
     if(!months.length) months = [currentMonth];
     // vế "trừ"

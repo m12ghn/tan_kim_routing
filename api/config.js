@@ -5,7 +5,7 @@
 // Dùng SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (biến môi trường Vercel, KHÔNG đưa vào code/HTML).
 // Ghi có kiểm tra version (optimistic lock): nếu người khác lưu trước thì trả 409 kèm bản mới nhất.
 
-const TABLE = 'tk_config', ROW_ID = 'main', MONTHS = ['T10', 'T11', 'T12'];
+const TABLE = 'tk_config', ROW_ID = 'main', MONTHS = ['T10', 'T11', 'T12', '05/27', '06/27', '07/27', '08/27', '09/27', '10/27', '11/27', '12/27'];
 const MAX_BYTES = 500 * 1024;
 
 function cfg() {
