@@ -237,6 +237,29 @@ def build():
 
     label_adm2(adm2, wh)
 
+    # ---- Số AOP T11/T12 theo KA v3 (data/aop_T11_T12_KA_v3.csv: vol = đơn, kg = weight nhập, tổng 3 tầng của kho) ----
+    ka_path = os.path.join(DATA, "aop_T11_T12_KA_v3.csv")
+    if os.path.exists(ka_path):
+        ka = pd.read_csv(ka_path, dtype={"owner": str})
+        idx = {"T10": 0, "T11": 1, "T12": 2}
+        ratio = {}
+        for _, r in ka.iterrows():
+            o, i = r.owner, idx[r.month]
+            for key, new in (("vol", float(r.vol)), ("w_nhap", float(r.kg))):
+                old = official[o][key]["before"][i]
+                f = new / old
+                ratio[(o, i, key)] = f
+                official[o][key]["before"][i] = new
+                official[o][key]["after"][i] *= f      # giữ nguyên % nhường của AOP Sheet, chỉ đổi nền
+            f = ratio[(o, i, "w_nhap")]                # w_4t: không có số mới -> đổi cùng tỷ lệ với w_nhap
+            official[o]["w_4t"]["before"][i] *= f
+            official[o]["w_4t"]["after"][i] *= f
+        if "tk" in official:
+            for key in ("vol", "w_nhap", "w_4t"):
+                for i in (1, 2):
+                    official["tk"][key]["after"][i] = sum(official[o][key]["before"][i] - official[o][key]["after"][i] for o in ("1626", "2388"))
+        print(f"  KA v3 T11/T12: {len(ka)} dòng áp vào official")
+
     # ---- Kế hoạch 2027 (05/27–12/27): data/plan_2027.json + data/aop_2027.csv ----
     plan_path = os.path.join(DATA, "plan_2027.json")
     plan = None
