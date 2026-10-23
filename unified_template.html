@@ -445,7 +445,7 @@
         <span class="hint">Mỗi quận/huyện tô màu theo kho quản nhiều hàng nhất · theo tháng đang chọn ở trên cùng</span>
       </div>
       <div class="map-embed"><div id="zmap"></div></div>
-      <p class="map-note">Vùng = quận/huyện (BC nằm trong ranh giới nào thì tính vào quận đó). Màu = kho nhận nhiều hàng nhất của quận (đơn/ngày, tổng chiều lấy + giao nếu chọn "Cả hai"); màu càng đậm thì kho đó càng chiếm ưu thế. Rê chuột vào vùng để xem tỷ lệ từng kho. Chấm vàng ◆ = các KTC/KCT. Quận chưa có BC trong dữ liệu để xám.</p>
+      <p class="map-note">Vùng = quận/huyện (BC nằm trong ranh giới nào thì tính vào quận đó). Màu = kho nhận nhiều hàng nhất của quận (đơn/ngày) theo chiều đang chọn — chiều Lấy/Giao dùng chung với tab Phân bổ luồng hàng nên số hai tab giống nhau; màu càng đậm thì kho đó càng chiếm ưu thế. Rê chuột vào vùng để xem tỷ lệ từng kho. Chấm vàng ◆ = các KTC/KCT. Quận chưa có BC trong dữ liệu để xám.</p>
     </section>
   </div>
 
@@ -1856,7 +1856,15 @@
       renderFlow();
     });
   }
-  bindSeg('fl-chieu','chieu'); bindSeg('fl-level','level'); bindSeg('fl-metric','metric');
+  // Chiều hàng dùng chung cho tab Phân bổ luồng hàng và Bản đồ khoanh vùng (cùng một góc nhìn)
+  function setViewChieu(ch){
+    fl.chieu = ch; if(typeof zstate !== 'undefined') zstate.chieu = ch;
+    ['fl-chieu','zchieu'].forEach(function(id){ var g = document.getElementById(id); if(g) g.querySelectorAll('button').forEach(function(x){ x.classList.toggle('active', x.dataset.v===ch); }); });
+    if(!document.getElementById('panel-flow').hidden) renderFlow();
+    if(typeof renderZoneIfVisible === 'function') renderZoneIfVisible();
+  }
+  document.getElementById('fl-chieu').addEventListener('click', function(e){ var b = e.target.closest('button'); if(b) setViewChieu(b.dataset.v); });
+  bindSeg('fl-level','level'); bindSeg('fl-metric','metric');
   document.getElementById('fl-top').addEventListener('change', renderFlow);
   document.getElementById('fl-restrict').addEventListener('change', function(e){ fl.restrict = e.target.checked; renderFlow(); });
   document.getElementById('fl-month').innerHTML = 'Tháng: <b id="flow-month"></b>';
@@ -2205,7 +2213,7 @@
   var ZCOL = {'1626':'#3987e5', '2388':'#19c98a', 'TK':'#e8672f'}, ZNAME = {'1626':'HCM01', '2388':'HCM20', 'TK':'Tân Kim'};
   var SPLIT_I = {}; ((PLAN && PLAN.split) || []).forEach(function(x){ SPLIT_I[x.i] = x; });
   var zHalf = null, zLine = null;
-  var zmap = null, zDist = null, zKho = null, zProvSet = null, zDistSet = null, zTip = {}, zstate = {when:'after', chieu:'both'};
+  var zmap = null, zDist = null, zKho = null, zProvSet = null, zDistSet = null, zTip = {}, zstate = {when:'after', chieu:'lấy'};
   // Phân bổ lượng hàng của từng BC cho 3 kho (theo cùng cơ sở với KPI / flow chart / bản đồ mũi tên); after=false: chưa có Tân Kim
   function zoneAllocChieu(month, chieu, m, cal, after, out){
     var scope = scopeFor(month, chieu), volSrc = chieu==='lấy' ? VOL_LAY : VOL_GIAO;
@@ -2292,7 +2300,7 @@
     var zp = document.createElement('div'); zp.className = 'pnl'; zp.id = 'zpanel';
     zp.innerHTML = '<h3>🗺️ Khoanh vùng</h3><div class="sub">Quận/huyện tô màu theo kho quản</div>'+
       '<label>Thời điểm</label><div class="zseg" id="zwhen"><button type="button" data-v="before">Trước</button><button type="button" data-v="after" class="active">Sau (có Tân Kim)</button></div>'+
-      '<label>Chiều hàng</label><div class="zseg" id="zchieu"><button type="button" data-v="lấy">Lấy</button><button type="button" data-v="giao">Giao</button><button type="button" data-v="both" class="active">Cả hai</button></div>'+
+      '<label>Chiều hàng <span style="font-weight:400;color:#8aa0b4">(chung với tab Phân bổ luồng hàng)</span></label><div class="zseg" id="zchieu"><button type="button" data-v="lấy"'+(fl.chieu==='lấy'?' class="active"':'')+'>Lấy</button><button type="button" data-v="giao"'+(fl.chieu==='giao'?' class="active"':'')+'>Giao</button></div>'+
       '<div class="hr"></div>'+
       '<div class="zlg"><i style="background:'+ZCOL['1626']+'"></i> HCM01 quản</div><div class="zlg"><i style="background:'+ZCOL['2388']+'"></i> HCM20 quản</div><div class="zlg"><i style="background:'+ZCOL.TK+'"></i> Tân Kim quản</div><div class="zlg"><i style="background:#1b2f2a;border:1px solid #3a5a52"></i> Chưa có BC trong dữ liệu</div>'+
       '<div class="sub" style="margin-top:6px">Màu đậm = kho đó chiếm ưu thế rõ; màu nhạt = quận chia cho nhiều kho.</div>'+
@@ -2306,7 +2314,8 @@
     function seg(id, key){ document.getElementById(id).addEventListener('click', function(e){
       var b = e.target.closest('button'); if(!b) return; zstate[key] = b.dataset.v;
       this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('active', x===b); }); renderZone(); }); }
-    seg('zwhen','when'); seg('zchieu','chieu');
+    seg('zwhen','when'); zstate.chieu = fl.chieu;
+    document.getElementById('zchieu').addEventListener('click', function(e){ var b = e.target.closest('button'); if(b) setViewChieu(b.dataset.v); });
     var zopt = {prov:true, dist:true};
     function syncZLabelsImpl(){
       if(zopt.prov){ zProvSet.rebuild(); if(!zmap.hasLayer(zProvSet.group)) zProvSet.group.addTo(zmap); } else if(zmap.hasLayer(zProvSet.group)) zmap.removeLayer(zProvSet.group);
@@ -2359,9 +2368,12 @@
       t = {'1626': (af ? a1.vol.after : a1.vol.before)/D, '2388': (af ? a2.vol.after : a2.vol.before)/D, 'TK': af ? (a1.vol.shifted + a2.vol.shifted)/D : 0};
       tk = {'1626': (af ? a1.w_nhap.after : a1.w_nhap.before)/D, '2388': (af ? a2.w_nhap.after : a2.w_nhap.before)/D, 'TK': af ? (a1.w_nhap.shifted + a2.w_nhap.shifted)/D : 0};
       note = 'lấy ∪ giao, mỗi đơn tính 1 lần (khớp KPI tab Cấu hình)';
-    } else note = 'chỉ chiều '+zstate.chieu+' (khớp flow chart chiều '+zstate.chieu+')';
+    } else note = 'chiều '+zstate.chieu+' — giống biểu đồ ở tab Phân bổ luồng hàng';
+    var kD = DAYS[currentMonth], kr = computeAll(currentMonth), kAf = zstate.when==='after';
+    var kpiLine = '<div class="hr"></div><div style="color:#8aa0b4;font-size:11px">KPI cả hai chiều (lấy ∪ giao, mỗi đơn 1 lần), đơn/ngày:<br>'+
+      ['1626','2388'].map(function(o){ return ZNAME[o]+' '+fmt((kAf ? kr[o].vol.after : kr[o].vol.before)/kD); }).join(' · ')+' · Tân Kim '+fmt(kAf ? (kr['1626'].vol.shifted+kr['2388'].vol.shifted)/kD : 0)+'</div>';
     document.getElementById('zstbody').innerHTML = '<div style="color:#8aa0b4;font-size:11px;margin-bottom:6px">'+currentMonth+' · '+(zstate.when==='after'?'sau (có Tân Kim)':'trước')+' · trung bình/ngày · '+note+'</div>'+
-      keys.map(function(x){ return '<div style="margin:6px 0"><span style="color:'+ZCOL[x]+'">■</span> <b>'+ZNAME[x]+'</b><div style="margin-left:16px;font:12px JetBrains Mono,monospace">'+fmt(t[x])+' đơn · '+fmt(tk[x])+' kg<br><span style="color:#8aa0b4">'+cnt[x]+' quận/huyện</span></div></div>'; }).join('');
+      keys.map(function(x){ return '<div style="margin:6px 0"><span style="color:'+ZCOL[x]+'">■</span> <b>'+ZNAME[x]+'</b><div style="margin-left:16px;font:12px JetBrains Mono,monospace">'+fmt(t[x])+' đơn · '+fmt(tk[x])+' kg<br><span style="color:#8aa0b4">'+cnt[x]+' quận/huyện</span></div></div>'; }).join('') + (zstate.chieu==='both' ? '' : kpiLine);
   }
   function renderZoneIfVisible(){ if(zmap && !document.getElementById('panel-zone').hidden) renderZone(); }
 
