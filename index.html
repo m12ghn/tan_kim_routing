@@ -1767,19 +1767,20 @@
     function khoLines(nd){
       var id = nd.key, P = info.prim, O = info.oth;
       var pb = P.b[id], pa = P.a[id], ob = O.b[id], oa = O.a[id];
-      function part(b, a, u){
-        var s = '<tspan class="sub">'+fmt(withTK?a:b)+' '+u+'</tspan>';
+      // trả [giá trị, chênh lệch]; % của Tân Kim tính trên tổng HCM01+HCM20 trước của CHÍNH chỉ số đó (đơn với đơn, kg với kg)
+      function part(b, a, u, tkBasis){
+        var s = '<tspan class="sub">'+fmt(withTK?a:b)+' '+u+'</tspan>', dl = '';
         if(withTK){
           var d = a - b;
           if(Math.abs(d) >= 0.5){
-            var basis = id==='TK' ? (P.b['1626']+P.b['2388']) : b;
+            var basis = id==='TK' ? tkBasis : b;
             var cls = id==='TK' ? 'dtk' : (d<0 ? 'dneg' : 'dpos');
-            s += '<tspan class="'+cls+'" dx="5">'+(d<0?'▼':'▲')+fmtK(d)+(basis ? ' ('+pct1(d/basis*100)+')' : '')+'</tspan>';
+            dl = '<tspan class="'+cls+'">'+(d<0?'▼ ':'▲ ')+fmtK(Math.abs(d))+(basis ? ' ('+(d<0?'−':'+')+pct1(d/basis*100)+(id==='TK'?' tổng 2 kho':'')+')' : '')+'</tspan>';
           }
         }
-        return s;
+        return [s, dl];
       }
-      return [part(pb, pa, info.pu), part(ob, oa, info.ou)];
+      return [part(pb, pa, info.pu, P.b['1626']+P.b['2388']), part(ob, oa, info.ou, O.b['1626']+O.b['2388'])];
     }
     function drawNode(nd, x, leftSide){
       var tx = leftSide ? x-8 : x+nodeW+8, anchor = leftSide?'end':'start';
@@ -1791,15 +1792,16 @@
       }
       var col = nd.color || '#948d7c', isKho = !!nd.isKho;
       var tip = withTK ? (isKho ? (nd.key==='TK' ? ' data-tip="tk"' : '') : ' data-tip="g:'+nd.gi+'"') : '';
-      var o = '<g'+tip+(tip?' style="cursor:help"':'')+'><rect x="'+x+'" y="'+nd.y+'" width="'+nodeW+'" height="'+nd.h+'" rx="2" fill="'+col+'"/>';
+      var empty = isKho && withTK && nd.total < 0.5;   // kho không còn hàng (vd HCM20 khi chuyển hết): vẽ khung rỗng
+      var o = '<g'+tip+(tip?' style="cursor:help"':'')+'><rect x="'+x+'" y="'+nd.y+'" width="'+nodeW+'" height="'+nd.h+'" rx="2" fill="'+col+'"'+(empty ? ' fill-opacity=".15" stroke="'+col+'" stroke-dasharray="3 3"' : '')+'/>';
       var cy = nd.y+nd.h/2;
       var lbl = nd.label.length>26 ? nd.label.slice(0,25)+'…' : nd.label;
       if(isKho){
-        var ls = khoLines(nd);
-        o += '<text x="'+tx+'" y="'+(cy-13)+'" text-anchor="'+anchor+'" dominant-baseline="middle" style="font-weight:700">'+esc(lbl)+'</text>'+
-             '<text x="'+tx+'" y="'+cy+'" text-anchor="'+anchor+'" dominant-baseline="middle">'+ls[0]+'</text>'+
-             '<text x="'+tx+'" y="'+(cy+13)+'" text-anchor="'+anchor+'" dominant-baseline="middle">'+ls[1]+'</text></g>';
-        return o;
+        var ls = khoLines(nd), rows = [['<tspan style="font-weight:700">'+esc(lbl)+'</tspan>']];
+        rows.push(ls[0][0]); if(ls[0][1]) rows.push(ls[0][1]); rows.push(ls[1][0]); if(ls[1][1]) rows.push(ls[1][1]);
+        var y0 = cy - (rows.length-1)*13/2;
+        rows.forEach(function(r, k){ o += '<text x="'+tx+'" y="'+(y0+k*13)+'" text-anchor="'+anchor+'" dominant-baseline="middle">'+r+'</text>'; });
+        return o + '</g>';
       }
       o += '<text x="'+tx+'" y="'+(cy-6)+'" text-anchor="'+anchor+'" dominant-baseline="middle" style="font-weight:500">'+esc(lbl)+'</text>';
       var line2 = '<tspan class="sub">'+fmt(nd.total)+' '+unit+'</tspan>';
