@@ -294,25 +294,27 @@ def build():
         tk_side = side(tk["lat"], tk["lng"])
         north, south, nocoord = [], [], []
         dside = {}
+        split_provs = cfgp.get("split_provs", ["Hồ Chí Minh"])
         for wid, w in wh.items():
-            if w.get("pname") != "Hồ Chí Minh": continue
+            if w.get("pname") not in split_provs: continue
             if w.get("lat") is None: nocoord.append(wid); continue
             is_s = side(w["lat"], w["lng"]) * tk_side > 0
             (south if is_s else north).append(str(wid))
-            dside.setdefault(w["dname"], []).append(is_s)
+            dside.setdefault((w["pname"], w["dname"]), []).append(is_s)
         # BC không có toạ độ: theo phía chiếm đa số của quận (mặc định Nam nếu quận không có BC nào có toạ độ)
         for wid in nocoord:
-            v = dside.get(wh[wid]["dname"], [True])
+            v = dside.get((wh[wid]["pname"], wh[wid]["dname"]), [True])
             (south if sum(v) * 2 >= len(v) else north).append(str(wid))
         nocoord = len(nocoord)
-        print(f"  plan 2027: HCM bắc {len(north)} BC ({nocoord} BC không toạ độ xếp theo quận), nam {len(south)} BC")
+        print(f"  plan 2027: TP.HCM + Long An, bắc {len(north)} BC ({nocoord} BC không toạ độ xếp theo quận), nam {len(south)} BC")
         base = {(r["chieu"], str(r["wid"])): r for r in default_rules[cfgp["inherit"]]}
+        north_set, south_set = set(north), set(south)
         for m in cfgp["months"]:
-            rules = dict(base)
+            rules = {k: v for k, v in base.items() if k[1] not in north_set}   # BC phía bắc đường ranh về HCM01, không chuyển sang Tân Kim
             for chieu, src in (("lấy", vol_lay), ("giao", vol_giao)):
                 for wid in src:
                     w = wh.get(wid) or wh.get(str(wid)) or wh.get(int(wid)) or {}
-                    if w.get("pname") in cfgp["mientay"] or str(wid) in set(south):
+                    if w.get("pname") in cfgp["mientay"] or str(wid) in south_set:
                         rules[(chieu, str(wid))] = {"chieu": chieu, "capdo": "bc", "wid": int(wid), "hang": "Cả hai"}
             default_rules[m] = list(rules.values())
             print(f"  {m}: {len(default_rules[m])} default rules")
