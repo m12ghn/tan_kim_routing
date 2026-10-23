@@ -96,3 +96,7 @@ Nút "Xuất luật mới để lưu Sheet" hiện chỉ xuất text để copy 
 ## Bản đồ khoanh vùng
 
 Tab "Bản đồ khoanh vùng": mỗi quận/huyện (adm2) tô màu theo kho nhận nhiều hàng nhất (HCM01 / HCM20 / Tân Kim), theo tháng đang chọn, chiều lấy / giao / cả hai, trước hoặc sau khi có Tân Kim; dùng cùng cách phân bổ với KPI/flow chart. `build_blob.py` ghi `bcDist` (BC → polygon quận/huyện theo toạ độ).
+
+## Nền volume 1–22/10 (thay T6)
+
+`data/vol_base.csv` (template_volume_dim: chiều × kho 1626/2388 × BC × Normal/Bulky, tổng đơn + kg cả kỳ) thay nền T6 (`vol_from.xlsx`/`vol_to.csv`, vẫn giữ để quay lại: xoá `vol_base.csv`). BC có volume nhưng chưa có trong `dim_warehouse.csv` lấy tên/tỉnh từ file dim mới, quận dò theo địa chỉ, toạ độ = tâm quận (ước tính) → `data/wh_added_2210.json`. `actual_T10.csv` (22 BC) cập nhật theo cùng nguồn 1–22/10.
