@@ -1,0 +1,1232 @@
+{
+ "23133000": {
+  "name": "(HNO) CK Bình Minh",
+  "province": "Hà Nội",
+  "district": "Huyện Thanh Oai",
+  "pid": "201",
+  "lat": 20.8548,
+  "lng": 105.78244,
+  "approx": true,
+  "address": "Đường 10/3 Thôn Ninh Dương, Xã Bình Minh, Huyện Thanh Oai, Thành phố Hà Nội"
+ },
+ "23197000": {
+  "name": "(HCM) Đông Thạnh 1",
+  "province": "Hồ Chí Minh",
+  "district": "Huyện Hóc Môn",
+  "pid": "202",
+  "lat": 10.88221,
+  "lng": 106.61084,
+  "approx": true,
+  "address": "66 ấp 7, đường Đặng Thúc Vịnh, xã Đông Thạnh, huyện Hóc Môn, Thành phố Hồ Chí Minh"
+ },
+ "22657001": {
+  "name": "(HNA) ĐL Lý Nhân",
+  "province": "Hà Nam",
+  "district": "Huyện Lý Nhân",
+  "pid": "232",
+  "lat": 20.5592,
+  "lng": 106.08182,
+  "approx": true,
+  "address": "Xóm 7, Thôn Quan Văn, Xã Văn Lý, Huyện Lý Nhân, Tỉnh Hà Nam"
+ },
+ "23109000": {
+  "name": "(HCM) CK Thới An",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 12",
+  "pid": "202",
+  "lat": 10.85947,
+  "lng": 106.66092,
+  "approx": true,
+  "address": "24A Thới An 19A, Phường Thới An, Quận 12, Hồ Chí Minh"
+ },
+ "23195000": {
+  "name": "(HCM) Tân An Hội",
+  "province": "Hồ Chí Minh",
+  "district": "Huyện Củ Chi",
+  "pid": "202",
+  "lat": 11.04682,
+  "lng": 106.52048,
+  "approx": true,
+  "address": "431 - 433 Tỉnh Lộ 8, Xã Tân An Hội, Huyện Củ Chi, Thành Phố Hồ Chí Minh"
+ },
+ "23143000": {
+  "name": "(AGI) Long Xuyên",
+  "province": "An Giang",
+  "district": "Thành phố Long Xuyên",
+  "pid": "217",
+  "lat": 10.36216,
+  "lng": 105.42918,
+  "approx": true,
+  "address": "25 Nguyễn Văn Linh, Mỹ Phước, Long Xuyên, An Giang"
+ },
+ "23196000": {
+  "name": "(HNO) LH Dương Nội",
+  "province": "Hà Nội",
+  "district": "Quận Hà Đông",
+  "pid": "201",
+  "lat": 20.96006,
+  "lng": 105.75694,
+  "approx": true,
+  "address": "51A, đường Tiến Thành, Phường Dương Nội, Quận Hà Đông, Hà Nội"
+ },
+ "23146000": {
+  "name": "(HCM) CK Bình Tân",
+  "province": "Hồ Chí Minh",
+  "district": "Quận Bình Tân",
+  "pid": "202",
+  "lat": 10.76548,
+  "lng": 106.59373,
+  "approx": true,
+  "address": "660 Quốc Lộ 1A, Bình Hưng Hoà B, Bình Tân, HCM"
+ },
+ "23194000": {
+  "name": "(HNO) Yên Nghĩa",
+  "province": "Hà Nội",
+  "district": "Quận Hà Đông",
+  "pid": "201",
+  "lat": 20.96006,
+  "lng": 105.75694,
+  "approx": true,
+  "address": "Quốc Lộ 6 tổ 3 TDP 24, Phường Yên Nghĩa,  Quận Hà Đông, Hà Nội"
+ },
+ "23170000": {
+  "name": "(HCM) An Phú Đông",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 12",
+  "pid": "202",
+  "lat": 10.85947,
+  "lng": 106.66092,
+  "approx": true,
+  "address": "111 Nguyễn Thị Sáu phường Thạnh Lộc Quận 12 HCM"
+ },
+ "23164000": {
+  "name": "(HNO) CK Thanh Xuân",
+  "province": "Hà Nội",
+  "district": "Quận Thanh Xuân",
+  "pid": "201",
+  "lat": 20.992,
+  "lng": 105.81175,
+  "approx": true,
+  "address": "51 Vũ Trọng Phụng, Phường Thanh Xuân, Hà Nội"
+ },
+ "23212000": {
+  "name": "(HCM) Tăng Nhơn Phú 1",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 9",
+  "pid": "202",
+  "lat": 10.8167,
+  "lng": 106.82359,
+  "approx": true,
+  "address": "25 Đường 494, Phường Tăng Nhơn Phú A, Quận 9, Hồ Chí Minh"
+ },
+ "23126000": {
+  "name": "(HCM) KD Hiệp Bình",
+  "province": "Hồ Chí Minh",
+  "district": "Huyện Bình Chánh",
+  "pid": "202",
+  "lat": 10.71155,
+  "lng": 106.60008,
+  "approx": true,
+  "address": "Phường Hiệp Bình Chánh, Quận Thủ Đức, Thành phố Hồ Chí Minh"
+ },
+ "23140000": {
+  "name": "(BDU) Long Nguyên",
+  "province": "Bình Dương",
+  "district": "Thị xã Bến Cát",
+  "pid": "205",
+  "lat": 11.12616,
+  "lng": 106.60224,
+  "approx": true,
+  "address": "68B Đường ĐT 7A, Phường An Điền, TP Bến Cát, Tỉnh Bình Dương"
+ },
+ "23160000": {
+  "name": "(HCM) KT Phú Định",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 8",
+  "pid": "202",
+  "lat": 10.702,
+  "lng": 106.598,
+  "approx": true,
+  "address": "132A, Đường Hoàng Ngân, Phường 16, Quận 8, Thành phố Hồ Chí Minh"
+ },
+ "23120000": {
+  "name": "(HNO) CK Sơn Đồng",
+  "province": "Hà Nội",
+  "district": "Huyện Hoài Đức",
+  "pid": "201",
+  "lat": 21.02641,
+  "lng": 105.70328,
+  "approx": true,
+  "address": "Khu đất dịch vụ Lại yên-Xã Lại Yên-Huyện Hoài Đức-TP Hà Nội"
+ },
+ "23154000": {
+  "name": "(HCM) KT Xuân Thới Sơn",
+  "province": "Hồ Chí Minh",
+  "district": "Huyện Hóc Môn",
+  "pid": "202",
+  "lat": 10.88221,
+  "lng": 106.61084,
+  "approx": true,
+  "address": "862 Nuyễn Văn Bứa, Xã Xuân Thới Sơn, Huyện Hóc Môn, Thành phố Hồ Chí Minh"
+ },
+ "23122000": {
+  "name": "(DTH) An Long",
+  "province": "Đồng Tháp",
+  "district": "Huyện Tam Nông",
+  "pid": "216",
+  "lat": 10.69416,
+  "lng": 105.50389,
+  "approx": true,
+  "address": "Quốc Lộ 30, Xã An Long, Tỉnh Đồng Tháp"
+ },
+ "23183000": {
+  "name": "(HNO) Lĩnh Nam",
+  "province": "Hà Nội",
+  "district": "Quận Hoàng Mai",
+  "pid": "201",
+  "lat": 20.97955,
+  "lng": 105.84982,
+  "approx": true,
+  "address": "1/10/2 ngõ 1 Thuý Lĩnh Phường Lĩnh nam , Quận Hoàng Mai, Hà Nội"
+ },
+ "23169000": {
+  "name": "(HNO) KT Đại Thanh",
+  "province": "Hà Nội",
+  "district": "Huyện Thanh Trì",
+  "pid": "201",
+  "lat": 20.93663,
+  "lng": 105.8363,
+  "approx": true,
+  "address": "Xóm Sở, Thôn Vĩnh Ninh, Xã Vĩnh Quỳnh, Huyện Thanh Trì"
+ },
+ "23103000": {
+  "name": "(BVT) Tam Thắng",
+  "province": "Bà Rịa - Vũng Tàu",
+  "district": "Thành phố Vũng Tàu",
+  "pid": "206",
+  "lat": 10.41931,
+  "lng": 107.12183,
+  "approx": true,
+  "address": "210 Bình Giã, Phường 8, Tp. Vũng Tàu, Bà Rịa Vũng Tàu, HCM"
+ },
+ "23119000": {
+  "name": "(BDU) CK Dĩ An",
+  "province": "Bình Dương",
+  "district": "Thành phố Dĩ An",
+  "pid": "205",
+  "lat": 10.90704,
+  "lng": 106.78023,
+  "approx": true,
+  "address": "8 Độc Lập, Phường Dĩ An, TP Dĩ An, Tỉnh Bình Dương, HCM"
+ },
+ "23125000": {
+  "name": "(HYE) Phố Hiến 2",
+  "province": "Hưng Yên",
+  "district": "Thành phố Hưng Yên",
+  "pid": "268",
+  "lat": 20.66498,
+  "lng": 106.06826,
+  "approx": true,
+  "address": "Quốc lộ 39A, Xã Liên Phương, Thành Phố Hưng Yên, Tỉnh Hưng Yên"
+ },
+ "23138000": {
+  "name": "(HCM) KD Bình Trị Đông",
+  "province": "Hồ Chí Minh",
+  "district": "Quận Bình Tân",
+  "pid": "202",
+  "lat": 10.76548,
+  "lng": 106.59373,
+  "approx": true,
+  "address": "25 đường số 4, Phường Bình Hưng Hòa A, Quận Bình Tân, Thành phố Hồ Chí Minh"
+ },
+ "23129000": {
+  "name": "(TGI) Trung An",
+  "province": "Tiền Giang",
+  "district": "Thành phố Mỹ Tho",
+  "pid": "212",
+  "lat": 10.3753,
+  "lng": 106.36109,
+  "approx": true,
+  "address": "404A Phạm Hùng, xã Trung An, Tp Mỹ Tho, Tiền Giang"
+ },
+ "23118000": {
+  "name": "(HCM) CK Long Trường",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 8",
+  "pid": "202",
+  "lat": 10.702,
+  "lng": 106.598,
+  "approx": true,
+  "address": "Số 8 đường 1, phường Long Trường, Quận 9, HCM"
+ },
+ "23150000": {
+  "name": "(HNO) KT Quảng Oai 2",
+  "province": "Hà Nội",
+  "district": "Huyện Ba Vì",
+  "pid": "201",
+  "lat": 21.10851,
+  "lng": 105.40886,
+  "approx": true,
+  "address": "Tỉnh lộ 412 X Quảng Oai Ba Vì Hà Nội"
+ },
+ "23167000": {
+  "name": "(GLA) Diên Hồng",
+  "province": "Gia Lai",
+  "district": "Thành phố Pleiku",
+  "pid": "207",
+  "lat": 13.95889,
+  "lng": 107.98617,
+  "approx": true,
+  "address": "300 Lê Thánh Tôn, Phường Diên Hồng, TP. Pleiku, Tỉnh Gia Lai"
+ },
+ "23128000": {
+  "name": "(BNI) Thuận Thành 2",
+  "province": "Bắc Ninh",
+  "district": "Thị xã Thuận Thành",
+  "pid": "249",
+  "lat": 21.02833,
+  "lng": 106.06784,
+  "approx": true,
+  "address": "Đường Âu Cơ, Phố Hồ, Thuận Thành, Bắc Ninh"
+ },
+ "23139000": {
+  "name": "(HNO) KT Tương Mai",
+  "province": "Hà Nội",
+  "district": "Quận Hoàng Mai",
+  "pid": "201",
+  "lat": 20.97955,
+  "lng": 105.84982,
+  "approx": true,
+  "address": "Phường Vĩnh Hưng, Quận Hoàng Mai, Thành phố Hà Nội"
+ },
+ "23116000": {
+  "name": "(TGI) Tân Thới",
+  "province": "Tiền Giang",
+  "district": "Huyện Tân Phú Đông",
+  "pid": "212",
+  "lat": 10.25827,
+  "lng": 106.65614,
+  "approx": true,
+  "address": "Đường tỉnh 877B, xã Tân Phú, Huyện Tân Phú Đông, Tỉnh Tiền Giang"
+ },
+ "23156000": {
+  "name": "(HCM) KD Bình Thạnh",
+  "province": "Hồ Chí Minh",
+  "district": "Quận Bình Thạnh",
+  "pid": "202",
+  "lat": 10.8133,
+  "lng": 106.71148,
+  "approx": true,
+  "address": "56C1 Ngô Đức Kế, Phường 12, Quận Bình Thạnh"
+ },
+ "23147000": {
+  "name": "(TBI) Đông Hưng 1",
+  "province": "Thái Bình",
+  "district": "Huyện Đông Hưng",
+  "pid": "226",
+  "lat": 20.55273,
+  "lng": 106.3334,
+  "approx": true,
+  "address": "Quốc Lộ 10, Thị Trấn Đông Hưng Huyện Đông Hưng, Tỉnh Thái Bình"
+ },
+ "23141000": {
+  "name": "(HDU) Nam An Phụ",
+  "province": "Hải Dương",
+  "district": "Thành phố Hải Dương",
+  "pid": "225",
+  "lat": 20.94867,
+  "lng": 106.33002,
+  "approx": true,
+  "address": "KĐT Đông Hải Đường tỉnh 389, Xã Phúc Thành, Huyện Kinh Môn, Tỉnh Hải Dương"
+ },
+ "23199000": {
+  "name": "(HNO) CK Phú Diễn",
+  "province": "Hà Nội",
+  "district": "Quận Bắc Từ Liêm",
+  "pid": "201",
+  "lat": 21.06488,
+  "lng": 105.76661,
+  "approx": true,
+  "address": "Lô đất số BT04,03, Phường Phúc Diễn, Quận Bắc Từ Liêm, Hà Nội"
+ },
+ "23179000": {
+  "name": "(NAN) Vinh Phú 1",
+  "province": "Nghệ An",
+  "district": "Thành phố Vinh",
+  "pid": "235",
+  "lat": 18.70891,
+  "lng": 105.6882,
+  "approx": true,
+  "address": "91, Hoàng Phan Thái, Nghi Phú, Vinh, Nghệ An"
+ },
+ "23137000": {
+  "name": "(NAN) Trường Vinh",
+  "province": "Nghệ An",
+  "district": "Thành phố Vinh",
+  "pid": "235",
+  "lat": 18.70891,
+  "lng": 105.6882,
+  "approx": true,
+  "address": "KĐT Mới Vinh Tân, Phường Vinh Tân, Thành phố Vinh, Tỉnh Nghệ An"
+ },
+ "23168000": {
+  "name": "(BDI) Tuy Phước Đông",
+  "province": "Bình Định",
+  "district": "Huyện Tuy Phước",
+  "pid": "262",
+  "lat": 13.85054,
+  "lng": 109.15096,
+  "approx": true,
+  "address": "Thôn Phụng Sơn, Xã Phước Sơn, Huyện Tuy Phước, Tỉnh Bình Định"
+ },
+ "23181000": {
+  "name": "(HCM) KD Tam Bình",
+  "province": "Hồ Chí Minh",
+  "district": "Thành Phố Thủ Đức",
+  "pid": "202",
+  "lat": null,
+  "lng": null,
+  "approx": true,
+  "address": "70A Bình Chiểu, Phường Bình Chiểu, Quận Thủ Đức, Hồ Chí Minh"
+ },
+ "23172000": {
+  "name": "(TBI) Đông Tiên Hưng",
+  "province": "Thái Bình",
+  "district": "Huyện Đông Hưng",
+  "pid": "226",
+  "lat": 20.55273,
+  "lng": 106.3334,
+  "approx": true,
+  "address": "Phố Tăng, Xã Phú Châu, Huyện Đông Hưng, Tỉnh Thái Bình"
+ },
+ "23190000": {
+  "name": "(BDU) KD Thuận Giao",
+  "province": "Bình Dương",
+  "district": "Thành phố Thuận An",
+  "pid": "205",
+  "lat": 10.93476,
+  "lng": 106.70346,
+  "approx": true,
+  "address": "Ô 22, Lô LK-D - khu nhà ở 22 tháng 12, Phường Thuận Giao, Thành phố Thuận An, Tỉnh Bình Dương"
+ },
+ "23144000": {
+  "name": "(BVT) Xuyên Mộc",
+  "province": "Bà Rịa - Vũng Tàu",
+  "district": "Huyện Xuyên Mộc",
+  "pid": "206",
+  "lat": 10.6332,
+  "lng": 107.41838,
+  "approx": true,
+  "address": "Quốc Lộ 55, Xã Bông Trang, Huyện Xuyên Mộc, Tĩnh Bà Rịa Vũng Tàu"
+ },
+ "23127000": {
+  "name": "(HNO) KT Yên Nghĩa",
+  "province": "Hà Nội",
+  "district": "Quận Hà Đông",
+  "pid": "201",
+  "lat": 20.96006,
+  "lng": 105.75694,
+  "approx": true,
+  "address": "Yên Lộ, phường Yên Nghĩa, Quận Hà Đông, Hà Nội"
+ },
+ "23185000": {
+  "name": "(NAN) Diễn Châu",
+  "province": "Nghệ An",
+  "district": "Huyện Diễn Châu",
+  "pid": "235",
+  "lat": 19.03821,
+  "lng": 105.56322,
+  "approx": true,
+  "address": "Xã Diễn Phúc Huyện Diễn Châu Tỉnh Nghệ An"
+ },
+ "23173000": {
+  "name": "(THO) Hoa Lộc",
+  "province": "Thanh Hóa",
+  "district": "Thành phố Thanh Hóa",
+  "pid": "234",
+  "lat": 19.80365,
+  "lng": 105.78602,
+  "approx": true,
+  "address": "Tỉnh lộ 526 Thôn Nghĩa Trúc, Xã Hoa Lộc Tỉnh Thanh Hóa"
+ },
+ "23100000": {
+  "name": "(QTR) Quảng Trị",
+  "province": "Quảng Trị",
+  "district": "Thị xã Quảng Trị",
+  "pid": "238",
+  "lat": 16.69452,
+  "lng": 107.15167,
+  "approx": true,
+  "address": "09 Nguyễn Hoàng, Phường 1, Thị xã Quảng Trị, Tỉnh Quảng Trị"
+ },
+ "23201000": {
+  "name": "(HPH) Đông Hải 1",
+  "province": "Hải Phòng",
+  "district": "Quận Hải An",
+  "pid": "224",
+  "lat": 20.83065,
+  "lng": 106.74321,
+  "approx": true,
+  "address": "687 Nguyễn Bỉnh Khiêm, Phường Đông Hải 1, Quận Hải An, Thành phố Hải Phòng"
+ },
+ "23145000": {
+  "name": "(BVT) Hòa Hội",
+  "province": "Bà Rịa - Vũng Tàu",
+  "district": "Huyện Xuyên Mộc",
+  "pid": "206",
+  "lat": 10.6332,
+  "lng": 107.41838,
+  "approx": true,
+  "address": "Tĩnh Lộ 328, Âp 5, Xã Hòa Bình, Huyện Xuyên Mộc, Tĩnh Bà Rịa Vũng Tàu"
+ },
+ "23104000": {
+  "name": "(HNO) KD Hát Môn",
+  "province": "Hà Nội",
+  "district": "Huyện Phúc Thọ",
+  "pid": "201",
+  "lat": 21.1005,
+  "lng": 105.58022,
+  "approx": true,
+  "address": "Xã Hát Môn, Phúc Thọ, Hà Nội"
+ },
+ "23113000": {
+  "name": "(HNO) KT Gia Lâm",
+  "province": "Hà Nội",
+  "district": "Huyện Gia Lâm",
+  "pid": "201",
+  "lat": 21.03032,
+  "lng": 105.95044,
+  "approx": true,
+  "address": "Xã Dương Xá, Huyện Gia Lâm, Thành phố Hà Nội"
+ },
+ "23174000": {
+  "name": "(THO) Tĩnh Gia 1",
+  "province": "Thanh Hóa",
+  "district": "Thành phố Thanh Hóa",
+  "pid": "234",
+  "lat": 19.80365,
+  "lng": 105.78602,
+  "approx": true,
+  "address": "Ngô Chân Lưu, Xã Hải Hòa, Huyện Tĩnh Gia, Tỉnh Thanh Hóa"
+ },
+ "23124000": {
+  "name": "(TBI) Kiến Xương",
+  "province": "Thái Bình",
+  "district": "Huyện Kiến Xương",
+  "pid": "226",
+  "lat": 20.41223,
+  "lng": 106.4254,
+  "approx": true,
+  "address": "TDP Tân Tiến Trần Hưng Đạo, Thị trấn Thanh Nê, Huyện Kiến Xương, Tỉnh Thái Bình"
+ },
+ "23134000": {
+  "name": "(GLA) Phú Túc",
+  "province": "Gia Lai",
+  "district": "Huyện Krông Pa",
+  "pid": "207",
+  "lat": 13.25988,
+  "lng": 108.66828,
+  "approx": true,
+  "address": "06A Lê Hồng Phong, Thị Trấn Phú Túc, Huyện Krong Pa, Gia Lai"
+ },
+ "23166000": {
+  "name": "(BDU) KD Đông Hòa",
+  "province": "Bình Dương",
+  "district": "Thành phố Dĩ An",
+  "pid": "205",
+  "lat": 10.90704,
+  "lng": 106.78023,
+  "approx": true,
+  "address": "29 Võ Thị Sáu, Phường Đông Hòa, Thành phố Dĩ An, Bình Dương"
+ },
+ "23171000": {
+  "name": "(NAN) Hợp Minh",
+  "province": "Nghệ An",
+  "district": "Huyện Yên Thành",
+  "pid": "235",
+  "lat": 19.01479,
+  "lng": 105.457,
+  "approx": true,
+  "address": "Xóm 6, xã Bảo Thành, huyện Yên Thành, TỈnh Nghệ An"
+ },
+ "23205000": {
+  "name": "(DNO) Nhân Cơ 1",
+  "province": "Đắk Nông",
+  "district": "Huyện Đắk R lấp",
+  "pid": "241",
+  "lat": null,
+  "lng": null,
+  "approx": true,
+  "address": "Thôn 9 Quốc lộ 14, Xã Nhân Cơ, Huyện Đắk R'Lấp, Tỉnh Đăk Nông"
+ },
+ "23114000": {
+  "name": "(HNO) KD Việt Hưng",
+  "province": "Hà Nội",
+  "district": "Quận Long Biên",
+  "pid": "201",
+  "lat": 21.0323,
+  "lng": 105.89854,
+  "approx": true,
+  "address": "Số 16 ngõ 24 Lý Sơn, Phường Thượng Thanh, Long Biên, Hà Nội"
+ },
+ "23163000": {
+  "name": "(HNO) KD An Khánh",
+  "province": "Hà Nội",
+  "district": "Huyện Hoài Đức",
+  "pid": "201",
+  "lat": 21.02641,
+  "lng": 105.70328,
+  "approx": true,
+  "address": "110 Phố Đông, Xã An Khánh, Huyện Hoài Đức, Thành Phố Hà Nội"
+ },
+ "23189000": {
+  "name": "(LDO) D'Ran",
+  "province": "Lâm Đồng",
+  "district": "Huyện Đơn Dương",
+  "pid": "209",
+  "lat": 11.78432,
+  "lng": 108.55982,
+  "approx": true,
+  "address": "Quốc Lộ 27, Xã Lạc Xuân, Huyện Đơn Dương, Tỉnh Lâm Đồng"
+ },
+ "23106000": {
+  "name": "(HYE) KD Việt Tiến",
+  "province": "Hưng Yên",
+  "district": "Huyện Khoái Châu",
+  "pid": "268",
+  "lat": 20.83419,
+  "lng": 105.98525,
+  "approx": true,
+  "address": "Dân Tiến, huyện Khoái Châu, tỉnh Hưng Yên"
+ },
+ "23157000": {
+  "name": "(QNI) Vân Đồn 1",
+  "province": "Quảng Ninh",
+  "district": "Huyện Vân Đồn",
+  "pid": "230",
+  "lat": 21.16175,
+  "lng": 107.50632,
+  "approx": true,
+  "address": "Thôn 12, xã Hạ Long, Huyện Vân Đồn, Tỉnh Quảng Ninh"
+ },
+ "23148000": {
+  "name": "(THO) Công Chính",
+  "province": "Thanh Hóa",
+  "district": "Thành phố Thanh Hóa",
+  "pid": "234",
+  "lat": 19.80365,
+  "lng": 105.78602,
+  "approx": true,
+  "address": "Thôn Đạo Đức, Xã Công Chính, Tỉnh Thanh Hoá"
+ },
+ "22657002": {
+  "name": "(HYE) ĐL Đại Đồng",
+  "province": "Hưng Yên",
+  "district": "Thành phố Hưng Yên",
+  "pid": "268",
+  "lat": 20.66498,
+  "lng": 106.06826,
+  "approx": true,
+  "address": "Đại Đồng, Văn Lâm, Hưng Yên"
+ },
+ "23099000": {
+  "name": "(THO) Ngọc Sơn",
+  "province": "Thanh Hóa",
+  "district": "Thành phố Thanh Hóa",
+  "pid": "234",
+  "lat": 19.80365,
+  "lng": 105.78602,
+  "approx": true,
+  "address": "Xã Hải Châu, Tĩnh Gia, Thanh Hóa"
+ },
+ "23130000": {
+  "name": "(HNO) KT Chương Dương",
+  "province": "Hà Nội",
+  "district": "Huyện Thường Tín",
+  "pid": "201",
+  "lat": 20.84065,
+  "lng": 105.86688,
+  "approx": true,
+  "address": "Số 24, Đường Lê Lợi, Xã Chương Dương, Huyện Thường Tín, Hà Nội"
+ },
+ "23210000": {
+  "name": "(QNI) Bãi Cháy",
+  "province": "Quảng Ninh",
+  "district": "Thành phố Hạ Long",
+  "pid": "230",
+  "lat": 20.9764,
+  "lng": 107.04186,
+  "approx": true,
+  "address": "Phường Bãi Cháy, Tp Hạ Long, Tỉnh Quảng Ninh"
+ },
+ "23184000": {
+  "name": "(THO) Hoằng Tiến",
+  "province": "Thanh Hóa",
+  "district": "Thành phố Thanh Hóa",
+  "pid": "234",
+  "lat": 19.80365,
+  "lng": 105.78602,
+  "approx": true,
+  "address": "Đường 510 Thôn Kim Phú Xã Hoằng Tiến Thanh Hóa"
+ },
+ "23214000": {
+  "name": "(BPH) Lộc Quang",
+  "province": "Bình Phước",
+  "district": "Huyện Lộc Ninh",
+  "pid": "239",
+  "lat": 11.81336,
+  "lng": 106.55985,
+  "approx": true,
+  "address": "759B, Xã Lộc Hiệp, Huyện Lộc Ninh, Tỉnh Bình Phước"
+ },
+ "23193000": {
+  "name": "(QNI) Hồng Gai",
+  "province": "Quảng Ninh",
+  "district": "Thành phố Hạ Long",
+  "pid": "230",
+  "lat": 20.9764,
+  "lng": 107.04186,
+  "approx": true,
+  "address": "Phường Yết Kiêu thành phố Hạ Long, Quảng Ninh"
+ },
+ "23102000": {
+  "name": "(HNO) CK Giảng Võ",
+  "province": "Hà Nội",
+  "district": "Quận Ba Đình",
+  "pid": "201",
+  "lat": 21.0345,
+  "lng": 105.8257,
+  "approx": true,
+  "address": "24 Nguyễn Công Hoan, Ngọc Khánh, Ba Đình, Hà Nội"
+ },
+ "22859001": {
+  "name": "(KGI) ĐG Thổ Châu",
+  "province": "Kiên Giang",
+  "district": "Thành phố Phú Quốc",
+  "pid": "219",
+  "lat": 10.22864,
+  "lng": 103.98791,
+  "approx": true,
+  "address": "Ngã 3 Bãi Vòng 973, Xã Dương Tơ, Huyện Phú Quốc, Tỉnh Kiên Giang"
+ },
+ "23123000": {
+  "name": "(KHO) CK Bắc Nha Trang",
+  "province": "Khánh Hòa",
+  "district": "Thành phố Nha Trang",
+  "pid": "208",
+  "lat": 12.26437,
+  "lng": 109.17658,
+  "approx": true,
+  "address": "19 Sư Vạn Hạnh, Phường Vĩnh Hải, TP. Nha Trang, Khánh Hoà"
+ },
+ "23203000": {
+  "name": "(HPH) Lê Ích Mộc",
+  "province": "Hải Phòng",
+  "district": "Huyện Thủy Nguyên",
+  "pid": "224",
+  "lat": 20.94989,
+  "lng": 106.65,
+  "approx": true,
+  "address": "Đường 352, Xã Quảng Thanh, Huyện Thủy Nguyên, Thành phố Hải Phòng"
+ },
+ "23213000": {
+  "name": "(KHO) Nam Nha Trang",
+  "province": "Khánh Hòa",
+  "district": "Thành phố Nha Trang",
+  "pid": "208",
+  "lat": 12.26437,
+  "lng": 109.17658,
+  "approx": true,
+  "address": "Đại Lộ Nguyễn Tất Thành, Xã Phước Đồng, TP. Nha Trang, Tỉnh Khánh Hòa"
+ },
+ "23105000": {
+  "name": "(THO) KD Hoằng Lộc",
+  "province": "Thanh Hóa",
+  "district": "Huyện Hoằng Hóa",
+  "pid": "234",
+  "lat": 19.87617,
+  "lng": 105.84373,
+  "approx": true,
+  "address": "Đường Hoằng Lộc, Hoằng Hoá, Thanh Hoá"
+ },
+ "23180000": {
+  "name": "(THO) KD Triệu Sơn",
+  "province": "Thanh Hóa",
+  "district": "Huyện Triệu Sơn",
+  "pid": "234",
+  "lat": 19.80798,
+  "lng": 105.57291,
+  "approx": true,
+  "address": "43 Bà Triệu, Thị trấn Triệu Sơn, Huyện Triệu Sơn, Tỉnh Thanh Hóa"
+ },
+ "23208000": {
+  "name": "(BPH) Đồng Phú 1",
+  "province": "Bình Phước",
+  "district": "Huyện Đồng Phú",
+  "pid": "239",
+  "lat": 11.4829,
+  "lng": 106.94201,
+  "approx": true,
+  "address": "327 DT 741, Xã Tân Tiến, Huyện Đồng Phú, Tỉnh Bình Phước"
+ },
+ "23198000": {
+  "name": "(TBI) Thái Ninh",
+  "province": "Thái Bình",
+  "district": "Thành phố Thái Bình",
+  "pid": "226",
+  "lat": 20.45736,
+  "lng": 106.35032,
+  "approx": true,
+  "address": "Đường Tỉnh 459 Xã Thái Ninh Tỉnh Hưng Yên, Xã Thái Hưng, Huyện Thái Thụy, Tỉnh Thái Bình"
+ },
+ "23176000": {
+  "name": "(THO) Quan Sơn",
+  "province": "Thanh Hóa",
+  "district": "Thành phố Thanh Hóa",
+  "pid": "234",
+  "lat": 19.80365,
+  "lng": 105.78602,
+  "approx": true,
+  "address": "KP3 QL 217, Thị trấn Quan Sơn, Huyện Quan Sơn, Tỉnh Thanh Hóa"
+ },
+ "23157001": {
+  "name": "(QNI) Cô Tô 1",
+  "province": "Quảng Ninh",
+  "district": "Huyện Vân Đồn",
+  "pid": "230",
+  "lat": 21.16175,
+  "lng": 107.50632,
+  "approx": true,
+  "address": "Thôn 12, xã Hạ Long, Huyện Vân Đồn, Tỉnh Quảng Ninh"
+ },
+ "23135000": {
+  "name": "(YBA) Mù Cang Chải",
+  "province": "Yên Bái",
+  "district": "Huyện Mù Cang Chải",
+  "pid": "263",
+  "lat": 21.79055,
+  "lng": 104.16129,
+  "approx": true,
+  "address": "Đường Hoàng Liên, Thị Trấn Mù Cang Chải, Tỉnh Yên Bái"
+ },
+ "23162000": {
+  "name": "(HNO) KD Phú Lương",
+  "province": "Hà Nội",
+  "district": "Quận Hà Đông",
+  "pid": "201",
+  "lat": 20.96006,
+  "lng": 105.75694,
+  "approx": true,
+  "address": "38 Phố Xốm, Phường Phú Lương, Quận Hà Đông, Thành Phố Hà Nội"
+ },
+ "23165000": {
+  "name": "(VPH) KD Vĩnh Phúc",
+  "province": "Vĩnh Phúc",
+  "district": "Thành phố Vĩnh Yên",
+  "pid": "221",
+  "lat": 21.30049,
+  "lng": 105.58797,
+  "approx": true,
+  "address": "14 Tôn Đức Thắng, Phường Khai Quang, Thành phố Vĩnh Yên, Tỉnh Vĩnh Phúc"
+ },
+ "23161000": {
+  "name": "(HNO) KD Thanh Oai",
+  "province": "Hà Nội",
+  "district": "Huyện Thanh Oai",
+  "pid": "201",
+  "lat": 20.8548,
+  "lng": 105.78244,
+  "approx": true,
+  "address": "Số 2 Kim Lân, Thị trấn Kim Bài, Huyện Thanh Oai, Thành Phố Hà Nội"
+ },
+ "23149000": {
+  "name": "(HNO) KT Đông Ngạc",
+  "province": "Hà Nội",
+  "district": "Quận Bắc Từ Liêm",
+  "pid": "201",
+  "lat": 21.06488,
+  "lng": 105.76661,
+  "approx": true,
+  "address": "Số nhà 21, ngách 326/14 TDP Phú Minh, Phuòng Đông Ngạc, Thành phố Hà Nội"
+ },
+ "23151000": {
+  "name": "(NBI) KD Tam Điệp",
+  "province": "Ninh Bình",
+  "district": "Thành phố Ninh Bình",
+  "pid": "233",
+  "lat": 20.24592,
+  "lng": 105.96589,
+  "approx": true,
+  "address": "Số 12 Thanh Niên, Phường Bắc Sơn, Thành Phố Tam Điệp, Tỉnh Ninh Bình"
+ },
+ "23117000": {
+  "name": "(HNO) KD Vĩnh Tuy",
+  "province": "Hà Nội",
+  "district": "Quận Hai Bà Trưng",
+  "pid": "201",
+  "lat": 21.00071,
+  "lng": 105.86,
+  "approx": true,
+  "address": "279 Kim Ngưu, Phường Vĩnh Tuy, Quận Hai Bà Trưng, Hà Nội"
+ },
+ "23204000": {
+  "name": "(THO) Linh Sơn",
+  "province": "Thanh Hóa",
+  "district": "Huyện Lang Chánh",
+  "pid": "234",
+  "lat": 20.15105,
+  "lng": 105.13205,
+  "approx": true,
+  "address": "251 Mường Chính, Thị trấn Lang Chánh, Huyện Lang Chánh, Tỉnh Thanh Hóa"
+ },
+ "23153000": {
+  "name": "(HAG) Tân Quang",
+  "province": "Hà Giang",
+  "district": "Huyện Bắc Quang",
+  "pid": "227",
+  "lat": 22.36249,
+  "lng": 104.9017,
+  "approx": true,
+  "address": "Xuân Hòa, Xã Tân Quang, Huyện Bắc Quang, Tỉnh Hà Giang"
+ },
+ "23158000": {
+  "name": "(NBI) KD Đông Hoa Lư",
+  "province": "Ninh Bình",
+  "district": "Thành phố Ninh Bình",
+  "pid": "233",
+  "lat": 20.24592,
+  "lng": 105.96589,
+  "approx": true,
+  "address": "1328 Nguyễn Công Trứ, QL10, Xã Ninh Phúc, TP. Ninh Bình, Tỉnh Ninh Bình"
+ },
+ "23110000": {
+  "name": "Kho Giao Hàng Nặng - Hải Hậu - Nam Định",
+  "province": "Nam Định",
+  "district": "Thành phố Nam Định",
+  "pid": "231",
+  "lat": 20.41802,
+  "lng": 106.16893,
+  "approx": true,
+  "address": "xã Hải Trung, huyện Hải Hậu, tỉnh Nam Định"
+ },
+ "23200000": {
+  "name": "(HNO) KD Tùng Thiện",
+  "province": "Hà Nội",
+  "district": "Thị xã Sơn Tây",
+  "pid": "201",
+  "lat": 21.10047,
+  "lng": 105.47755,
+  "approx": true,
+  "address": "115 Thanh Vị, Xã Thanh Mỹ, Thị xã Sơn Tây, Thành phố Hà Nội"
+ },
+ "23111000": {
+  "name": "(NAN) KD Diễn Châu",
+  "province": "Nghệ An",
+  "district": "Huyện Diễn Châu",
+  "pid": "235",
+  "lat": 19.03821,
+  "lng": 105.56322,
+  "approx": true,
+  "address": "Xóm 8, Diễn Thành, Diễn Châu, Nghệ An"
+ },
+ "23186000": {
+  "name": "(VPH) KD Sơn Đông",
+  "province": "Vĩnh Phúc",
+  "district": "Huyện Lập Thạch",
+  "pid": "221",
+  "lat": 21.40777,
+  "lng": 105.48067,
+  "approx": true,
+  "address": "Thôn Lam Sơn, Xã Triệu Đề, Huyện Lập Thạch, Tỉnh Vĩnh Phúc"
+ },
+ "23215000": {
+  "name": "(NAN) Hoàng Mai",
+  "province": "Nghệ An",
+  "district": "Thị xã Hoàng Mai",
+  "pid": "235",
+  "lat": 19.26418,
+  "lng": 105.71078,
+  "approx": true,
+  "address": "Tân Phong, Phường Quỳnh Thiện, Thị xã Hoàng Mai, Tỉnh Nghệ An"
+ },
+ "23107000": {
+  "name": "Kho Giao Hàng Nặng - Lập Thạch - Vĩnh Phúc",
+  "province": "Vĩnh Phúc",
+  "district": "Huyện Lập Thạch",
+  "pid": "221",
+  "lat": 21.40777,
+  "lng": 105.48067,
+  "approx": true,
+  "address": "Thôn Long Cương, Xã Lập Thạch, Vĩnh Phú"
+ },
+ "23159000": {
+  "name": "(NBI) KD Yên Khánh",
+  "province": "Ninh Bình",
+  "district": "Huyện Yên Khánh",
+  "pid": "233",
+  "lat": 20.19881,
+  "lng": 106.06717,
+  "approx": true,
+  "address": "699 Lê Thánh Tông, Thị trấn Yên Ninh, Huyện Yên Khánh, Tỉnh Ninh Bình"
+ },
+ "23211000": {
+  "name": "(HNO) Kim Liên",
+  "province": "Hà Nội",
+  "district": "Quận Đống Đa",
+  "pid": "201",
+  "lat": 21.032,
+  "lng": 105.829,
+  "approx": true,
+  "address": "229 Tây Sơn, Kim Liên, Hà Nội"
+ },
+ "23177000": {
+  "name": "(HNO) KD Phú Thượng",
+  "province": "Hà Nội",
+  "district": "Quận Bắc Từ Liêm",
+  "pid": "201",
+  "lat": 21.06488,
+  "lng": 105.76661,
+  "approx": true,
+  "address": "639 Nguyễn Hoàng Tôn, Phường Xuân Đỉnh, Quận Bắc Từ Liêm, Thành phố Hà Nội"
+ },
+ "23108000": {
+  "name": "Kho Giao Hàng Nặng - Yên Khánh - Ninh Bình",
+  "province": "Ninh Bình",
+  "district": "Huyện Yên Khánh",
+  "pid": "233",
+  "lat": 20.19881,
+  "lng": 106.06717,
+  "approx": true,
+  "address": "Thôn Hạ Giá, Xã Khánh Cư, Huyện Yên Khánh, tỉnh Ninh Bình"
+ },
+ "23112000": {
+  "name": "(NAN) KD Thành Vinh",
+  "province": "Nghệ An",
+  "district": "Thành phố Vinh",
+  "pid": "235",
+  "lat": 18.70891,
+  "lng": 105.6882,
+  "approx": true,
+  "address": "167 Đường Đặng Thái Thân, Phường Cửa Nam, Thành phố Vinh, Nghệ An"
+ },
+ "22424002": {
+  "name": "(HNO) ĐL Thanh Liệt",
+  "province": "Hà Nội",
+  "district": "Huyện Thanh Trì",
+  "pid": "201",
+  "lat": 20.93663,
+  "lng": 105.8363,
+  "approx": true,
+  "address": "Đường Phạm Tu, Đối diện cổng viện K Tân Triều"
+ },
+ "23115000": {
+  "name": "(HNO) KD Thạch Thất",
+  "province": "Hà Nội",
+  "district": "Huyện Thạch Thất",
+  "pid": "201",
+  "lat": 21.01823,
+  "lng": 105.53934,
+  "approx": true,
+  "address": "143 ĐT419, Phú Kim, Thạch Thất, Hà Nội"
+ },
+ "23136000": {
+  "name": "(HNO) KD Phượng Dực",
+  "province": "Hà Nội",
+  "district": "Huyện Phú Xuyên",
+  "pid": "201",
+  "lat": 20.73678,
+  "lng": 105.89118,
+  "approx": true,
+  "address": "Thôn Cổ Hoàng, Xã Hoàng Long, Huyện Phú Xuyên, Hà Nội"
+ },
+ "23188000": {
+  "name": "(NAN) KD Đô Lương",
+  "province": "Nghệ An",
+  "district": "Huyện Đô Lương",
+  "pid": "235",
+  "lat": 18.90079,
+  "lng": 105.33682,
+  "approx": true,
+  "address": "Khu đô thị Cầu Dâu Quốc lộ 15, Thị trấn Đô Lương, Huyện Đô Lương, Tỉnh Nghệ An"
+ },
+ "23202000": {
+  "name": "(HNO) KD Mê Linh",
+  "province": "Hà Nội",
+  "district": "Huyện Mê Linh",
+  "pid": "201",
+  "lat": 21.19407,
+  "lng": 105.70396,
+  "approx": true,
+  "address": "Lô số 45 Khu nhà ở chia lô - biệt thự nhà vườn, Xã Tiền Phong, Huyện Mê Linh, Thành phố Hà Nội"
+ },
+ "23178000": {
+  "name": "(HNO) KD Ngọc Hà",
+  "province": "Hà Nội",
+  "district": "Quận Ba Đình",
+  "pid": "201",
+  "lat": 21.0345,
+  "lng": 105.8257,
+  "approx": true,
+  "address": "475 Đội Cấn, phường Vĩnh Phúc, Quận Ba Đình, Hà Nội"
+ },
+ "23191000": {
+  "name": "(HCM) KD Tân Mỹ",
+  "province": "Hồ Chí Minh",
+  "district": "Quận Tân Phú",
+  "pid": "202",
+  "lat": 10.7887,
+  "lng": 106.62655,
+  "approx": true,
+  "address": "12 Đường Số 14, Phường Tân Phú, Quận 7, Thành phố Hồ Chí Minh"
+ },
+ "23182000": {
+  "name": "(HCM) KT Nhà Bè",
+  "province": "Hồ Chí Minh",
+  "district": "Huyện Nhà Bè",
+  "pid": "202",
+  "lat": 10.64528,
+  "lng": 106.72632,
+  "approx": true,
+  "address": "2226 Huỳnh Tấn Phát, Xã Phú Xuân, Huyện Nhà Bè, Hồ Chí Minh"
+ },
+ "23187000": {
+  "name": "(NAN) KD Yên Thành",
+  "province": "Nghệ An",
+  "district": "Huyện Yên Thành",
+  "pid": "235",
+  "lat": 19.01479,
+  "lng": 105.457,
+  "approx": true,
+  "address": "Khối 3 Quốc lộ 7B, Thị trấn Yên Thành, Huyện Yên Thành, Tỉnh Nghệ An"
+ },
+ "23155000": {
+  "name": "(THN) CK Tích Lương",
+  "province": "Thái Nguyên",
+  "district": "Thành phố Thái Nguyên",
+  "pid": "244",
+  "lat": 21.56765,
+  "lng": 105.81683,
+  "approx": true,
+  "address": "Quốc lộ 3, Tổ 11, phường Tích Lương, tỉnh Thái Nguyên"
+ },
+ "22413002": {
+  "name": "(LAN) ĐL Đức Lập 1",
+  "province": "Long An",
+  "district": "Huyện Đức Hòa",
+  "pid": "211",
+  "lat": 10.88438,
+  "lng": 106.37242,
+  "approx": true,
+  "address": "Lô B124, Đường Số 7, KCN Thái Hòa, Ấp Tân Hòa, Xã Đức Lập Hạ, Huyện Đức Hòa, Tỉnh Long An"
+ },
+ "22619002": {
+  "name": "(HNO) ĐL Phúc Thịnh 1",
+  "province": "Hà Nội",
+  "district": "Huyện Đông Anh",
+  "pid": "201",
+  "lat": 21.15397,
+  "lng": 105.8444,
+  "approx": true,
+  "address": "Tổ 28 Thị Trấn Đông Anh, Huyện Đông Anh, Thành Phố Hà Nội"
+ },
+ "21381003": {
+  "name": "(HNO) ĐL An Khánh 2",
+  "province": "Hà Nội",
+  "district": "Huyện Hoài Đức",
+  "pid": "201",
+  "lat": 21.02641,
+  "lng": 105.70328,
+  "approx": true,
+  "address": "Cổng Chào Mộc Hoàn Giáo, Kho Tôn Có Biển Kho Ghế Mia, Xã Vân Côn, Huyện Hoài Đức, Hà Nội"
+ },
+ "23209000": {
+  "name": "(VPH) KD Tam Sơn",
+  "province": "Vĩnh Phúc",
+  "district": "Huyện Sông Lô",
+  "pid": "221",
+  "lat": 21.43066,
+  "lng": 105.40741,
+  "approx": true,
+  "address": "307B đường tỉnh, Thị trấn Tam Sơn, Huyện Sông Lô, Tỉnh Vĩnh Phúc"
+ },
+ "21381002": {
+  "name": "(HNO) ĐL An Khánh 1",
+  "province": "Hà Nội",
+  "district": "Huyện Hoài Đức",
+  "pid": "201",
+  "lat": 21.02641,
+  "lng": 105.70328,
+  "approx": true,
+  "address": "Đội 3 Quyết Tiến, Xã Vân Côn, Huyện Hoài Đức, Hà Nội"
+ },
+ "21099001": {
+  "name": "(HCM) ĐL Củ Chi 2",
+  "province": "Hồ Chí Minh",
+  "district": "Quận Tân Phú",
+  "pid": "202",
+  "lat": 10.7887,
+  "lng": 106.62655,
+  "approx": true,
+  "address": "Đường N7, Khu Công Nghiệp Tân Phú Trung, Xã Tân Phú Trung, Huyện Củ Chi, Thành phố Hồ Chí Minh"
+ },
+ "22975002": {
+  "name": "(HCM) ĐL Tân Vĩnh Lộc",
+  "province": "Hồ Chí Minh",
+  "district": "Huyện Bình Chánh",
+  "pid": "202",
+  "lat": 10.71155,
+  "lng": 106.60008,
+  "approx": true,
+  "address": "F4/46/1 Đường 6B Xã Vĩnh Lộc B Bình Chánh, Xã Vĩnh Lộc B, Huyện Bình Chánh, Hồ Chí Minh"
+ },
+ "21514001": {
+  "name": "(BDU) ĐL An Phú",
+  "province": "Bình Dương",
+  "district": "Thành phố Thuận An",
+  "pid": "205",
+  "lat": 10.93476,
+  "lng": 106.70346,
+  "approx": true,
+  "address": "Kho số 4 Phước Sơn, Số 207A/2 đường An Phú 21, tổ 2 khu phố 1B, phường An Phú, TP Thuận An, Bình Dương"
+ },
+ "21666001": {
+  "name": "(HCM) ĐL An Hội Đông",
+  "province": "Hồ Chí Minh",
+  "district": "Quận Gò Vấp",
+  "pid": "202",
+  "lat": 10.83435,
+  "lng": 106.67283,
+  "approx": true,
+  "address": "736/205 đường Lê Đức Thọ, Phường 15, Gò Vấp"
+ },
+ "22657000": {
+  "name": "(HYE) LH Xuân Trúc",
+  "province": "Hưng Yên",
+  "district": "Thành phố Hưng Yên",
+  "pid": "268",
+  "lat": 20.66498,
+  "lng": 106.06826,
+  "approx": true,
+  "address": "Khu công nghiệp số 3 Ecoland Hưng Yên, xã Xuân Trúc, huyện Ân Thi, tỉnh Hưng Yên"
+ },
+ "23142000": {
+  "name": "(LAN) LH Đức Lập",
+  "province": "Long An",
+  "district": "Huyện Đức Hòa",
+  "pid": "211",
+  "lat": 10.88438,
+  "lng": 106.37242,
+  "approx": true,
+  "address": "Kho số A03, Dự Án SLP Park Xuyên Á, tọa lạc tại Lô HH, Đường số 11 và Đường số 3, Khu Công Nghiệp Xuyên Á, Phường Mỹ Hạnh Bắc, Huyện Đức Hòa, Long An"
+ },
+ "22619001": {
+  "name": "(HNO) ĐL Phúc Thịnh",
+  "province": "Hà Nội",
+  "district": "Huyện Đông Anh",
+  "pid": "201",
+  "lat": 21.15397,
+  "lng": 105.8444,
+  "approx": true,
+  "address": "Thôn Vệ, Xã Nam Hồng, Huyện Đông Anh, Thành phố Hà Nội"
+ }
+}

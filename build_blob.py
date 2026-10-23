@@ -181,6 +181,17 @@ def build():
                     "did": wh.get(wid, {}).get("did", ""),
                     "lat": v.get("lat"), "lng": v.get("lng"),
                 })
+    added_path = os.path.join(DATA, "wh_added_2210.json")
+    if os.path.exists(added_path):
+        did_of = {(w["pname"], w["dname"]): w["did"] for w in wh.values() if w.get("did")}
+        n_add = 0
+        for k, v in json.load(open(added_path, encoding="utf-8")).items():
+            wid = int(k)
+            if wid in wh: continue
+            wh[wid] = {"name": v["name"], "pid": v.get("pid", ""), "pname": v["province"], "did": did_of.get((v["province"], v["district"]), ""),
+                       "dname": v["district"], "dept": "", "lat": v.get("lat"), "lng": v.get("lng"), "approx": True}
+            n_add += 1
+        print(f"  + {n_add} BC mới (wh_added_2210.json; toạ độ = tâm quận, ước tính)")
     print(f"  {len(wh)} BC trong danh mục")
 
     print("[2/6] Volume theo BC + owner (1626/2388) + hàng (T6 baseline) — lấy...")
@@ -189,30 +200,43 @@ def build():
     # hàng cho cả 2 kho tuỳ tuyến, không phải "BC này thuộc kho kia". Nên phải giữ
     # owner làm 1 chiều riêng, không được cộng gộp owner lại — nếu gộp sẽ mất khả
     # năng tính đúng % nhường của từng kho HCM01/HCM20.
-    df_from = pd.read_excel(VOL_FROM, header=1)
-    df_from["pick_warehouse_id"] = pd.to_numeric(df_from["pick_warehouse_id"], errors="coerce").astype("Int64")
-    vol_lay = {}
-    for (wid, owner, svc), g in df_from.groupby(["pick_warehouse_id", "warehouse_id", "service"]):
-        if pd.isna(wid):
-            continue
-        vol_lay.setdefault(int(wid), {}).setdefault(str(int(owner)), {})[svc] = {
-            "vol": int(g["total_vol"].sum()), "kl": int(g["total_kl"].sum())}
+    base_path = os.path.join(DATA, "vol_base.csv")
+    if os.path.exists(base_path):
+        vb = pd.read_csv(base_path)
+        print(f"  Nền volume: {base_path} ({vb.period_start.iloc[0]} → {vb.period_end.iloc[0]}, {int(vb.days.iloc[0])} ngày, {len(vb)} dòng) thay cho T6")
+        vols = {"lấy": {}, "giao": {}}
+        for _, r in vb.iterrows():
+            vols[r.chieu].setdefault(int(r.bc_id), {}).setdefault(str(int(r.owner)), {})[r.service] = {"vol": int(r.don), "kl": int(round(r.kg * 1000))}
+        vol_lay, vol_giao = vols["lấy"], vols["giao"]
+        lay = vb[vb.chieu == "lấy"]
+        totals = {str(w): {"vol": int(lay[lay.owner == w].don.sum()), "kl": int(round(lay[lay.owner == w].kg.sum() * 1000))} for w in (1626, 2388)}
+    else:
+        vol_lay = vol_giao = totals = None
+    if vol_lay is None:
+      df_from = pd.read_excel(VOL_FROM, header=1)
+      df_from["pick_warehouse_id"] = pd.to_numeric(df_from["pick_warehouse_id"], errors="coerce").astype("Int64")
+      vol_lay = {}
+      for (wid, owner, svc), g in df_from.groupby(["pick_warehouse_id", "warehouse_id", "service"]):
+          if pd.isna(wid):
+              continue
+          vol_lay.setdefault(int(wid), {}).setdefault(str(int(owner)), {})[svc] = {
+              "vol": int(g["total_vol"].sum()), "kl": int(g["total_kl"].sum())}
 
-    print("[3/6] Volume theo BC + owner + hàng (T6 baseline) — giao...")
-    df_to = pd.read_csv(VOL_TO)
-    df_to["deliver_warehouse_id"] = pd.to_numeric(df_to["deliver_warehouse_id"], errors="coerce").astype("Int64")
-    vol_giao = {}
-    for (wid, owner, svc), g in df_to.groupby(["deliver_warehouse_id", "warehouse_id", "service"]):
-        if pd.isna(wid):
-            continue
-        vol_giao.setdefault(int(wid), {}).setdefault(str(int(owner)), {})[svc] = {
-            "vol": int(g["total_vol"].sum()), "kl": int(g["total_kl"].sum())}
+      print("[3/6] Volume theo BC + owner + hàng (T6 baseline) — giao...")
+      df_to = pd.read_csv(VOL_TO)
+      df_to["deliver_warehouse_id"] = pd.to_numeric(df_to["deliver_warehouse_id"], errors="coerce").astype("Int64")
+      vol_giao = {}
+      for (wid, owner, svc), g in df_to.groupby(["deliver_warehouse_id", "warehouse_id", "service"]):
+          if pd.isna(wid):
+              continue
+          vol_giao.setdefault(int(wid), {}).setdefault(str(int(owner)), {})[svc] = {
+              "vol": int(g["total_vol"].sum()), "kl": int(g["total_kl"].sum())}
 
-    totals = {
-        str(w): {"vol": int(df_from[df_from["warehouse_id"] == w]["total_vol"].sum()),
-                 "kl": int(df_from[df_from["warehouse_id"] == w]["total_kl"].sum())}
-        for w in (1626, 2388)
-    }
+      totals = {
+          str(w): {"vol": int(df_from[df_from["warehouse_id"] == w]["total_vol"].sum()),
+                   "kl": int(df_from[df_from["warehouse_id"] == w]["total_kl"].sum())}
+          for w in (1626, 2388)
+      }
 
     print("[4/6] Default rules từ config_v3.csv (BC-level, hàng=Cả hai, cumulative T10->T11->T12)...")
     t10 = parse_config_from_csv(CFG_CSV, 0, 1); t10["lấy"].discard(1327)
