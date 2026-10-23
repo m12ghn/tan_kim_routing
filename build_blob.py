@@ -42,6 +42,9 @@ def parse_config_from_csv(path, tc, ic):
     return o
 
 # Các quận/huyện không có BC trong dim_warehouse (đảo, huyện mới...) nên không suy ra được tên có dấu -> ghi tay.
+# Sửa nhãn polygon bị gán nhầm do trùng tên không dấu (ưu tiên cao nhất)
+ADM2_VN_FIX = {"Huyen Hong Ngu": "Huyện Hồng Ngự"}
+
 ADM2_VN_OVERRIDE = {
     "Ba To": "Huyện Ba Tơ", "Bac Ai": "Huyện Bác Ái", "Bach Long Vi": "Huyện Bạch Long Vĩ",
     "Buon Don": "Huyện Buôn Đôn", "Cat Hai": "Huyện Cát Hải", "Co To": "Huyện Cô Tô",
@@ -114,7 +117,9 @@ def label_adm2(adm2, wh):
                 if x0 <= x <= x1 and y0 <= y <= y1 and _inside(x, y, ring):
                     cnt[dn] += 1
         cand = [dn for dn, _ in cnt.most_common() if _strip(dn) == key]
-        if cand:
+        if f["properties"]["name"] in ADM2_VN_FIX:
+            f["properties"]["vn"] = ADM2_VN_FIX[f["properties"]["name"]]; n_name += 1
+        elif cand:
             f["properties"]["vn"] = cand[0]; n_pip += 1
         elif len(by_name.get(key, ())) == 1:
             f["properties"]["vn"] = next(iter(by_name[key])); n_name += 1

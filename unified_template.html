@@ -1337,10 +1337,10 @@
   function fmtKm(x){ return (x<10 ? x.toFixed(1) : Math.round(x)).toString().replace('.',','); }
 
   // ---------- nút thu gọn/mở rộng 2 khung menu trên bản đồ ----------
-  (function(){
+  function pnlCollapsible(list){
     var KEY = 'tk_map_panels_collapsed_v1', state = {};
     try{ state = JSON.parse(localStorage.getItem(KEY)||'{}') || {}; }catch(e){ state = {}; }
-    [mpanel, mstats].forEach(function(el){
+    list.forEach(function(el){
       L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el);
       var btn = document.createElement('button');
       btn.type = 'button'; btn.className = 'pnl-toggle';
@@ -1357,7 +1357,8 @@
       });
       el.appendChild(btn); apply();
     });
-  })();
+  }
+  pnlCollapsible([mpanel, mstats]);
 
   // ---------- các kho đánh dấu cố định (luôn hiện, không phụ thuộc bộ tuyến); toạ độ lấy từ dim_warehouse ----------
   var KHO_MARKERS = [
@@ -2301,7 +2302,7 @@
       '<div class="hk"><input type="checkbox" id="zDistName" checked> Tên quận/huyện <span style="color:#8aa0b4;font-size:11px">(zoom gần)</span></div>';
     var zs = document.createElement('div'); zs.className = 'pnl'; zs.id = 'zstats'; zs.innerHTML = '<h3>📊 Tổng theo kho</h3><div id="zstbody"></div>';
     document.getElementById('zmap').appendChild(zp); document.getElementById('zmap').appendChild(zs);
-    [zp, zs].forEach(function(el){ L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el); });
+    pnlCollapsible([zp, zs]);
     function seg(id, key){ document.getElementById(id).addEventListener('click', function(e){
       var b = e.target.closest('button'); if(!b) return; zstate[key] = b.dataset.v;
       this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('active', x===b); }); renderZone(); }); }
@@ -2325,7 +2326,7 @@
     if(zLine){ if(plan){ if(!zmap.hasLayer(zLine)) zLine.addTo(zmap); } else if(zmap.hasLayer(zLine)) zmap.removeLayer(zLine); }
     function tipOf(title, a, k, note){
       var sum = a['1626']+a['2388']+a.TK;
-      return '<b>'+title+'</b>'+(note||'')+'<br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
+      return '<b>'+title+'</b>'+(note||'')+(zstate.chieu==='both' ? '<br><span style="color:#8aa0b4">lấy + giao cộng dồn, trung bình/ngày</span>' : '')+'<br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
         return '<span style="color:'+ZCOL[x]+'">■</span> '+ZNAME[x]+': '+fmt(a[x])+' đơn/ngày ('+Math.round(a[x]/sum*100)+'%) · '+fmt(k ? k[x] : 0)+' kg/ngày';
       }).join('<br>');
     }
@@ -2339,9 +2340,7 @@
       if(plan && SPLIT_I[i]){ l.setStyle({fillOpacity:0}); return; }   // vẽ bằng 2 nửa Bắc/Nam bên dưới
       l.setStyle({fillColor:ZCOL[best], fillOpacity: Math.min(.92, .3 + .62*share)});
       var cv = r.vol.cover[i];
-      zTip[i] = '<b>'+(f.properties.vn || f.properties.name)+'</b>'+(cv ? '<br><span style="color:#8aa0b4">không có BC đặt tại đây · do '+cv.map(function(w){ return (WH[w]||{}).name || w; }).join(', ')+' phục vụ (số dưới là của BC đó)</span>' : '')+'<br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
-        return '<span style="color:'+ZCOL[x]+'">■</span> '+ZNAME[x]+': '+fmt(a[x])+' đơn/ngày ('+Math.round(a[x]/sum*100)+'%) · '+fmt(k ? k[x] : 0)+' kg/ngày';
-      }).join('<br>');
+      zTip[i] = tipOf(f.properties.vn || f.properties.name, a, k, cv ? '<br><span style="color:#8aa0b4">không có BC đặt tại đây · do '+cv.map(function(w){ return (WH[w]||{}).name || w; }).join(', ')+' phục vụ (số dưới là của BC đó)</span>' : '');
     });
     if(plan && zHalf){
       zHalf.eachLayer(function(l){
@@ -2353,8 +2352,15 @@
         zTip[hk] = tipOf(name, a, r.kl.byHalf[hk]);
       });
     }
-    var t = r.vol.tot, tk = r.kl.tot;
-    document.getElementById('zstbody').innerHTML = '<div style="color:#8aa0b4;font-size:11px;margin-bottom:6px">'+currentMonth+' · '+(zstate.when==='after'?'sau (có Tân Kim)':'trước')+' · chiều '+(zstate.chieu==='both'?'lấy + giao':zstate.chieu)+' · trung bình/ngày</div>'+
+    var t = r.vol.tot, tk = r.kl.tot, note;
+    if(zstate.chieu === 'both'){
+      // cả hai chiều: lấy số KPI (lấy ∪ giao, mỗi đơn tính 1 lần), không cộng dồn 2 chiều
+      var D = DAYS[currentMonth], ka = computeAll(currentMonth), a1 = ka['1626'], a2 = ka['2388'], af = zstate.when==='after';
+      t = {'1626': (af ? a1.vol.after : a1.vol.before)/D, '2388': (af ? a2.vol.after : a2.vol.before)/D, 'TK': af ? (a1.vol.shifted + a2.vol.shifted)/D : 0};
+      tk = {'1626': (af ? a1.w_nhap.after : a1.w_nhap.before)/D, '2388': (af ? a2.w_nhap.after : a2.w_nhap.before)/D, 'TK': af ? (a1.w_nhap.shifted + a2.w_nhap.shifted)/D : 0};
+      note = 'lấy ∪ giao, mỗi đơn tính 1 lần (khớp KPI tab Cấu hình)';
+    } else note = 'chỉ chiều '+zstate.chieu+' (khớp flow chart chiều '+zstate.chieu+')';
+    document.getElementById('zstbody').innerHTML = '<div style="color:#8aa0b4;font-size:11px;margin-bottom:6px">'+currentMonth+' · '+(zstate.when==='after'?'sau (có Tân Kim)':'trước')+' · trung bình/ngày · '+note+'</div>'+
       keys.map(function(x){ return '<div style="margin:6px 0"><span style="color:'+ZCOL[x]+'">■</span> <b>'+ZNAME[x]+'</b><div style="margin-left:16px;font:12px JetBrains Mono,monospace">'+fmt(t[x])+' đơn · '+fmt(tk[x])+' kg<br><span style="color:#8aa0b4">'+cnt[x]+' quận/huyện</span></div></div>'; }).join('');
   }
   function renderZoneIfVisible(){ if(zmap && !document.getElementById('panel-zone').hidden) renderZone(); }
