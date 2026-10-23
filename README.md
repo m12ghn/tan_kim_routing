@@ -84,7 +84,7 @@ Nút "Xuất luật mới để lưu Sheet" hiện chỉ xuất text để copy 
 
 ## Kế hoạch 2027 (05/27 → 12/27)
 
-`data/plan_2027.json` + `data/aop_2027.csv` (AOP gốc 2027 của HCM01/HCM20, sheet Topline). `build_blob.py` thêm 8 tháng `05/27`…`12/27`:
+`data/plan_2027.json` + `data/aop_2027.csv` (AOP gốc 2027 của HCM01/HCM20, Topline 2027 Inbound & Sort V2 — CAP 22/10/2026). `build_blob.py` thêm 8 tháng `05/27`…`12/27`:
 - Scope mặc định = scope T12 (config_v3) + toàn bộ BC các tỉnh miền Tây (không gồm Long An; có Bến Tre, Tiền Giang) + BC phía nam TP.HCM và Long An (đường thẳng nối kho Sóng Thần – Tân Tạo kéo dài; phía chứa Tân Kim = Nam; BC phía bắc ở lại HCM01). HCM01 chuyển các BC trong scope sang Tân Kim (hệ số 1, tỷ trọng T6).
 - HCM20 chuyển 100%: BC phía bắc TP.HCM về HCM01, phần còn lại sang Tân Kim. Bỏ qua các % trong sheet.
 - w_4t 2027 = w_nhap × tỷ lệ w_4t/w_nhap của T12/2026 (sheet không có w_4t).
