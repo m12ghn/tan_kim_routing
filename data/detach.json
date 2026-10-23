@@ -1,0 +1,4 @@
+{
+  "_ghi_chu": "Tách tuyến abnormal: với mỗi BC × chiều, nếu phần đi qua kho phụ (1626/2388) < min_share tổng của BC thì coi là đi nhầm và gộp về kho chính.",
+  "min_share": 0.05
+}

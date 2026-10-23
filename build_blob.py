@@ -212,9 +212,29 @@ def build():
         vols = {"lấy": {}, "giao": {}}
         for _, r in vb.iterrows():
             vols[r.chieu].setdefault(int(r.bc_id), {}).setdefault(str(int(r.owner)), {})[r.service] = {"vol": int(r.don), "kl": int(round(r.kg * 1000))}
+        # Tách tuyến abnormal (data/detach.json): kho phụ của BC chiếm < min_share -> gộp về kho chính
+        det_path = os.path.join(DATA, "detach.json")
+        detached = []
+        if os.path.exists(det_path):
+            th = float(json.load(open(det_path, encoding="utf-8")).get("min_share", 0))
+            for ch, vmap in vols.items():
+                for wid, ow in vmap.items():
+                    if len(ow) < 2: continue
+                    tot_o = {o: sum(v["vol"] for v in e.values()) for o, e in ow.items()}
+                    t = sum(tot_o.values())
+                    minor = min(tot_o, key=tot_o.get); major = max(tot_o, key=tot_o.get)
+                    if t and minor != major and tot_o[minor] / t < th:
+                        for sv, v in ow[minor].items():
+                            d = ow[major].setdefault(sv, {"vol": 0, "kl": 0}); d["vol"] += v["vol"]; d["kl"] += v["kl"]
+                        detached.append((ch, wid, minor, major, tot_o[minor], tot_o[minor] / t))
+                        del ow[minor]
+            print(f"  detach: {len(detached)} tuyến BC×kho (<{th:.0%}) gộp về kho chính, {sum(x[4] for x in detached)/int(vb.days.iloc[0]):.0f} đơn/ngày")
+            with open(os.path.join(DATA, "detached_routes.csv"), "w", encoding="utf-8") as f:
+                f.write("chieu,bc_id,kho_phu,kho_chinh,don_ca_ky,ty_le\n")
+                for x in sorted(detached): f.write(f"{x[0]},{x[1]},{x[2]},{x[3]},{x[4]},{x[5]:.4f}\n")
         vol_lay, vol_giao = vols["lấy"], vols["giao"]
-        lay = vb[vb.chieu == "lấy"]
-        totals = {str(w): {"vol": int(lay[lay.owner == w].don.sum()), "kl": int(round(lay[lay.owner == w].kg.sum() * 1000))} for w in (1626, 2388)}
+        totals = {o: {"vol": sum(e.get(o, {}).get(sv, {}).get("vol", 0) for e in vol_lay.values() for sv in ("Normal", "Bulky")),
+                      "kl": sum(e.get(o, {}).get(sv, {}).get("kl", 0) for e in vol_lay.values() for sv in ("Normal", "Bulky"))} for o in ("1626", "2388")}
     else:
         vol_lay = vol_giao = totals = None
     if vol_lay is None:
