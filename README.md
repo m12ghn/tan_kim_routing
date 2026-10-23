@@ -88,3 +88,7 @@ Nút "Xuất luật mới để lưu Sheet" hiện chỉ xuất text để copy 
 - Scope mặc định = scope T12 (config_v3) + toàn bộ BC các tỉnh miền Tây (không gồm Long An; có Bến Tre, Tiền Giang) + BC phía nam TP.HCM (đường thẳng nối kho Sóng Thần – Tân Tạo; phía chứa Tân Kim = Nam). HCM01 chuyển các BC trong scope sang Tân Kim (hệ số 1, tỷ trọng T6).
 - HCM20 chuyển 100%: BC phía bắc TP.HCM về HCM01, phần còn lại sang Tân Kim. Bỏ qua các % trong sheet.
 - w_4t 2027 = w_nhap × tỷ lệ w_4t/w_nhap của T12/2026 (sheet không có w_4t).
+
+## AOP T11/T12 theo KA v3
+
+`data/aop_T11_T12_KA_v3.csv` (file KTC nhập T10–T12 KA v3; vol = đơn, kg = weight nhập, tổng 3 tầng) thay nền AOP T11/T12 của HCM01/HCM20 trong `build_blob.py`. % nhường của AOP Sheet được giữ nguyên (scale cả `after`), w_4t đổi cùng tỷ lệ với w_nhap. T10 chưa đổi.
