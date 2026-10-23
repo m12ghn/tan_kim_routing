@@ -1,0 +1,4 @@
+{
+  "_ghi_chu": "Quận/huyện không có BC đặt trong ranh giới nhưng do BC khác phục vụ. Khoá = warehouse_id BC; giá trị = danh sách 'Tên quận có dấu|Tỉnh'. Bản đồ khoanh vùng tô các quận này theo kho của BC phục vụ.",
+  "22912000": ["Huyện Mộc Hóa|Long An"]
+}
