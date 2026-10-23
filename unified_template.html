@@ -171,7 +171,7 @@
 
   .map-embed{ background:#0a1614; border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);
     overflow:hidden; height:78vh; min-height:560px; position:relative; }
-  #tkmap{ position:absolute; inset:0; }
+  #tkmap, #zmap{ position:absolute; inset:0; }
   .flow-ctrl{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:14px; }
   .flow-ctrl .grp{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--text-secondary); }
   .flow-ctrl .seg{ display:flex; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:2px; }
@@ -232,6 +232,9 @@
    padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.5);font-size:13px;color:#cdd9e5;max-height:94%;overflow:auto}
   #mpanel{left:10px;width:250px}
   #mstats{right:10px;width:260px}
+  #zpanel{left:10px;width:250px} #zstats{right:10px;width:270px}
+  .zlg{ display:flex; align-items:center; gap:8px; margin:3px 0; font-size:12px; color:#cdd9e5; } .zlg i{ width:14px; height:14px; border-radius:3px; display:inline-block; }
+  .zseg{ display:flex; gap:4px; margin:3px 0 6px; } .zseg button{ flex:1; padding:5px 4px; border:1px solid #2d5047; border-radius:6px; background:#11251f; color:#cdd9e5; font-size:12px; cursor:pointer; font-family:inherit; } .zseg button.active{ background:#25c2a0; color:#06130f; border-color:#25c2a0; font-weight:700; }
   .mlbl{ background:none; border:none; box-shadow:none; pointer-events:none; white-space:nowrap; text-align:center; transform:translate(-50%,-50%);
     font-family:'Be Vietnam Pro',sans-serif; text-shadow:0 0 3px #0a1614,0 0 3px #0a1614,0 0 5px #0a1614; }
   .mlbl-p{ color:#d8f3ec; font-size:12.5px; font-weight:700; letter-spacing:.02em; }
@@ -327,6 +330,7 @@
       <button class="view-tab" id="tab-btn-sim" role="tab" aria-selected="true">Cấu hình &amp; mô phỏng</button>
       <button class="view-tab" id="tab-btn-map" role="tab" aria-selected="false">Bản đồ mạng lưới (live)</button>
       <button class="view-tab" id="tab-btn-flow" role="tab" aria-selected="false">Phân bổ luồng hàng</button>
+      <button class="view-tab" id="tab-btn-zone" role="tab" aria-selected="false">Bản đồ khoanh vùng</button>
     </div>
     <div class="month-wrap" title="Tháng đang xem — áp dụng cho cả 3 tab"><button type="button" class="logbtn" id="btn-log" title="Xem nhật ký: giờ nào, thay đổi gì">🕘 Nhật ký thay đổi</button><span class="month-lbl">Tháng</span><div class="month-group" id="month-group"></div></div>
   </div>
@@ -431,6 +435,17 @@
       </div>
       <div class="map-embed"><div id="tkmap"></div></div>
       <p class="map-note">Đổi tuyến ở tab "Cấu hình &amp; mô phỏng" rồi quay lại tab này — bản đồ vẽ lại ngay theo đúng bộ tuyến mới, không còn là ảnh chụp tĩnh tách rời như trước.</p>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-zone" hidden>
+    <section>
+      <div class="section-head">
+        <h2>Bản đồ khoanh vùng — HCM01 · HCM20 · Tân Kim</h2>
+        <span class="hint">Mỗi quận/huyện tô màu theo kho quản nhiều hàng nhất · theo tháng đang chọn ở trên cùng</span>
+      </div>
+      <div class="map-embed"><div id="zmap"></div></div>
+      <p class="map-note">Vùng = quận/huyện (BC nằm trong ranh giới nào thì tính vào quận đó). Màu = kho nhận nhiều hàng nhất của quận (đơn/ngày, tổng chiều lấy + giao nếu chọn "Cả hai"); màu càng đậm thì kho đó càng chiếm ưu thế. Rê chuột vào vùng để xem tỷ lệ từng kho. Chấm vàng ◆ = các KTC/KCT. Quận chưa có BC trong dữ liệu để xám.</p>
     </section>
   </div>
 
@@ -1254,7 +1269,7 @@
             .replace(/^Quận\s+/,'Q. ').replace(/^Thành phố\s+/,'TP. ').replace(/^Thị [xX]ã\s+/,'TX. ').replace(/^Thị trấn\s+/,'TT. ').replace(/^Huyện\s+/,'');
   }
   // Bộ nhãn có tránh đè: ưu tiên polygon lớn hơn, nhãn nào chạm nhãn đã đặt thì bỏ (tự hiện thêm khi zoom gần hơn)
-  function makeLabelSet(fc, cls, textOf, charW, lineH){
+  function makeLabelSet(fc, cls, textOf, charW, lineH, mo){
     var items = [];
     fc.features.forEach(function(f){
       var c = featureCenter(f.geometry); if(!c) return;
@@ -1266,7 +1281,7 @@
       group.clearLayers();
       var placed = [];
       items.forEach(function(it){
-        var pt = map.latLngToLayerPoint([it.lat,it.lng]), w = it.text.length*charW+6, h = lineH;
+        var pt = (mo||map).latLngToLayerPoint([it.lat,it.lng]), w = it.text.length*charW+6, h = lineH;
         var r = {x0:pt.x-w/2, x1:pt.x+w/2, y0:pt.y-h/2, y1:pt.y+h/2};
         for(var i=0;i<placed.length;i++){ var q=placed[i]; if(r.x0<q.x1 && r.x1>q.x0 && r.y0<q.y1 && r.y1>q.y0) return; }
         placed.push(r);
@@ -1477,7 +1492,7 @@
     if(topProv.length){ s += '<div class="sec">Top tỉnh (số BC)</div>'; topProv.forEach(function(p){ s+='<div class="row"><span class="l">'+p[0]+'</span><span class="v">'+p[1]+'</span></div>'; }); }
     document.getElementById('mstbody').innerHTML = s;
   }
-  function syncMap(){ mRefreshOptions(); renderMap(); if(typeof renderFlow==='function') renderFlow(); }
+  function syncMap(){ mRefreshOptions(); renderMap(); if(typeof renderFlow==='function') renderFlow(); if(typeof renderZoneIfVisible==='function') renderZoneIfVisible(); }
   document.getElementById('mfProv').addEventListener('change', function(e){ mstate.prov=e.target.value; mstate.dist=''; mstate.bc=''; mRefreshOptions(); renderMap(); });
   document.getElementById('mfDist').addEventListener('change', function(e){ mstate.dist=e.target.value; mstate.bc=''; mRefreshOptions(); renderMap(); });
   document.getElementById('mfBC').addEventListener('change', function(e){ mstate.bc=e.target.value; renderMap();
@@ -2183,23 +2198,146 @@
   });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !document.getElementById('log-drawer').hidden) logToggle(false); });
 
+
+  // ---------- bản đồ khoanh vùng: quận/huyện tô màu theo kho quản (HCM01 / HCM20 / Tân Kim) ----------
+  var BC_DIST = DATA.bcDist || {};
+  var ZCOL = {'1626':'#3987e5', '2388':'#19c98a', 'TK':'#e8672f'}, ZNAME = {'1626':'HCM01', '2388':'HCM20', 'TK':'Tân Kim'};
+  var zmap = null, zDist = null, zKho = null, zProvSet = null, zDistSet = null, zTip = {}, zstate = {when:'after', chieu:'both'};
+  // Phân bổ lượng hàng của từng BC cho 3 kho (theo cùng cơ sở với KPI / flow chart / bản đồ mũi tên); after=false: chưa có Tân Kim
+  function zoneAllocChieu(month, chieu, m, cal, after, out){
+    var scope = scopeFor(month, chieu), volSrc = chieu==='lấy' ? VOL_LAY : VOL_GIAO;
+    var ctx = distCtx(month, chieu, m, scope, volSrc, cal), wids = Object.keys(volSrc);
+    if(ACTUAL[month] && ACTUAL[month][chieu]) Object.keys(ACTUAL[month][chieu]).forEach(function(x){ if(!volSrc[x]) wids.push(x); });
+    wids.forEach(function(wid){
+      var h = scope[wid], act = h ? ctx.act(wid) : null;
+      OWNERS.forEach(function(o){
+        var e = (volSrc[wid] && volSrc[wid][o]) || (act ? {} : null); if(!e) return;
+        var c = cal[o+'|'+m], d = out[wid] || (out[wid] = {'1626':0, '2388':0, 'TK':0});
+        ['Normal','Bulky'].forEach(function(sv){
+          var v = e[sv] || ((act && act[o] && act[o][sv]) ? {vol:0, kl:0} : null); if(!v) return;
+          var t6 = m==='vol' ? v.vol : v.kl, total = c.tot ? t6 / c.tot * c.B : 0;
+          if(!after){ d[o] += total; return; }
+          if(planFull(month, o)){ if(PLAN_NORTH[wid]) d['1626'] += total; else d.TK += total; return; }
+          var moved = h && (h==='Cả hai' || h===sv);
+          var tk = !moved ? 0 : (act ? ((act[o] && act[o][sv]) || 0) : (ctx.movedNA[o] ? Math.min(total, t6 / ctx.movedNA[o] * ctx.tkcNA[o]) : 0));
+          if(tk > total) total = tk;
+          d[o] += total - tk; d.TK += tk;
+        });
+      });
+    });
+  }
+  function zoneCompute(){
+    var month = currentMonth, cal = calibFor(month), after = zstate.when==='after', res = {};
+    ['vol','kl'].forEach(function(m){
+      var per = {};
+      if(zstate.chieu !== 'giao') zoneAllocChieu(month, 'lấy', m, cal, after, per);
+      if(zstate.chieu !== 'lấy') zoneAllocChieu(month, 'giao', m, cal, after, per);
+      var byDist = {}, tot = {'1626':0, '2388':0, 'TK':0};
+      Object.keys(per).forEach(function(wid){
+        var d = per[wid];
+        ['1626','2388','TK'].forEach(function(k){ tot[k] += d[k]; });
+        var di = BC_DIST[wid]; if(di === undefined) return;
+        var a = byDist[di] || (byDist[di] = {'1626':0, '2388':0, 'TK':0});
+        ['1626','2388','TK'].forEach(function(k){ a[k] += d[k]; });
+      });
+      res[m] = {byDist:byDist, tot:tot};
+    });
+    return res;
+  }
+  function initZone(){
+    zmap = L.map('zmap', {preferCanvas:true, attributionControl:false, zoomControl:false, minZoom:5, maxZoom:14}).setView([12.2,107.3], 7);
+    L.control.zoom({position:'bottomright'}).addTo(zmap);
+    var idx = 0;
+    zDist = L.geoJSON(DATA.adm2, {
+      style:{color:DIST_LINE, weight:.7, opacity:.6, fill:true, fillColor:'#1b2f2a', fillOpacity:.92},
+      onEachFeature:function(f, layer){
+        layer._zi = idx++;
+        layer.bindTooltip(function(){ return zTip[layer._zi] || (f.properties.vn || f.properties.name) + '<br><span style="color:#8aa0b4">chưa có BC trong dữ liệu</span>'; }, {sticky:true, className:'rt'});
+      }
+    }).addTo(zmap);
+    zmap.on('zoomend', function(){ var z = zmap.getZoom(); zDist.setStyle({weight: z>=10 ? 1.4 : (z>=8 ? 1 : .6)}); });
+    L.geoJSON(DATA.prov, {interactive:false, style:{color:'#8fd4c4', weight:2.2, opacity:.95, fill:false}}).addTo(zmap);
+    zProvSet = makeLabelSet(DATA.prov, 'mlbl-p', function(f){ return shortAdm(f.properties.name); }, 7.4, 16, zmap);
+    zDistSet = makeLabelSet(DATA.adm2, 'mlbl-d', function(f){ return shortAdm(f.properties.vn || f.properties.name); }, 6.2, 14, zmap);
+    zmap.on('zoomend', function(){ syncZLabels(); });
+    zKho = L.layerGroup().addTo(zmap);
+    KHO_MARKERS.forEach(function(k){
+      var w = WH[k.id]; if(!w || w.lat==null) return;
+      L.marker([w.lat, w.lng], {icon:L.divIcon({className:'', html:'<div class="khoicon"></div>', iconSize:[16,16], iconAnchor:[8,8]}), zIndexOffset:500}).addTo(zKho)
+        .bindTooltip('🏬 '+k.short, {permanent:true, direction:'top', offset:[0,-8], className:'khotip'});
+    });
+    L.marker([TK.lat, TK.lng]).addTo(zKho).bindTooltip('🏭 '+TK.name, {permanent:true, className:'whlbl', direction:'top', offset:[0,-8]});
+    var zp = document.createElement('div'); zp.className = 'pnl'; zp.id = 'zpanel';
+    zp.innerHTML = '<h3>🗺️ Khoanh vùng</h3><div class="sub">Quận/huyện tô màu theo kho quản</div>'+
+      '<label>Thời điểm</label><div class="zseg" id="zwhen"><button type="button" data-v="before">Trước</button><button type="button" data-v="after" class="active">Sau (có Tân Kim)</button></div>'+
+      '<label>Chiều hàng</label><div class="zseg" id="zchieu"><button type="button" data-v="lấy">Lấy</button><button type="button" data-v="giao">Giao</button><button type="button" data-v="both" class="active">Cả hai</button></div>'+
+      '<div class="hr"></div>'+
+      '<div class="zlg"><i style="background:'+ZCOL['1626']+'"></i> HCM01 quản</div><div class="zlg"><i style="background:'+ZCOL['2388']+'"></i> HCM20 quản</div><div class="zlg"><i style="background:'+ZCOL.TK+'"></i> Tân Kim quản</div><div class="zlg"><i style="background:#1b2f2a;border:1px solid #3a5a52"></i> Chưa có BC trong dữ liệu</div>'+
+      '<div class="sub" style="margin-top:6px">Màu đậm = kho đó chiếm ưu thế rõ; màu nhạt = quận chia cho nhiều kho.</div>'+
+      '<div class="hr"></div>'+
+      '<div class="hk"><input type="checkbox" id="zKhoChk" checked> <span style="color:#f2c94c">◆</span> Kho KTC/KCT</div>'+
+      '<div class="hk"><input type="checkbox" id="zProvName" checked> Tên tỉnh</div>'+
+      '<div class="hk"><input type="checkbox" id="zDistName" checked> Tên quận/huyện <span style="color:#8aa0b4;font-size:11px">(zoom gần)</span></div>';
+    var zs = document.createElement('div'); zs.className = 'pnl'; zs.id = 'zstats'; zs.innerHTML = '<h3>📊 Tổng theo kho</h3><div id="zstbody"></div>';
+    document.getElementById('zmap').appendChild(zp); document.getElementById('zmap').appendChild(zs);
+    [zp, zs].forEach(function(el){ L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el); });
+    function seg(id, key){ document.getElementById(id).addEventListener('click', function(e){
+      var b = e.target.closest('button'); if(!b) return; zstate[key] = b.dataset.v;
+      this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('active', x===b); }); renderZone(); }); }
+    seg('zwhen','when'); seg('zchieu','chieu');
+    var zopt = {prov:true, dist:true};
+    function syncZLabelsImpl(){
+      if(zopt.prov){ zProvSet.rebuild(); if(!zmap.hasLayer(zProvSet.group)) zProvSet.group.addTo(zmap); } else if(zmap.hasLayer(zProvSet.group)) zmap.removeLayer(zProvSet.group);
+      if(zopt.dist && zmap.getZoom() >= 8){ zDistSet.rebuild(); if(!zmap.hasLayer(zDistSet.group)) zDistSet.group.addTo(zmap); } else if(zmap.hasLayer(zDistSet.group)) zmap.removeLayer(zDistSet.group);
+    }
+    syncZLabels = syncZLabelsImpl; syncZLabels();
+    document.getElementById('zKhoChk').addEventListener('change', function(e){ if(e.target.checked) zKho.addTo(zmap); else zmap.removeLayer(zKho); });
+    document.getElementById('zProvName').addEventListener('change', function(e){ zopt.prov = e.target.checked; syncZLabels(); });
+    document.getElementById('zDistName').addEventListener('change', function(e){ zopt.dist = e.target.checked; syncZLabels(); });
+  }
+  var syncZLabels = function(){};
+  function renderZone(){
+    if(!zmap) return;
+    var r = zoneCompute(), keys = ['1626','2388','TK'], cnt = {'1626':0, '2388':0, 'TK':0};
+    zTip = {};
+    zDist.eachLayer(function(l){
+      var i = l._zi, a = r.vol.byDist[i], k = r.kl.byDist[i], f = l.feature;
+      var sum = a ? a['1626']+a['2388']+a.TK : 0;
+      if(!a || sum < 1){ l.setStyle({fillColor:'#1b2f2a', fillOpacity:.92}); return; }
+      var best = keys[0]; keys.forEach(function(x){ if(a[x] > a[best]) best = x; });
+      var share = a[best]/sum; cnt[best]++;
+      l.setStyle({fillColor:ZCOL[best], fillOpacity: Math.min(.92, .3 + .62*share)});
+      zTip[i] = '<b>'+(f.properties.vn || f.properties.name)+'</b><br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
+        return '<span style="color:'+ZCOL[x]+'">■</span> '+ZNAME[x]+': '+fmt(a[x])+' đơn/ngày ('+Math.round(a[x]/sum*100)+'%) · '+fmt(k ? k[x] : 0)+' kg/ngày';
+      }).join('<br>');
+    });
+    var t = r.vol.tot, tk = r.kl.tot;
+    document.getElementById('zstbody').innerHTML = '<div style="color:#8aa0b4;font-size:11px;margin-bottom:6px">'+currentMonth+' · '+(zstate.when==='after'?'sau (có Tân Kim)':'trước')+' · chiều '+(zstate.chieu==='both'?'lấy + giao':zstate.chieu)+' · trung bình/ngày</div>'+
+      keys.map(function(x){ return '<div style="margin:6px 0"><span style="color:'+ZCOL[x]+'">■</span> <b>'+ZNAME[x]+'</b><div style="margin-left:16px;font:12px JetBrains Mono,monospace">'+fmt(t[x])+' đơn · '+fmt(tk[x])+' kg<br><span style="color:#8aa0b4">'+cnt[x]+' quận/huyện</span></div></div>'; }).join('');
+  }
+  function renderZoneIfVisible(){ if(zmap && !document.getElementById('panel-zone').hidden) renderZone(); }
+
   // ---------- tab switching ----------
   var btnSim = document.getElementById('tab-btn-sim'), btnMap = document.getElementById('tab-btn-map');
   var panelSim = document.getElementById('panel-sim'), panelMap = document.getElementById('panel-map');
   var btnFlow = document.getElementById('tab-btn-flow'), panelFlow = document.getElementById('panel-flow');
+  var btnZone = document.getElementById('tab-btn-zone'), panelZone = document.getElementById('panel-zone');
   var mapInited = false;
   function showTab(which){
-    var sim = which==='sim', mp = which==='map', flw = which==='flow';
+    var sim = which==='sim', mp = which==='map', flw = which==='flow', zn = which==='zone';
     btnSim.setAttribute('aria-selected', sim?'true':'false');
     btnMap.setAttribute('aria-selected', mp?'true':'false');
     btnFlow.setAttribute('aria-selected', flw?'true':'false');
-    panelSim.hidden = !sim; panelMap.hidden = !mp; panelFlow.hidden = !flw;
+    btnZone.setAttribute('aria-selected', zn?'true':'false');
+    panelSim.hidden = !sim; panelMap.hidden = !mp; panelFlow.hidden = !flw; panelZone.hidden = !zn;
+    if(zn){ if(!zmap) initZone(); setTimeout(function(){ zmap.invalidateSize(); renderZone(); }, 30); }
     if(flw) renderFlow();
     if(mp){ setTimeout(function(){ map.invalidateSize(); syncMap(); mapInited = true; }, 30); }
   }
   btnSim.addEventListener('click', function(){ showTab('sim'); });
   btnMap.addEventListener('click', function(){ showTab('map'); });
   btnFlow.addEventListener('click', function(){ showTab('flow'); });
+  btnZone.addEventListener('click', function(){ showTab('zone'); });
 
   // ---------- khôi phục: bản lưu tạm trên máy trước, rồi tải bản chung (Supabase) đè lên nếu có ----------
   var restoredAt = loadLocal(); restoredAtGlobal = restoredAt;

@@ -237,6 +237,20 @@ def build():
 
     label_adm2(adm2, wh)
 
+    # BC -> chỉ số polygon quận/huyện (adm2) chứa toạ độ BC (dùng cho bản đồ khoanh vùng)
+    bc_dist, n_in, n_out = {}, 0, 0
+    feats = [(i, f, _rings(f["geometry"])) for i, f in enumerate(adm2["features"])]
+    boxes = [(i, [(min(q[0] for q in r), max(q[0] for q in r), min(q[1] for q in r), max(q[1] for q in r), r) for r in rings]) for i, f, rings in feats]
+    for wid, w in wh.items():
+        if w.get("lat") is None: continue
+        x, y, hit = w["lng"], w["lat"], None
+        for i, bs in boxes:
+            if any(x0 <= x <= x1 and y0 <= y <= y1 and _inside(x, y, r) for (x0, x1, y0, y1, r) in bs):
+                hit = i; break
+        if hit is None: n_out += 1
+        else: bc_dist[str(wid)] = hit; n_in += 1
+    print(f"  bcDist: {n_in} BC nằm trong polygon quận/huyện, {n_out} ngoài polygon")
+
     # ---- Số AOP T11/T12 theo KA v3 (data/aop_T11_T12_KA_v3.csv: vol = đơn, kg = weight nhập, tổng 3 tầng của kho) ----
     ka_path = os.path.join(DATA, "aop_T11_T12_KA_v3.csv")
     if os.path.exists(ka_path):
@@ -323,7 +337,7 @@ def build():
         "volGiao": {str(k): v for k, v in vol_giao.items()},
         "totals": totals,
         "defaultRules": default_rules,
-        "official": official, "actual": actual, "plan": plan,
+        "official": official, "actual": actual, "plan": plan, "bcDist": bc_dist,
         "prov": prov, "adm2": adm2, "tk": tk,
     }
     with open(OUT, "w", encoding="utf-8") as f:

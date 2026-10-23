@@ -92,3 +92,7 @@ Nút "Xuất luật mới để lưu Sheet" hiện chỉ xuất text để copy 
 ## AOP T11/T12 theo KA v3
 
 `data/aop_T11_T12_KA_v3.csv` (file KTC nhập T10–T12 KA v3; vol = đơn, kg = weight nhập, tổng 3 tầng) thay nền AOP T11/T12 của HCM01/HCM20 trong `build_blob.py`. % nhường của AOP Sheet được giữ nguyên (scale cả `after`), w_4t đổi cùng tỷ lệ với w_nhap. T10 chưa đổi.
+
+## Bản đồ khoanh vùng
+
+Tab "Bản đồ khoanh vùng": mỗi quận/huyện (adm2) tô màu theo kho nhận nhiều hàng nhất (HCM01 / HCM20 / Tân Kim), theo tháng đang chọn, chiều lấy / giao / cả hai, trước hoặc sau khi có Tân Kim; dùng cùng cách phân bổ với KPI/flow chart. `build_blob.py` ghi `bcDist` (BC → polygon quận/huyện theo toạ độ).
