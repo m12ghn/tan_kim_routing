@@ -2202,6 +2202,8 @@
   // ---------- bản đồ khoanh vùng: quận/huyện tô màu theo kho quản (HCM01 / HCM20 / Tân Kim) ----------
   var BC_DIST = DATA.bcDist || {}, DIST_COVER = DATA.distCover || {};
   var ZCOL = {'1626':'#3987e5', '2388':'#19c98a', 'TK':'#e8672f'}, ZNAME = {'1626':'HCM01', '2388':'HCM20', 'TK':'Tân Kim'};
+  var SPLIT_I = {}; ((PLAN && PLAN.split) || []).forEach(function(x){ SPLIT_I[x.i] = x; });
+  var zHalf = null, zLine = null;
   var zmap = null, zDist = null, zKho = null, zProvSet = null, zDistSet = null, zTip = {}, zstate = {when:'after', chieu:'both'};
   // Phân bổ lượng hàng của từng BC cho 3 kho (theo cùng cơ sở với KPI / flow chart / bản đồ mũi tên); after=false: chưa có Tân Kim
   function zoneAllocChieu(month, chieu, m, cal, after, out){
@@ -2232,13 +2234,17 @@
       var per = {};
       if(zstate.chieu !== 'giao') zoneAllocChieu(month, 'lấy', m, cal, after, per);
       if(zstate.chieu !== 'lấy') zoneAllocChieu(month, 'giao', m, cal, after, per);
-      var byDist = {}, tot = {'1626':0, '2388':0, 'TK':0};
+      var byDist = {}, byHalf = {}, tot = {'1626':0, '2388':0, 'TK':0};
       Object.keys(per).forEach(function(wid){
         var d = per[wid];
         ['1626','2388','TK'].forEach(function(k){ tot[k] += d[k]; });
         var di = BC_DIST[wid]; if(di === undefined) return;
         var a = byDist[di] || (byDist[di] = {'1626':0, '2388':0, 'TK':0});
         ['1626','2388','TK'].forEach(function(k){ a[k] += d[k]; });
+        if(SPLIT_I[di]){   // quận bị đường ranh cắt đôi: cộng riêng từng nửa
+          var hk = di+'|'+((PLAN.bcSide && PLAN.bcSide[wid]) || 'S'), hh = byHalf[hk] || (byHalf[hk] = {'1626':0, '2388':0, 'TK':0});
+          ['1626','2388','TK'].forEach(function(k){ hh[k] += d[k]; });
+        }
       });
       // quận không có BC: tô theo BC phục vụ (chỉ để hiển thị, không cộng vào tổng)
       var cover = {};
@@ -2248,7 +2254,7 @@
         DIST_COVER[di].forEach(function(wid){ var d = per[wid]; if(d){ any = true; ['1626','2388','TK'].forEach(function(k){ a[k] += d[k]; }); } });
         if(any){ byDist[di] = a; cover[di] = DIST_COVER[di]; }
       });
-      res[m] = {byDist:byDist, tot:tot, cover:cover};
+      res[m] = {byDist:byDist, byHalf:byHalf, tot:tot, cover:cover};
     });
     return res;
   }
@@ -2263,6 +2269,13 @@
         layer.bindTooltip(function(){ return zTip[layer._zi] || (f.properties.vn || f.properties.name) + '<br><span style="color:#8aa0b4">chưa có BC trong dữ liệu</span>'; }, {sticky:true, className:'rt'});
       }
     }).addTo(zmap);
+    var hf = [];
+    Object.keys(SPLIT_I).forEach(function(i){ ['N','S'].forEach(function(k){ hf.push({type:'Feature', properties:{i:+i, side:k}, geometry:SPLIT_I[i][k]}); }); });
+    zHalf = L.geoJSON({type:'FeatureCollection', features:hf}, {
+      style:{color:DIST_LINE, weight:.7, opacity:.6, fill:true, fillColor:'#1b2f2a', fillOpacity:.92},
+      onEachFeature:function(f, layer){ layer.bindTooltip(function(){ return zTip[f.properties.i+'|'+f.properties.side] || ''; }, {sticky:true, className:'rt'}); }
+    });
+    if(PLAN && PLAN.line) zLine = L.polyline(PLAN.line, {color:'#f2c94c', weight:2.5, opacity:.95, dashArray:'10 6', interactive:false});
     zmap.on('zoomend', function(){ var z = zmap.getZoom(); zDist.setStyle({weight: z>=10 ? 1.4 : (z>=8 ? 1 : .6)}); });
     L.geoJSON(DATA.prov, {interactive:false, style:{color:'#8fd4c4', weight:2.2, opacity:.95, fill:false}}).addTo(zmap);
     zProvSet = makeLabelSet(DATA.prov, 'mlbl-p', function(f){ return shortAdm(f.properties.name); }, 7.4, 16, zmap);
@@ -2306,20 +2319,40 @@
   var syncZLabels = function(){};
   function renderZone(){
     if(!zmap) return;
-    var r = zoneCompute(), keys = ['1626','2388','TK'], cnt = {'1626':0, '2388':0, 'TK':0};
+    var r = zoneCompute(), keys = ['1626','2388','TK'], cnt = {'1626':0, '2388':0, 'TK':0}, plan = isPlan(currentMonth);
     zTip = {};
+    if(zHalf){ if(plan){ if(!zmap.hasLayer(zHalf)){ zHalf.addTo(zmap); } } else if(zmap.hasLayer(zHalf)) zmap.removeLayer(zHalf); }
+    if(zLine){ if(plan){ if(!zmap.hasLayer(zLine)) zLine.addTo(zmap); } else if(zmap.hasLayer(zLine)) zmap.removeLayer(zLine); }
+    function tipOf(title, a, k, note){
+      var sum = a['1626']+a['2388']+a.TK;
+      return '<b>'+title+'</b>'+(note||'')+'<br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
+        return '<span style="color:'+ZCOL[x]+'">■</span> '+ZNAME[x]+': '+fmt(a[x])+' đơn/ngày ('+Math.round(a[x]/sum*100)+'%) · '+fmt(k ? k[x] : 0)+' kg/ngày';
+      }).join('<br>');
+    }
+    function domOf(a){ var best = keys[0]; keys.forEach(function(x){ if(a[x] > a[best]) best = x; }); return best; }
     zDist.eachLayer(function(l){
       var i = l._zi, a = r.vol.byDist[i], k = r.kl.byDist[i], f = l.feature;
       var sum = a ? a['1626']+a['2388']+a.TK : 0;
       if(!a || sum < 1){ l.setStyle({fillColor:'#1b2f2a', fillOpacity:.92}); return; }
-      var best = keys[0]; keys.forEach(function(x){ if(a[x] > a[best]) best = x; });
+      var best = domOf(a);
       var share = a[best]/sum; cnt[best]++;
+      if(plan && SPLIT_I[i]){ l.setStyle({fillOpacity:0}); return; }   // vẽ bằng 2 nửa Bắc/Nam bên dưới
       l.setStyle({fillColor:ZCOL[best], fillOpacity: Math.min(.92, .3 + .62*share)});
       var cv = r.vol.cover[i];
       zTip[i] = '<b>'+(f.properties.vn || f.properties.name)+'</b>'+(cv ? '<br><span style="color:#8aa0b4">không có BC đặt tại đây · do '+cv.map(function(w){ return (WH[w]||{}).name || w; }).join(', ')+' phục vụ (số dưới là của BC đó)</span>' : '')+'<br>'+keys.filter(function(x){ return a[x] >= 1; }).map(function(x){
         return '<span style="color:'+ZCOL[x]+'">■</span> '+ZNAME[x]+': '+fmt(a[x])+' đơn/ngày ('+Math.round(a[x]/sum*100)+'%) · '+fmt(k ? k[x] : 0)+' kg/ngày';
       }).join('<br>');
     });
+    if(plan && zHalf){
+      zHalf.eachLayer(function(l){
+        var i = l.feature.properties.i, sd = l.feature.properties.side, hk = i+'|'+sd, a = r.vol.byHalf[hk], f = zDist.getLayers().filter(function(x){ return x._zi===i; })[0];
+        var name = ((f && f.feature.properties.vn) || '') + (sd==='N' ? ' — phía bắc đường ranh' : ' — phía nam đường ranh');
+        if(!a || a['1626']+a['2388']+a.TK < 1){ var pa = r.vol.byDist[i]; l.setStyle({fillColor: pa ? ZCOL[domOf(pa)] : '#1b2f2a', fillOpacity: pa ? .25 : .92}); zTip[hk] = '<b>'+name+'</b><br><span style="color:#8aa0b4">không có BC ở nửa này</span>'; return; }
+        var best = domOf(a), share = a[best]/(a['1626']+a['2388']+a.TK);
+        l.setStyle({fillColor:ZCOL[best], fillOpacity: Math.min(.92, .3 + .62*share)});
+        zTip[hk] = tipOf(name, a, r.kl.byHalf[hk]);
+      });
+    }
     var t = r.vol.tot, tk = r.kl.tot;
     document.getElementById('zstbody').innerHTML = '<div style="color:#8aa0b4;font-size:11px;margin-bottom:6px">'+currentMonth+' · '+(zstate.when==='after'?'sau (có Tân Kim)':'trước')+' · chiều '+(zstate.chieu==='both'?'lấy + giao':zstate.chieu)+' · trung bình/ngày</div>'+
       keys.map(function(x){ return '<div style="margin:6px 0"><span style="color:'+ZCOL[x]+'">■</span> <b>'+ZNAME[x]+'</b><div style="margin-left:16px;font:12px JetBrains Mono,monospace">'+fmt(t[x])+' đơn · '+fmt(tk[x])+' kg<br><span style="color:#8aa0b4">'+cnt[x]+' quận/huyện</span></div></div>'; }).join('');

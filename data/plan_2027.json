@@ -44,5 +44,15 @@
   "split_provs": [
     "Hồ Chí Minh",
     "Long An"
+  ],
+  "force_north": [
+    [
+      "Long An",
+      "Huyện Thủ Thừa"
+    ],
+    [
+      "Long An",
+      "Huyện Bến Lức"
+    ]
   ]
 }

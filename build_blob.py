@@ -348,6 +348,11 @@ def build():
             v = dside.get((wh[wid]["pname"], wh[wid]["dname"]), [True])
             (south if sum(v) * 2 >= len(v) else north).append(str(wid))
         nocoord = len(nocoord)
+        # quận được chỉ định về HCM01 toàn bộ (vd Thủ Thừa, Bến Lức) -> tất cả BC của quận tính là phía bắc
+        forced = {(pn, dn) for pn, dn in cfgp.get("force_north", [])}
+        moved = [w for w in south if (wh[int(w)]["pname"], wh[int(w)]["dname"]) in forced]
+        south = [w for w in south if w not in set(moved)]; north += moved
+        print(f"  force_north: {len(moved)} BC chuyển sang phía bắc ({', '.join(d for _, d in sorted(forced))})")
         print(f"  plan 2027: TP.HCM + Long An, bắc {len(north)} BC ({nocoord} BC không toạ độ xếp theo quận), nam {len(south)} BC")
         base = {(r["chieu"], str(r["wid"])): r for r in default_rules[cfgp["inherit"]]}
         north_set, south_set = set(north), set(south)
@@ -361,6 +366,45 @@ def build():
             default_rules[m] = list(rules.values())
             print(f"  {m}: {len(default_rules[m])} default rules")
         plan = {"months": cfgp["months"], "days": cfgp["days"], "north": north, "full": cfgp["full"]}
+        # Cắt polygon quận/huyện (TP.HCM, Long An) mà đường ranh đi qua thành 2 nửa Bắc/Nam để bản đồ khoanh vùng vẽ đúng đường chia
+        def clip(ring, keep_south):
+            out = []
+            n = len(ring)
+            for k in range(n):
+                P, Q = ring[k - 1], ring[k]
+                sp, sq = side(P[1], P[0]) * tk_side, side(Q[1], Q[0]) * tk_side
+                inP, inQ = (sp > 0) == keep_south, (sq > 0) == keep_south
+                if inQ:
+                    if not inP:
+                        t = sp / (sp - sq); out.append([P[0] + t * (Q[0] - P[0]), P[1] + t * (Q[1] - P[1])])
+                    out.append(list(Q))
+                elif inP:
+                    t = sp / (sp - sq); out.append([P[0] + t * (Q[0] - P[0]), P[1] + t * (Q[1] - P[1])])
+            return [[round(x, 5), round(y, 5)] for x, y in out]
+        dist_of_bc, n_bc, n_sp = {}, {}, {}
+        for wid, i in bc_dist.items():
+            w = wh.get(int(wid)) or {}
+            n_bc[i] = n_bc.get(i, 0) + 1
+            if w.get("pname") in split_provs:
+                dist_of_bc.setdefault(i, set()).add((w["pname"], w["dname"])); n_sp[i] = n_sp.get(i, 0) + 1
+        splits = []
+        for i, f, rings in feats:
+            names = dist_of_bc.get(i, set())
+            if not names or names & forced or n_sp.get(i, 0) * 2 <= n_bc.get(i, 0): continue
+            signs = {side(q[1], q[0]) * tk_side > 0 for r in rings for q in r}
+            if len(signs) < 2: continue
+            halves = {}
+            for key, ks in (("N", False), ("S", True)):
+                polys = [[c] for c in (clip(r, ks) for r in rings) if len(c) >= 3]
+                if polys: halves[key] = {"type": "MultiPolygon", "coordinates": polys}
+            if len(halves) == 2: splits.append({"i": i, **halves})
+        # đường ranh kéo dài, cắt ngang khung TP.HCM + Long An
+        def at_lng(x): return A["lat"] + (Bk["lat"] - A["lat"]) * (x - A["lng"]) / (Bk["lng"] - A["lng"])
+        plan["split"] = splits
+        ns = set(north)
+        plan["bcSide"] = {wid: ("N" if wid in ns else "S") for wid, i in bc_dist.items() if i in {x["i"] for x in splits}}
+        plan["line"] = [[round(at_lng(105.45), 5), 105.45], [round(at_lng(107.05), 5), 107.05]]
+        print(f"  plan 2027: cắt đôi {len(splits)} quận/huyện theo đường ranh")
 
     # Số thực tế (trung bình/ngày) theo BC, tách Normal/Bulky: data/actual_<tháng>.csv
     actual = {}
