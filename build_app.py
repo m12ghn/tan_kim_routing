@@ -27,6 +27,7 @@ def main():
         s = out
         s = s.replace("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", "vendor/leaflet.css")
         s = s.replace("https://unpkg.com/leaflet@1.9.4/dist/leaflet.js", "vendor/leaflet.js")
+        s = s.replace("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", "vendor/xlsx.full.min.js")
         s = s.replace(
             "https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js",
             "vendor/leaflet.polylineDecorator.js",

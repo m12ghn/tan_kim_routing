@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
@@ -341,6 +342,7 @@
       <div class="spacer"></div>
       <button class="ghost" id="btn-proximity" title="Áp quy tắc: BC phía Nam về Tân Kim; BC gần kho trung chuyển/chuyển tiếp khác hơn Tân Kim thì về kho đó">📍 Áp quy tắc gần kho (T10)</button>
       <button class="ghost" id="btn-reset">Về scope mặc định (tháng này)</button>
+      <button class="ghost" id="btn-xlsx" title="Tải file Excel: AOP 3 kho (HCM01, HCM20, Tân Kim) theo tháng + chi tiết BC của tháng đang xem">📊 Xuất Excel 3 kho</button>
       <button class="primary" id="btn-export">Xuất tuyến mới để lưu Sheet</button>
     </div>
     <div class="mode-line" id="mode-line"></div>
@@ -1011,6 +1013,42 @@
     else { ta.value = lines.join('\n'); }
     box.style.display = 'block';
     ta.focus(); ta.select();
+  });
+
+
+  // ---------- xuất Excel: AOP 3 kho theo tháng + chi tiết BC của tháng đang xem ----------
+  document.getElementById('btn-xlsx').addEventListener('click', function(){
+    if(typeof XLSX === 'undefined'){ alert('Chưa tải được thư viện Excel (cần mạng). Thử lại sau.'); return; }
+    var r0 = function(x){ return Math.round(x||0); };
+    var rows = [['Tháng','Số ngày','Kho','Kịch bản','Vol nhập (đơn/tháng)','Weight nhập (kg/tháng)','Weight 4TT (kg/tháng)','Vol nhập TB/ngày','Weight nhập TB/ngày (kg)','Weight 4TT TB/ngày (kg)','Ghi chú']];
+    MONTHS.forEach(function(m){
+      var res = computeAll(m), D = DAYS[m], plan = isPlan(m);
+      function row(kho, scen, v, w, t, note){ rows.push([m, D, kho, scen, r0(v), r0(w), r0(t), r0(v/D), r0(w/D), r0(t/D), note||'']); }
+      var o1 = res['1626'], o2 = res['2388'];
+      row('HCM01','Gốc (AOP)', o1.vol.before, o1.w_nhap.before, o1.w_4t.before);
+      row('HCM01','Sau Tân Kim', o1.vol.after, o1.w_nhap.after, o1.w_4t.after, plan && o1.recv.vol ? ('gồm nhận thêm từ HCM20 (bắc TP.HCM): '+r0(o1.recv.vol/D)+' đơn/ngày') : '');
+      row('HCM20','Gốc (AOP)', o2.vol.before, o2.w_nhap.before, o2.w_4t.before);
+      row('HCM20','Sau Tân Kim', o2.vol.after, o2.w_nhap.after, o2.w_4t.after, plan && o2.xfer.vol ? ('chuyển sang HCM01 (bắc TP.HCM): '+r0(o2.xfer.vol/D)+' đơn/ngày') : '');
+      row('Tân Kim','Gốc (AOP)', 0, 0, 0);
+      row('Tân Kim','Sau Tân Kim', o1.vol.shifted+o2.vol.shifted, o1.w_nhap.shifted+o2.w_nhap.shifted, o1.w_4t.shifted+o2.w_4t.shifted, ACTUAL[m] ? 'BC có số thực tế 1–15/10 dùng số thực tế' : '');
+    });
+    var recs = currentMapRecs(currentMonth).filter(function(r){ return r.vol > 0 || r.kl_kg > 0; })
+      .sort(function(a,b){ return (a.prov||'').localeCompare(b.prov||'','vi') || (a.dist||'').localeCompare(b.dist||'','vi') || (a.type<b.type?-1:1); });
+    var det = [['Tháng','warehouse_id','Tên BC','Tỉnh','Quận/Huyện','Chiều','Loại hàng','Đơn/ngày về Tân Kim','Weight nhập kg/ngày về Tân Kim']];
+    recs.forEach(function(r){ det.push([currentMonth, r.id, r.name, r.prov, r.dist, r.type, r.hang, Math.round(r.vol*10)/10, r.kl_kg]); });
+    var notes = [['Ghi chú'],
+      ['Nguồn: dashboard cấu hình tuyến Tân Kim (version '+currentVersion+'), xuất lúc '+new Date().toLocaleString('vi-VN')+'.'],
+      ['T10–T12/2026: số AOP Sheet × tỷ trọng T6 (T10: BC có số thực tế dùng số thực tế).'],
+      ['05/27–12/27: AOP 2027 (sheet Topline) × tỷ trọng T6; HCM20 chuyển 100% sang Tân Kim (BC phía bắc đường Sóng Thần–Tân Tạo về HCM01); HCM01 chuyển các BC trong scope (miền Tây, nửa nam TP.HCM, kế thừa T12).'],
+      ['Weight 4TT 2027 = weight nhập × tỷ lệ 4TT/nhập của T12/2026 (ước tính). Sheet "Chi tiết BC" chỉ gồm tháng đang xem: '+currentMonth+'.']];
+    var wb = XLSX.utils.book_new();
+    var w1 = XLSX.utils.aoa_to_sheet(rows); w1['!cols'] = [8,8,10,14,18,20,20,16,20,20,50].map(function(w){ return {wch:w}; });
+    var w2 = XLSX.utils.aoa_to_sheet(det); w2['!cols'] = [8,12,44,16,22,7,10,18,24].map(function(w){ return {wch:w}; });
+    var w3 = XLSX.utils.aoa_to_sheet(notes); w3['!cols'] = [{wch:140}];
+    XLSX.utils.book_append_sheet(wb, w1, 'AOP 3 kho');
+    XLSX.utils.book_append_sheet(wb, w2, 'Chi tiết BC '+currentMonth.replace('/','-'));
+    XLSX.utils.book_append_sheet(wb, w3, 'Ghi chú');
+    XLSX.writeFile(wb, 'AOP_3_kho_Tan_Kim.xlsx');
   });
 
   // ---------- month toggle / reset ----------
