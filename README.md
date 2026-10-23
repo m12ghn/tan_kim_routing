@@ -81,3 +81,10 @@ Nút "Xuất luật mới để lưu Sheet" hiện chỉ xuất text để copy 
 ## Số liệu thực tế (override)
 
 `data/actual_T10.csv` (month, chieu, warehouse_id, days, đơn/kg Normal/Bulky) — số thực tế 1–15/10 của 22 BC. `build_blob.py` đọc mọi `data/actual_*.csv` vào `blob.actual` (chia trung bình/ngày). BC có số thực tế dùng số này thay cho tỷ trọng T6 trong KPI, flow và bản đồ; BC còn lại giữ cách tính cũ. Version A / “gốc” vẫn là số AOP Sheet. Muốn revert: nhánh `backup/before-actual-T10`, hoặc xoá file CSV rồi `python3 build_blob.py && python3 build_app.py`.
+
+## Kế hoạch 2027 (05/27 → 12/27)
+
+`data/plan_2027.json` + `data/aop_2027.csv` (AOP gốc 2027 của HCM01/HCM20, sheet Topline). `build_blob.py` thêm 8 tháng `05/27`…`12/27`:
+- Scope mặc định = scope T12 (config_v3) + toàn bộ BC các tỉnh miền Tây (không gồm Long An; có Bến Tre, Tiền Giang) + BC phía nam TP.HCM (đường thẳng nối kho Sóng Thần – Tân Tạo; phía chứa Tân Kim = Nam). HCM01 chuyển các BC trong scope sang Tân Kim (hệ số 1, tỷ trọng T6).
+- HCM20 chuyển 100%: BC phía bắc TP.HCM về HCM01, phần còn lại sang Tân Kim. Bỏ qua các % trong sheet.
+- w_4t 2027 = w_nhap × tỷ lệ w_4t/w_nhap của T12/2026 (sheet không có w_4t).
