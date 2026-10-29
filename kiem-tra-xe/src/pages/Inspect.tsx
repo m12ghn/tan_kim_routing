@@ -43,8 +43,8 @@ export default function Inspect() {
     setLoading(true);
     setLoadError('');
     const [v, h] = await Promise.all([
-      supabase.from('vehicles').select('*').eq('active', true).order('plate'),
-      supabase.from('inspections').select('*').eq('inspector_id', userId).order('created_at', { ascending: false }).limit(20),
+      supabase.from('kx_vehicles').select('*').eq('active', true).order('plate'),
+      supabase.from('kx_inspections').select('*').eq('inspector_id', userId).order('created_at', { ascending: false }).limit(20),
     ]);
     if (v.error || h.error) setLoadError(friendlyError(v.error || h.error));
     setVehicles((v.data as Vehicle[]) ?? []);
@@ -113,7 +113,7 @@ export default function Inspect() {
         update({ uploaded });
       }
       setSending('Đang gửi phiếu…');
-      const { error } = await supabase.rpc('submit_inspection', {
+      const { error } = await supabase.rpc('kx_submit_inspection', {
         p_id: draft.id,
         p_vehicle_id: draft.vehicleId,
         p_result: draft.result,

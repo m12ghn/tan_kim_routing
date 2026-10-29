@@ -32,7 +32,7 @@ export default function InspectionReport() {
     setLoading(true);
     setError('');
     try {
-      const { data, error: e } = await supabase.from('inspections').select('*').eq('id', id).maybeSingle();
+      const { data, error: e } = await supabase.from('kx_inspections').select('*').eq('id', id).maybeSingle();
       if (e) throw e;
       if (!data) {
         setInsp(null);
@@ -42,9 +42,9 @@ export default function InspectionReport() {
       setInsp(i);
       setReviewNote(i.review_note);
       const [v, p, ph] = await Promise.all([
-        supabase.from('vehicles').select('*').eq('id', i.vehicle_id).maybeSingle(),
-        supabase.from('profiles').select('id, username, full_name, role, active').eq('id', i.inspector_id).maybeSingle(),
-        supabase.from('inspection_photos').select('*').eq('inspection_id', id),
+        supabase.from('kx_vehicles').select('*').eq('id', i.vehicle_id).maybeSingle(),
+        supabase.from('kx_members').select('id, username, full_name, role, active').eq('id', i.inspector_id).maybeSingle(),
+        supabase.from('kx_inspection_photos').select('*').eq('inspection_id', id),
       ]);
       setVehicle((v.data as Vehicle) ?? null);
       setInspector((p.data as Profile) ?? null);
@@ -67,7 +67,7 @@ export default function InspectionReport() {
     if (status === 'rejected' && !reviewNote.trim()) return setError('Trả lại phiếu thì ghi rõ lý do.');
     setBusy(true);
     setError('');
-    const { error: e } = await supabase.rpc('review_inspection', { p_id: id, p_status: status, p_note: reviewNote.trim() });
+    const { error: e } = await supabase.rpc('kx_review_inspection', { p_id: id, p_status: status, p_note: reviewNote.trim() });
     setBusy(false);
     if (e) setError(friendlyError(e));
     else load();

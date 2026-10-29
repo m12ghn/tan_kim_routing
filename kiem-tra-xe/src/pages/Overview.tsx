@@ -43,23 +43,23 @@ export default function Overview() {
     try {
       const [from, to] = dayRangeVN(day);
       const [v, i, p] = await Promise.all([
-        supabase.from('vehicles').select('*').eq('active', true).order('plate'),
+        supabase.from('kx_vehicles').select('*').eq('active', true).order('plate'),
         supabase
-          .from('inspections')
-          .select('*, inspection_photos(count)')
+          .from('kx_inspections')
+          .select('*, kx_inspection_photos(count)')
           .gte('created_at', from)
           .lt('created_at', to)
           .order('created_at', { ascending: false }),
-        supabase.from('profiles').select('id, username, full_name, role, active'),
+        supabase.from('kx_members').select('id, username, full_name, role, active'),
       ]);
       if (v.error) throw v.error;
       if (i.error) throw i.error;
       if (p.error) throw p.error;
       setVehicles(v.data as Vehicle[]);
       setInspections(
-        (i.data ?? []).map((r: Inspection & { inspection_photos?: { count: number }[] }) => ({
+        (i.data ?? []).map((r: Inspection & { kx_inspection_photos?: { count: number }[] }) => ({
           ...r,
-          photo_count: r.inspection_photos?.[0]?.count ?? 0,
+          photo_count: r.kx_inspection_photos?.[0]?.count ?? 0,
         })),
       );
       setPeople(Object.fromEntries((p.data as Profile[]).map((x) => [x.id, x])));

@@ -1,5 +1,6 @@
 # Quy ước cho Claude khi sửa app Kiểm tra xe
 
+- DB dùng chung project Supabase với app khác: mọi bảng/hàm/trigger/policy mới PHẢI có tiền tố `kx_` (bucket `kx-photos`). Không tạo/sửa đối tượng không có tiền tố, không gắn trigger vào `auth.users`, không ban user ở Auth (khóa qua `kx_members.active`).
 - Ngôn ngữ giao diện: tiếng Việt có dấu, ngắn, nói thẳng.
 - Thay đổi DB: thêm `supabase/migration-NNN-*.sql` (chạy lại được) và cập nhật `schema.sql` + `setup-all.sql`. Dán nội dung SQL vào chat cho người dùng copy vào SQL Editor.
 - Mỗi lần sửa app: thêm dòng vào `src/changelog.json` (loại new / change / fix / system, phiên bản mới nằm đầu) rồi chạy `npm run changelog`.

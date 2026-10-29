@@ -21,8 +21,8 @@ export async function getCaller(req, admin) {
   if (!token) throw httpError(401, 'Bạn cần đăng nhập lại.');
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data?.user) throw httpError(401, 'Phiên đăng nhập hết hạn. Hãy đăng nhập lại.');
-  const { data: profile } = await admin.from('profiles').select('*').eq('id', data.user.id).single();
-  if (!profile?.active) throw httpError(403, 'Tài khoản đã bị khóa.');
+  const { data: profile } = await admin.from('kx_members').select('*').eq('id', data.user.id).single();
+  if (!profile?.active) throw httpError(403, 'Tài khoản chưa được cấp quyền hoặc đã bị khóa trong app Kiểm tra xe.');
   return profile;
 }
 

@@ -8,7 +8,7 @@ export const supabase = createClient(
   __SUPABASE_ANON_KEY__ || 'chua-cau-hinh',
 );
 
-export const PHOTO_BUCKET = 'photos';
+export const PHOTO_BUCKET = 'kx-photos';
 export const EMAIL_DOMAIN = 'app.local';
 export const usernameToEmail = (u: string) => `${u.trim().toLowerCase()}@${EMAIL_DOMAIN}`;
 

@@ -39,9 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    const { data, error: e } = await supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle();
+    const { data, error: e } = await supabase.from('kx_members').select('*').eq('id', s.user.id).maybeSingle();
     if (e) setError(friendlyError(e));
-    else if (!data) setError('Tài khoản chưa có hồ sơ. Báo quản trị kiểm tra bảng profiles.');
+    else if (!data) setError('Tài khoản này chưa được cấp quyền dùng app Kiểm tra xe. Báo quản lý thêm vào danh sách.');
     else if (!data.active) {
       await supabase.auth.signOut();
       setError('Tài khoản đã bị khóa. Liên hệ quản lý.');
