@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.1.0",
+    "date": "2026-10-29",
+    "items": [
+      { "type": "system", "text": "Dựng nền tảng app: đăng nhập, phân quyền, giao diện sáng/tối, trang Tổng quan và trang Kiểm tra xe (chụp ảnh, gửi phiếu, xem báo cáo)." }
+    ]
+  }
+]
