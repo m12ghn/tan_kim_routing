@@ -1,5 +1,0 @@
-{
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
-  "functions": { "api/*.js": { "maxDuration": 60 } },
-  "crons": [{ "path": "/api/sync-vehicles", "schedule": "0 22 * * *" }]
-}
