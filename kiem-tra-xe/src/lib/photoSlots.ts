@@ -1,18 +1,30 @@
-// Các góc chụp của một lần kiểm tra. Sửa danh sách này khi chốt quy trình thật.
+// Vị trí ảnh của một lần kiểm tra. Khóa (key) phải khớp danh sách trong kx_set_photo / kx_complete_inspection.
 export interface PhotoSlot {
   key: string;
   label: string;
   required: boolean;
 }
 
-export const PHOTO_SLOTS: PhotoSlot[] = [
-  { key: 'front', label: 'Đầu xe', required: true },
-  { key: 'back', label: 'Đuôi xe', required: true },
-  { key: 'left', label: 'Bên trái', required: true },
-  { key: 'right', label: 'Bên phải', required: true },
-  { key: 'odo', label: 'Đồng hồ ODO', required: true },
-  { key: 'cabin', label: 'Cabin / nội thất', required: false },
-  { key: 'extra', label: 'Ảnh thêm (hư hỏng…)', required: false },
+export const REQUIRED_SLOTS: PhotoSlot[] = [
+  { key: 'front', label: 'Trước', required: true },
+  { key: 'left', label: 'Trái (tài xế)', required: true },
+  { key: 'back', label: 'Sau', required: true },
+  { key: 'tire', label: 'Lốp', required: true },
+  { key: 'right', label: 'Phải', required: true },
+  { key: 'odo', label: 'ODO', required: true },
+  { key: 'cabin', label: 'Cabin', required: true },
 ];
 
-export const slotLabel = (key: string) => PHOTO_SLOTS.find((s) => s.key === key)?.label ?? key;
+export const EXTRA_SLOTS: PhotoSlot[] = [
+  { key: 'extra1', label: 'Ảnh thêm 1', required: false },
+  { key: 'extra2', label: 'Ảnh thêm 2', required: false },
+  { key: 'extra3', label: 'Ảnh thêm 3', required: false },
+];
+
+export const ALL_SLOTS = [...REQUIRED_SLOTS, ...EXTRA_SLOTS];
+
+export const slotLabel = (key: string) => ALL_SLOTS.find((s) => s.key === key)?.label ?? key;
+export const slotOrder = (key: string) => {
+  const i = ALL_SLOTS.findIndex((s) => s.key === key);
+  return i < 0 ? 99 : i;
+};

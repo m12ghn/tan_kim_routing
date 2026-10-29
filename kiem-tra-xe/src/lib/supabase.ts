@@ -20,6 +20,6 @@ export function friendlyError(e: unknown): string {
   if (/JWT|session|refresh token/i.test(msg)) return 'Phiên đăng nhập hết hạn. Hãy đăng nhập lại.';
   if (/row-level security/i.test(msg)) return 'Bạn không có quyền làm thao tác này.';
   if (/does not exist|schema cache/i.test(msg)) return 'Cơ sở dữ liệu chưa được cài đặt đủ. Báo quản trị chạy file SQL.';
-  if (/[À-ỹ]/.test(msg)) return msg; // lỗi đã viết tiếng Việt từ DB/API
+  if (/[À-ỹ]/.test(msg)) return msg.replace(/^.*?ERROR:\s*/, ''); // lỗi đã viết tiếng Việt từ DB/API
   return 'Có lỗi xảy ra. Hãy thử lại, nếu vẫn lỗi thì chụp màn hình gửi quản trị.';
 }

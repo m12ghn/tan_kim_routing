@@ -1,7 +1,7 @@
 {
   "name": "kiem-tra-xe",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,8 @@
     "@supabase/supabase-js": "^2.118.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.30.1"
+    "react-router-dom": "^6.30.1",
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

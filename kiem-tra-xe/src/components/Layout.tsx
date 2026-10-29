@@ -6,15 +6,14 @@ import { fmtDate } from '../lib/format';
 import ThemeToggle from './ThemeToggle';
 
 const TABS = [
-  { to: '/tong-quan', label: 'Tổng quan', managerOnly: true },
-  { to: '/kiem-tra', label: 'Kiểm tra xe', managerOnly: false },
+  { to: '/tong-quan', label: 'Tổng quan' },
+  { to: '/kiem-tra', label: 'Kiểm tra xe' },
 ];
 
 export default function Layout() {
-  const { profile, isManager, signOut } = useAuth();
+  const { profile, signOut } = useAuth();
   const { pathname } = useLocation();
-  const tabs = TABS.filter((t) => !t.managerOnly || isManager);
-  const current = tabs.find((t) => pathname.startsWith(t.to))?.label ?? '';
+    const current = TABS.find((t) => pathname.startsWith(t.to))?.label ?? '';
   // Trang hiện trường dùng khung hẹp như điện thoại.
   const narrow = pathname.startsWith('/kiem-tra');
 
@@ -41,10 +40,10 @@ export default function Layout() {
         </div>
       </header>
 
-      {tabs.length > 1 && (
+      {(
         <nav className="tabs" aria-label="Trang">
           <div className="tabs-inner">
-            {tabs.map((t) => (
+            {TABS.map((t) => (
               <NavLink key={t.to} to={t.to} className={({ isActive }) => 'tab' + (isActive ? ' active' : '')}>
                 {t.label}
               </NavLink>

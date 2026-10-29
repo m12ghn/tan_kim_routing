@@ -10,9 +10,11 @@
 - Sau khi sửa: chạy `npx tsc --noEmit` và `npm run build` trước khi đẩy.
 
 ## Bản đồ mã
-- `src/pages/Overview.tsx` — trang Tổng quan tiến độ (quản lý).
-- `src/pages/Inspect.tsx` — trang Kiểm tra xe cho nhân viên hiện trường (chọn xe → chụp ảnh → kết quả → gửi; lưu nháp IndexedDB).
-- `src/pages/InspectionReport.tsx` — báo cáo một phiếu (ảnh, thông tin, duyệt/trả lại, in PDF).
-- `src/lib/photoSlots.ts` — danh sách góc chụp bắt buộc/không bắt buộc.
-- `src/components/CameraCapture.tsx` — chụp ảnh trong trang, nén 1280px / 0,8.
-- `api/admin-users.js` — tạo tài khoản, đổi mật khẩu, khóa/mở (chỉ quản lý).
+- `src/pages/Overview.tsx` — tab Tổng quan (mọi người): tiến độ, mức, lọc, Excel, nút đồng bộ (quản lý).
+- `src/pages/Inspect.tsx` — tab Kiểm tra xe: 3 bước Chọn xe → Chụp hình → Checklist, nháp IndexedDB, mở lại phiếu dở.
+- `src/components/inspect/PhotoStep.tsx`, `ChecklistStep.tsx` — UI từng bước.
+- `src/lib/checklist.ts` — 8 mục + rule mức; `src/lib/photoSlots.ts` — vị trí ảnh. Đổi khóa ở đây thì đổi cả trong SQL (`kx_set_photo`, `kx_complete_inspection`).
+- `src/pages/InspectionReport.tsx` — báo cáo một lần kiểm tra.
+- `api/sync-vehicles.js` + `api/_sheet.js` — đọc sheet "Data xe" (Đội xe = cột AQ, ODO = AK) → `kx_sync_vehicles`.
+- `api/admin-users.js` — cấp quyền / đổi mật khẩu / khóa trong app.
+- Không có bước duyệt phiếu (người dùng chốt).

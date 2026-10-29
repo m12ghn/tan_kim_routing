@@ -3,28 +3,29 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase, friendlyError } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { signedUrls } from '../lib/upload';
-import { PHOTO_SLOTS, slotLabel } from '../lib/photoSlots';
+import { slotLabel, slotOrder } from '../lib/photoSlots';
+import { CHECK_ITEMS } from '../lib/checklist';
 import { EMPTY, fmtDateTime, fmtNum } from '../lib/format';
 import type { Inspection, InspectionPhoto, Profile, Vehicle } from '../lib/types';
-import { ResultBadge, StatusBadge } from '../components/StatusBadge';
+import { LevelBadge, StatusBadge } from '../components/StatusBadge';
 import { SkeletonRows } from '../components/Skeleton';
 
-const slotOrder = (k: string) => {
-  const i = PHOTO_SLOTS.findIndex((s) => s.key === k);
-  return i < 0 ? 99 : i;
-};
+function duration(from: string, to: string | null) {
+  if (!to) return EMPTY;
+  const min = Math.max(0, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 60_000));
+  return min < 60 ? `${min} phút` : `${Math.floor(min / 60)} giờ ${min % 60} phút`;
+}
 
-// Báo cáo một phiếu kiểm tra: thông tin, ảnh, duyệt/trả lại (quản lý).
+// Báo cáo một lần kiểm tra: thông tin xe, mức, checklist, ảnh, giờ bắt đầu/hoàn tất.
 export default function InspectionReport() {
   const { id = '' } = useParams();
-  const { isManager } = useAuth();
+  const { isManager, profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [insp, setInsp] = useState<Inspection | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [inspector, setInspector] = useState<Profile | null>(null);
   const [photos, setPhotos] = useState<(InspectionPhoto & { url?: string })[]>([]);
-  const [reviewNote, setReviewNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [zoom, setZoom] = useState<string | null>(null);
 
@@ -40,7 +41,6 @@ export default function InspectionReport() {
       }
       const i = data as Inspection;
       setInsp(i);
-      setReviewNote(i.review_note);
       const [v, p, ph] = await Promise.all([
         supabase.from('kx_vehicles').select('*').eq('id', i.vehicle_id).maybeSingle(),
         supabase.from('kx_members').select('id, username, full_name, role, active').eq('id', i.inspector_id).maybeSingle(),
@@ -62,12 +62,10 @@ export default function InspectionReport() {
     load();
   }, [load]);
 
-  async function review(status: 'approved' | 'rejected') {
-    if (busy) return;
-    if (status === 'rejected' && !reviewNote.trim()) return setError('Trả lại phiếu thì ghi rõ lý do.');
+  async function cancelOpen() {
+    if (busy || !window.confirm('Hủy phiếu đang kiểm tra này?')) return;
     setBusy(true);
-    setError('');
-    const { error: e } = await supabase.rpc('kx_review_inspection', { p_id: id, p_status: status, p_note: reviewNote.trim() });
+    const { error: e } = await supabase.rpc('kx_cancel_inspection', { p_id: id });
     setBusy(false);
     if (e) setError(friendlyError(e));
     else load();
@@ -82,54 +80,95 @@ export default function InspectionReport() {
       </div>
     );
 
+  const canCancel = insp.status === 'in_progress' && (isManager || insp.inspector_id === profile?.id);
+
   return (
     <div className="stack-lg report">
       <div className="page-head">
-        <h1>Phiếu kiểm tra {vehicle?.plate ?? ''}</h1>
-        <button className="btn btn-ghost no-print" onClick={() => window.print()}>
-          In / lưu PDF
-        </button>
+        <h1>Kiểm tra xe {vehicle?.plate ?? ''}</h1>
+        <div className="row no-print">
+          <button className="btn btn-ghost" onClick={() => history.back()}>
+            ← Quay lại
+          </button>
+          <button className="btn btn-ghost" onClick={() => window.print()}>
+            In / lưu PDF
+          </button>
+        </div>
       </div>
 
       {error && <div className="alert alert-bad">{error}</div>}
 
-      <div className="card">
+      <div className="card stack">
+        <div className="report-level">
+          {insp.status === 'completed' ? <LevelBadge level={insp.level} big /> : <StatusBadge status={insp.status} />}
+          {canCancel && (
+            <button className="btn btn-sm btn-danger no-print" disabled={busy} onClick={cancelOpen}>
+              Hủy phiếu
+            </button>
+          )}
+        </div>
         <dl className="facts">
           <dt>Biển số</dt>
-          <dd>{vehicle?.plate ?? EMPTY}</dd>
-          <dt>Loại xe</dt>
-          <dd>{vehicle?.vehicle_type || EMPTY}</dd>
-          <dt>Kết quả</dt>
-          <dd>
-            <ResultBadge result={insp.result} />
-          </dd>
-          <dt>Trạng thái</dt>
-          <dd>
-            <StatusBadge status={insp.status} />
-          </dd>
-          <dt>ODO</dt>
+          <dd className="strong">{vehicle?.plate ?? EMPTY}</dd>
+          <dt>Đội xe</dt>
+          <dd>{vehicle?.fleet || EMPTY}</dd>
+          <dt>Hãng xe</dt>
+          <dd>{[vehicle?.brand, vehicle?.model].filter(Boolean).join(' · ') || EMPTY}</dd>
+          <dt>Tải trọng</dt>
+          <dd>{vehicle?.payload_kg == null ? EMPTY : `${fmtNum(vehicle.payload_kg)} kg`}</dd>
+          <dt>ODO lúc kiểm tra</dt>
           <dd>{insp.odo == null ? EMPTY : `${fmtNum(insp.odo)} km`}</dd>
           <dt>Người kiểm tra</dt>
           <dd>{inspector ? `${inspector.username} · ${inspector.full_name}` : EMPTY}</dd>
-          <dt>Giờ gửi</dt>
-          <dd>{fmtDateTime(insp.created_at)}</dd>
-          <dt>Ghi chú</dt>
-          <dd>{insp.note || EMPTY}</dd>
-          {insp.reviewed_at && (
-            <>
-              <dt>Duyệt lúc</dt>
-              <dd>{fmtDateTime(insp.reviewed_at)}</dd>
-              <dt>Ý kiến quản lý</dt>
-              <dd>{insp.review_note || EMPTY}</dd>
-            </>
-          )}
+          <dt>Bắt đầu</dt>
+          <dd>{fmtDateTime(insp.started_at)}</dd>
+          <dt>Hoàn tất</dt>
+          <dd>{fmtDateTime(insp.completed_at)}</dd>
+          <dt>Thời gian</dt>
+          <dd>{duration(insp.started_at, insp.completed_at)}</dd>
         </dl>
       </div>
+
+      {insp.abnormal_note && (
+        <div className="abnormal-box">
+          <div>
+            <strong>✕ Bất thường — Cần sửa chữa</strong>
+            <p>{insp.abnormal_note}</p>
+          </div>
+        </div>
+      )}
+
+      {insp.status === 'completed' && (
+        <div className="card stack">
+          <h2>Checklist</h2>
+          <ul className="checklist checklist-view">
+            {CHECK_ITEMS.map((c) => {
+              const e = insp.checklist?.[c.key];
+              const ok = e?.ok !== false;
+              return (
+                <li key={c.key} className={ok ? '' : 'failed'}>
+                  <div className="check-row">
+                    <span className="check-label">{c.label}</span>
+                    <span className={ok ? 'ok-text strong' : 'danger-text strong'}>{ok ? '✓ Đạt' : '✗ Không đạt'}</span>
+                  </div>
+                  {!ok && e?.note && <p className="check-note">{e.note}</p>}
+                </li>
+              );
+            })}
+            <li>
+              <div className="check-row">
+                <span className="check-label">Khác</span>
+              </div>
+              <p className="check-note">{insp.other_note || EMPTY}</p>
+            </li>
+          </ul>
+        </div>
+      )}
 
       <div className="card stack">
         <h2>Ảnh ({fmtNum(photos.length)})</h2>
         {!photos.length ? (
-          <p className="empty">Phiếu này không có ảnh.</p>
+          <p className="empty">Phiếu này chưa có ảnh.</p>
         ) : (
           <div className="photo-grid">
             {photos.map((p) => (
@@ -147,24 +186,6 @@ export default function InspectionReport() {
           </div>
         )}
       </div>
-
-      {isManager && (
-        <div className="card stack no-print">
-          <h2>Duyệt phiếu</h2>
-          <label className="field">
-            <span>Ý kiến (bắt buộc khi trả lại)</span>
-            <textarea className="input" rows={2} value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} />
-          </label>
-          <div className="row">
-            <button className="btn btn-primary" disabled={busy} onClick={() => review('approved')}>
-              ✓ Duyệt
-            </button>
-            <button className="btn btn-danger" disabled={busy} onClick={() => review('rejected')}>
-              Trả lại
-            </button>
-          </div>
-        </div>
-      )}
 
       {zoom && (
         <div className="lightbox" onClick={() => setZoom(null)} role="dialog" aria-label="Ảnh phóng to">

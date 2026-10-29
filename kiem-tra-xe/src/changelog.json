@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.2.0",
+    "date": "2026-10-29",
+    "items": [
+      {
+        "type": "new",
+        "text": "Luồng kiểm tra 3 bước: Chọn xe (thẻ thông tin xe) → Chụp hình (7 ảnh bắt buộc + 3 ảnh thêm, chụp hoặc tải lên) → Checklist 8 mục, nút Bất thường, Hoàn tất."
+      },
+      {
+        "type": "new",
+        "text": "Mức hiện tại: Bình thường / Xem xét / Bất thường, tính theo checklist. Ghi log bắt đầu và hoàn tất kiểm tra."
+      },
+      {
+        "type": "new",
+        "text": "Dữ liệu xe đồng bộ từ Google Sheet Data xe (Đội xe cột AQ, ODO cột AK), có nút Đồng bộ và tự chạy mỗi sáng."
+      },
+      {
+        "type": "change",
+        "text": "Tab Tổng quan cho mọi người: tiến độ = xe đã kiểm / tổng xe, thẻ theo mức, bộ lọc, tải Excel. Bỏ bước duyệt phiếu."
+      }
+    ]
+  },
+  {
     "version": "0.1.1",
     "date": "2026-10-29",
     "items": [

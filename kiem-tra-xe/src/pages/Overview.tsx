@@ -1,172 +1,252 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase, friendlyError } from '../lib/supabase';
-import { dayRangeVN, EMPTY, fmtDate, fmtDateTime, fmtNum, fmtPct, todayVN } from '../lib/format';
-import { STATUS_LABEL, RESULT_LABEL, type Inspection, type Profile, type Vehicle } from '../lib/types';
+import { useAuth } from '../lib/auth';
+import { callApi } from '../lib/api';
+import { loadVehicles } from '../lib/vehicles';
+import { failedItems, type Checklist } from '../lib/checklist';
+import { downloadXlsx } from '../lib/excel';
+import { EMPTY, fmtDate, fmtDateTime, fmtNum, fmtPct, todayVN } from '../lib/format';
+import { LEVEL_LABEL, type Level, type Vehicle, type VehicleSummary } from '../lib/types';
 import KpiCard, { type Tone } from '../components/KpiCard';
 import Insights from '../components/Insights';
-import MultiSelect from '../components/MultiSelect';
+import MultiSelect, { type Option } from '../components/MultiSelect';
 import Pager, { PAGE_SIZE } from '../components/Pager';
 import { SkeletonCards, SkeletonRows } from '../components/Skeleton';
-import { ResultBadge, StatusBadge } from '../components/StatusBadge';
+import { LevelBadge } from '../components/StatusBadge';
 
-type Row = {
-  vehicle: Vehicle;
-  insp: (Inspection & { photo_count: number }) | null;
-  inspector: string;
-  state: string; // 'pending' | trạng thái phiếu
-};
+type Row = { v: Vehicle; s: VehicleSummary | undefined; level: Level | 'none'; state: 'done' | 'none' | 'open' };
 
-const STATE_OPTIONS = [
-  { value: 'pending', label: 'Chưa kiểm tra' },
-  ...Object.entries(STATUS_LABEL).map(([value, label]) => ({ value, label })),
+const LEVEL_OPTIONS: Option[] = [
+  ...(Object.entries(LEVEL_LABEL) as [Level, string][]).map(([value, label]) => ({ value, label })),
+  { value: 'none', label: 'Chưa kiểm tra' },
 ];
-const RESULT_OPTIONS = Object.entries(RESULT_LABEL).map(([value, label]) => ({ value, label }));
+const STATE_OPTIONS: Option[] = [
+  { value: 'done', label: 'Đã kiểm tra' },
+  { value: 'none', label: 'Chưa kiểm tra' },
+  { value: 'open', label: 'Đang kiểm tra' },
+];
+const OPEN_TOO_LONG_MS = 2 * 3_600_000;
+
+const uniq = (xs: string[]): Option[] =>
+  [...new Set(xs.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi')).map((x) => ({ value: x, label: x }));
 
 export default function Overview() {
-  const [day, setDay] = useState(todayVN);
+  const { isManager } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [inspections, setInspections] = useState<(Inspection & { photo_count: number })[]>([]);
-  const [people, setPeople] = useState<Record<string, Profile>>({});
+  const [summary, setSummary] = useState<Record<string, VehicleSummary>>({});
+  const [details, setDetails] = useState<Record<string, { checklist: Checklist; abnormal_note: string }>>({});
+  const [sync, setSync] = useState<{ busy: boolean; msg: string; bad: boolean }>({ busy: false, msg: '', bad: false });
+  const [exporting, setExporting] = useState(false);
 
   const [fPlate, setFPlate] = useState<string[]>([]);
+  const [fFleet, setFFleet] = useState<string[]>([]);
+  const [fLevel, setFLevel] = useState<string[]>([]);
   const [fState, setFState] = useState<string[]>([]);
-  const [fResult, setFResult] = useState<string[]>([]);
-  const [fPerson, setFPerson] = useState<string[]>([]);
+  const [fStatus, setFStatus] = useState<string[]>([]);
+  const [fBrand, setFBrand] = useState<string[]>([]);
   const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const [from, to] = dayRangeVN(day);
-      const [v, i, p] = await Promise.all([
-        supabase.from('kx_vehicles').select('*').eq('active', true).order('plate'),
-        supabase
-          .from('kx_inspections')
-          .select('*, kx_inspection_photos(count)')
-          .gte('created_at', from)
-          .lt('created_at', to)
-          .order('created_at', { ascending: false }),
-        supabase.from('kx_members').select('id, username, full_name, role, active'),
-      ]);
-      if (v.error) throw v.error;
-      if (i.error) throw i.error;
-      if (p.error) throw p.error;
-      setVehicles(v.data as Vehicle[]);
-      setInspections(
-        (i.data ?? []).map((r: Inspection & { kx_inspection_photos?: { count: number }[] }) => ({
-          ...r,
-          photo_count: r.kx_inspection_photos?.[0]?.count ?? 0,
-        })),
-      );
-      setPeople(Object.fromEntries((p.data as Profile[]).map((x) => [x.id, x])));
+      const { vehicles: v, summary: s } = await loadVehicles();
+      setVehicles(v);
+      setSummary(s);
+      // Chi tiết checklist của lần kiểm tra gần nhất có vấn đề, để viết "Điểm cần lưu ý".
+      const ids = Object.values(s)
+        .filter((x) => x.last_inspection_id && x.last_level && x.last_level !== 'normal')
+        .map((x) => x.last_inspection_id!);
+      if (ids.length) {
+        const { data, error: e } = await supabase.from('kx_inspections').select('id, checklist, abnormal_note').in('id', ids);
+        if (e) throw e;
+        setDetails(Object.fromEntries((data ?? []).map((d) => [d.id, d])));
+      } else setDetails({});
     } catch (e) {
       setError(friendlyError(e));
     } finally {
       setLoading(false);
     }
-  }, [day]);
+  }, []);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  // Mỗi xe lấy phiếu mới nhất trong ngày.
-  const rows: Row[] = useMemo(() => {
-    const latest = new Map<string, Inspection & { photo_count: number }>();
-    for (const i of inspections) if (!latest.has(i.vehicle_id)) latest.set(i.vehicle_id, i);
-    return vehicles.map((vehicle) => {
-      const insp = latest.get(vehicle.id) ?? null;
-      const p = insp ? people[insp.inspector_id] : undefined;
-      return {
-        vehicle,
-        insp,
-        inspector: p ? `${p.username} · ${p.full_name}` : insp ? EMPTY : '',
-        state: insp ? insp.status : 'pending',
-      };
-    });
-  }, [vehicles, inspections, people]);
+  async function syncNow() {
+    if (sync.busy) return;
+    setSync({ busy: true, msg: 'Đang đọc Google Sheet…', bad: false });
+    try {
+      const r = await callApi<{ total: number; deactivated: number }>('/api/sync-vehicles');
+      setSync({
+        busy: false,
+        bad: false,
+        msg: `Đã đồng bộ ${fmtNum(r.total)} xe${r.deactivated ? `, ${fmtNum(r.deactivated)} xe không còn trong sheet đã ẩn` : ''}.`,
+      });
+      load();
+    } catch (e) {
+      setSync({ busy: false, bad: true, msg: friendlyError(e) });
+    }
+  }
+
+  const rows: Row[] = useMemo(
+    () =>
+      vehicles.map((v) => {
+        const s = summary[v.id];
+        return {
+          v,
+          s,
+          level: s?.last_level ?? 'none',
+          state: s?.open_inspection_id ? 'open' : s?.last_completed_at ? 'done' : 'none',
+        };
+      }),
+    [vehicles, summary],
+  );
 
   const stats = useMemo(() => {
     const total = rows.length;
-    const done = rows.filter((r) => r.insp).length;
-    const issue = rows.filter((r) => r.insp?.result === 'issue');
-    const waiting = rows.filter((r) => r.state === 'submitted').length;
-    const rejected = rows.filter((r) => r.state === 'rejected');
-    const pct = total ? (done / total) * 100 : null;
-    return { total, done, pending: total - done, issue, waiting, rejected, pct };
+    const inspected = rows.filter((r) => r.s?.last_completed_at);
+    const by = (l: Level) => rows.filter((r) => r.level === l);
+    return {
+      total,
+      inspected: inspected.length,
+      pct: total ? (inspected.length / total) * 100 : null,
+      open: rows.filter((r) => r.s?.open_inspection_id),
+      normal: by('normal'),
+      review: by('review'),
+      abnormal: by('abnormal'),
+      none: rows.filter((r) => !r.s?.last_completed_at),
+    };
   }, [rows]);
 
+  // ---------- Điểm sáng / cần lưu ý (tự sinh) ----------
   const good: string[] = [];
   const bad: string[] = [];
-  if (stats.total && stats.pending === 0) good.push(`Đã kiểm tra đủ ${fmtNum(stats.total)}/${fmtNum(stats.total)} xe trong ngày.`);
-  if (stats.done && stats.issue.length === 0) good.push(`${fmtNum(stats.done)} xe đã kiểm tra đều đạt, không có vấn đề.`);
-  if (stats.pending > 0 && stats.total)
-    bad.push(
-      `${fmtNum(stats.pending)} xe chưa kiểm tra: ${rows
-        .filter((r) => !r.insp)
-        .slice(0, 5)
-        .map((r) => r.vehicle.plate)
-        .join(', ')}${stats.pending > 5 ? '…' : ''}`,
-    );
-  if (stats.issue.length) bad.push(`${fmtNum(stats.issue.length)} xe có vấn đề: ${stats.issue.slice(0, 5).map((r) => r.vehicle.plate).join(', ')}`);
-  if (stats.rejected.length) bad.push(`${fmtNum(stats.rejected.length)} phiếu bị trả lại cần kiểm tra lại: ${stats.rejected.slice(0, 5).map((r) => r.vehicle.plate).join(', ')}`);
-  if (stats.waiting) bad.push(`${fmtNum(stats.waiting)} phiếu đang chờ duyệt.`);
+  if (stats.total && stats.inspected === stats.total) good.push(`Đã kiểm tra đủ ${fmtNum(stats.total)}/${fmtNum(stats.total)} xe.`);
+  else if (stats.inspected) good.push(`Đã kiểm tra ${fmtNum(stats.inspected)}/${fmtNum(stats.total)} xe (${fmtPct(stats.pct)}).`);
+  if (stats.normal.length) good.push(`${fmtNum(stats.normal.length)} xe Bình thường ở lần kiểm tra gần nhất.`);
+  for (const r of stats.abnormal.slice(0, 5)) {
+    const note = details[r.s!.last_inspection_id!]?.abnormal_note;
+    bad.push(`${r.v.plate} Bất thường — cần sửa chữa${note ? `: ${note}` : ''}.`);
+  }
+  if (stats.abnormal.length > 5) bad.push(`Còn ${fmtNum(stats.abnormal.length - 5)} xe Bất thường khác, lọc Mức = Bất thường để xem.`);
+  if (stats.review.length) {
+    const sample = stats.review
+      .slice(0, 4)
+      .map((r) => {
+        const items = failedItems(details[r.s!.last_inspection_id!]?.checklist ?? {}).map((c) => c.label);
+        return items.length ? `${r.v.plate} (${items.join(', ')})` : r.v.plate;
+      })
+      .join('; ');
+    bad.push(`${fmtNum(stats.review.length)} xe cần Xem xét: ${sample}${stats.review.length > 4 ? '…' : ''}`);
+  }
+  const stale = stats.open.filter((r) => Date.now() - new Date(r.s!.open_started_at!).getTime() > OPEN_TOO_LONG_MS);
+  if (stale.length)
+    bad.push(`${fmtNum(stale.length)} phiếu kiểm tra dở quá 2 giờ: ${stale.slice(0, 5).map((r) => `${r.v.plate} (${r.s!.open_inspector})`).join(', ')}.`);
+  if (stats.none.length && stats.total) bad.push(`${fmtNum(stats.none.length)} xe chưa kiểm tra lần nào.`);
 
   const pctTone: Tone = stats.pct == null ? 'neutral' : stats.pct >= 100 ? 'good' : stats.pct >= 70 ? 'warn' : 'bad';
 
+  // ---------- Lọc ----------
   const plateOptions = useMemo(() => vehicles.map((v) => ({ value: v.id, label: v.plate })), [vehicles]);
-  const personOptions = useMemo(
-    () => Object.values(people).map((p) => ({ value: p.id, label: `${p.username} · ${p.full_name}` })),
-    [people],
-  );
+  const fleetOptions = useMemo(() => uniq(vehicles.map((v) => v.fleet)), [vehicles]);
+  const statusOptions = useMemo(() => uniq(vehicles.map((v) => v.sheet_status)), [vehicles]);
+  const brandOptions = useMemo(() => uniq(vehicles.map((v) => v.brand)), [vehicles]);
 
   const filtered = rows.filter(
     (r) =>
-      (!fPlate.length || fPlate.includes(r.vehicle.id)) &&
+      (!fPlate.length || fPlate.includes(r.v.id)) &&
+      (!fFleet.length || fFleet.includes(r.v.fleet)) &&
+      (!fLevel.length || fLevel.includes(r.level)) &&
       (!fState.length || fState.includes(r.state)) &&
-      (!fResult.length || (r.insp && fResult.includes(r.insp.result))) &&
-      (!fPerson.length || (r.insp && fPerson.includes(r.insp.inspector_id))),
+      (!fStatus.length || fStatus.includes(r.v.sheet_status)) &&
+      (!fBrand.length || fBrand.includes(r.v.brand)),
   );
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => setPage(1), [fPlate, fFleet, fLevel, fState, fStatus, fBrand]);
 
-  useEffect(() => setPage(1), [fPlate, fState, fResult, fPerson, day]);
-
-  const viewing = [
-    `ngày ${fmtDate(day)}`,
-    fPlate.length && `${fPlate.length} xe`,
-    fState.length && fState.map((s) => STATE_OPTIONS.find((o) => o.value === s)?.label).join(', '),
-    fResult.length && fResult.map((s) => RESULT_LABEL[s as 'ok' | 'issue']).join(', '),
-    fPerson.length && `${fPerson.length} người kiểm tra`,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const labelsOf = (vals: string[], opts: Option[]) => vals.map((v) => opts.find((o) => o.value === v)?.label ?? v).join(', ');
+  const viewing =
+    [
+      fPlate.length && `${fPlate.length} xe`,
+      fFleet.length && `Đội ${fFleet.join(', ')}`,
+      fLevel.length && labelsOf(fLevel, LEVEL_OPTIONS),
+      fState.length && labelsOf(fState, STATE_OPTIONS),
+      fStatus.length && fStatus.join(', '),
+      fBrand.length && fBrand.join(', '),
+    ]
+      .filter(Boolean)
+      .join(' · ') || 'tất cả xe';
 
   const reset = () => {
     setFPlate([]);
+    setFFleet([]);
+    setFLevel([]);
     setFState([]);
-    setFResult([]);
-    setFPerson([]);
-    setDay(todayVN());
+    setFStatus([]);
+    setFBrand([]);
   };
+
+  const levelText = (r: Row) => (r.level === 'none' ? 'Chưa kiểm tra' : LEVEL_LABEL[r.level]);
+
+  async function exportExcel() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await downloadXlsx(
+        `kiem-tra-xe-${todayVN()}.xlsx`,
+        ['Biển số', 'Đội xe', 'Hãng xe', 'Model', 'Tải trọng (kg)', 'Năm SX', 'Tình trạng', 'ODO (km)', 'Ngày ODO', 'Mức hiện tại', 'Kiểm tra gần nhất', 'Người kiểm tra', 'Số lần kiểm tra', 'Đang kiểm tra'],
+        filtered.map((r) => [
+          r.v.plate,
+          r.v.fleet,
+          r.v.brand,
+          r.v.model,
+          r.v.payload_kg,
+          r.v.year,
+          r.v.sheet_status,
+          r.v.odo,
+          r.v.odo_at ? fmtDate(r.v.odo_at) : null,
+          levelText(r),
+          r.s?.last_completed_at ? fmtDateTime(r.s.last_completed_at) : null,
+          r.s?.last_inspector ?? null,
+          r.s?.completed_count ?? 0,
+          r.s?.open_inspector ? `${r.s.open_inspector} từ ${fmtDateTime(r.s.open_started_at)}` : null,
+        ]),
+      );
+    } catch {
+      setError('Không tạo được file Excel. Hãy thử lại.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const lastSync = vehicles.reduce<string | null>((m, v) => (v.synced_at && (!m || v.synced_at > m) ? v.synced_at : m), null);
 
   return (
     <div className="stack-lg">
       <div className="page-head">
-        <h1>Tiến độ kiểm tra xe</h1>
-        <label className="field field-inline">
-          <span>Ngày</span>
-          <input type="date" value={day} max={todayVN()} onChange={(e) => e.target.value && setDay(e.target.value)} />
-        </label>
+        <div>
+          <h1>Tiến độ kiểm tra xe</h1>
+          <p className="muted small">
+            Dữ liệu xe từ Google Sheet "Data xe" · cập nhật {lastSync ? fmtDateTime(lastSync) : 'chưa đồng bộ'}
+          </p>
+        </div>
+        {isManager && (
+          <button className="btn btn-ghost" disabled={sync.busy} onClick={syncNow}>
+            {sync.busy ? 'Đang đồng bộ…' : '⟳ Đồng bộ xe từ Sheet'}
+          </button>
+        )}
       </div>
+      {sync.msg && <div className={`alert ${sync.bad ? 'alert-bad' : 'alert-good'}`}>{sync.msg}</div>}
 
       {error && (
         <div className="alert alert-bad">
           {error}{' '}
-          <button className="btn btn-ghost" onClick={load}>
+          <button className="btn btn-sm btn-ghost" onClick={load}>
             Thử lại
           </button>
         </div>
@@ -174,7 +254,7 @@ export default function Overview() {
 
       {loading ? (
         <>
-          <SkeletonCards n={5} />
+          <SkeletonCards n={6} />
           <SkeletonRows />
         </>
       ) : (
@@ -182,27 +262,43 @@ export default function Overview() {
           <Insights good={good} bad={bad} />
 
           <div className="kpi-grid">
-            <KpiCard label="Xe theo dõi" value={fmtNum(stats.total)} unit="xe" hint="Số xe đang hoạt động cần kiểm tra mỗi ngày" />
-            <KpiCard label="Tiến độ" value={fmtPct(stats.pct)} tone={pctTone} hint="Số xe đã có phiếu trong ngày / tổng số xe" />
-            <KpiCard label="Chưa kiểm tra" value={fmtNum(stats.pending)} unit="xe" tone={stats.pending ? 'warn' : 'good'} />
-            <KpiCard label="Có vấn đề" value={fmtNum(stats.issue.length)} unit="xe" tone={stats.issue.length ? 'bad' : 'good'} hint="Phiếu được đánh dấu ⚠ Có vấn đề" />
-            <KpiCard label="Chờ duyệt" value={fmtNum(stats.waiting)} unit="phiếu" tone={stats.waiting ? 'warn' : 'neutral'} />
+            <KpiCard label="Tổng xe" value={fmtNum(stats.total)} unit="xe" hint="Toàn bộ xe trong sheet Data xe" />
+            <KpiCard label="Tiến độ" value={fmtPct(stats.pct)} tone={pctTone} hint="Số xe đã kiểm tra ít nhất 1 lần / tổng xe" />
+            <KpiCard label="Đã kiểm tra" value={fmtNum(stats.inspected)} unit="xe" />
+            <KpiCard label="Đang kiểm tra" value={fmtNum(stats.open.length)} unit="xe" tone={stale.length ? 'warn' : 'neutral'} />
+            <KpiCard label="✓ Bình thường" value={fmtNum(stats.normal.length)} unit="xe" tone="good" hint="Mức ở lần kiểm tra gần nhất" />
+            <KpiCard label="⚠ Xem xét" value={fmtNum(stats.review.length)} unit="xe" tone={stats.review.length ? 'warn' : 'neutral'} hint="Có ít nhất 1 mục checklist ✗" />
+            <KpiCard label="✕ Bất thường" value={fmtNum(stats.abnormal.length)} unit="xe" tone={stats.abnormal.length ? 'bad' : 'neutral'} hint="Đánh dấu Bất thường — Cần sửa chữa" />
           </div>
 
           <div className="card stack">
             <div className="filters">
               <MultiSelect label="Biển số" options={plateOptions} value={fPlate} onChange={setFPlate} />
-              <MultiSelect label="Trạng thái" options={STATE_OPTIONS} value={fState} onChange={setFState} />
-              <MultiSelect label="Kết quả" options={RESULT_OPTIONS} value={fResult} onChange={setFResult} />
-              <MultiSelect label="Người kiểm tra" options={personOptions} value={fPerson} onChange={setFPerson} />
-              <button className="btn btn-ghost filters-reset" onClick={reset}>
-                ↺ Đặt lại bộ lọc
-              </button>
+              <MultiSelect label="Đội xe" options={fleetOptions} value={fFleet} onChange={setFFleet} />
+              <MultiSelect label="Mức hiện tại" options={LEVEL_OPTIONS} value={fLevel} onChange={setFLevel} />
+              <MultiSelect label="Kiểm tra" options={STATE_OPTIONS} value={fState} onChange={setFState} />
+              <MultiSelect label="Tình trạng xe" options={statusOptions} value={fStatus} onChange={setFStatus} />
+              <MultiSelect label="Hãng xe" options={brandOptions} value={fBrand} onChange={setFBrand} />
             </div>
-            <p className="muted small">Đang xem: {viewing}</p>
+            <div className="toolbar">
+              <p className="muted small">
+                Đang xem: {viewing} · {fmtNum(filtered.length)} xe
+              </p>
+              <div className="row">
+                <button className="btn btn-ghost btn-sm" onClick={reset}>
+                  ↺ Đặt lại bộ lọc
+                </button>
+                <button className="btn btn-ghost btn-sm" disabled={exporting || !filtered.length} onClick={exportExcel}>
+                  {exporting ? 'Đang tạo file…' : '⬇ Tải Excel (.xlsx)'}
+                </button>
+              </div>
+            </div>
 
             {!vehicles.length ? (
-              <p className="empty">Chưa có xe nào trong danh mục. Quản lý thêm xe vào bảng vehicles để bắt đầu theo dõi.</p>
+              <p className="empty">
+                Chưa có dữ liệu xe.{' '}
+                {isManager ? 'Bấm "⟳ Đồng bộ xe từ Sheet" ở trên để lấy danh sách xe.' : 'Báo quản lý đồng bộ dữ liệu xe.'}
+              </p>
             ) : !filtered.length ? (
               <p className="empty">Không có xe nào khớp bộ lọc. Hãy đổi bộ lọc hoặc bấm ↺ Đặt lại.</p>
             ) : (
@@ -212,28 +308,37 @@ export default function Overview() {
                     <thead>
                       <tr>
                         <th>Biển số</th>
-                        <th>Loại xe</th>
-                        <th>Trạng thái</th>
-                        <th>Kết quả</th>
+                        <th>Đội xe</th>
+                        <th>Hãng xe</th>
+                        <th className="num">Tải trọng (kg)</th>
+                        <th>Tình trạng</th>
                         <th className="num">ODO (km)</th>
-                        <th className="num">Số ảnh</th>
+                        <th>Mức hiện tại</th>
+                        <th>Kiểm tra gần nhất</th>
                         <th>Người kiểm tra</th>
-                        <th>Giờ gửi</th>
+                        <th className="num">Số lần</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pageRows.map((r) => (
-                        <tr key={r.vehicle.id}>
+                        <tr
+                          key={r.v.id}
+                          className={r.s?.last_inspection_id ? 'clickable' : ''}
+                          onClick={() => r.s?.last_inspection_id && navigate(`/phieu/${r.s.last_inspection_id}`)}
+                        >
+                          <td className="strong">{r.v.plate}</td>
+                          <td>{r.v.fleet || EMPTY}</td>
+                          <td>{r.v.brand || EMPTY}</td>
+                          <td className="num">{fmtNum(r.v.payload_kg)}</td>
+                          <td>{r.v.sheet_status || EMPTY}</td>
+                          <td className="num">{fmtNum(r.v.odo)}</td>
                           <td>
-                            {r.insp ? <Link to={`/phieu/${r.insp.id}`}>{r.vehicle.plate}</Link> : r.vehicle.plate}
+                            <LevelBadge level={r.s?.last_level} />
+                            {r.s?.open_inspection_id && <span className="badge badge-warn"> ⟳ Đang kiểm tra</span>}
                           </td>
-                          <td>{r.vehicle.vehicle_type || EMPTY}</td>
-                          <td>{r.insp ? <StatusBadge status={r.insp.status} /> : <span className="badge">Chưa kiểm tra</span>}</td>
-                          <td>{r.insp ? <ResultBadge result={r.insp.result} /> : EMPTY}</td>
-                          <td className="num">{fmtNum(r.insp?.odo)}</td>
-                          <td className="num">{r.insp ? fmtNum(r.insp.photo_count) : EMPTY}</td>
-                          <td>{r.inspector || EMPTY}</td>
-                          <td>{fmtDateTime(r.insp?.created_at)}</td>
+                          <td>{fmtDateTime(r.s?.last_completed_at)}</td>
+                          <td>{r.s?.last_inspector || EMPTY}</td>
+                          <td className="num">{r.s?.completed_count ? fmtNum(r.s.completed_count) : EMPTY}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -242,6 +347,7 @@ export default function Overview() {
                 <Pager page={page} total={filtered.length} onPage={setPage} />
               </>
             )}
+            <p className="muted small">Bấm vào một dòng để xem báo cáo lần kiểm tra gần nhất của xe.</p>
           </div>
         </>
       )}

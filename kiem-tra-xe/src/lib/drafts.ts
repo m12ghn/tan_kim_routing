@@ -1,25 +1,28 @@
-// Lưu nháp phiếu kiểm tra vào IndexedDB để không mất khi mất mạng hoặc tải lại trang.
-import type { InspectionResult } from './types';
+// Lưu nháp phiếu đang kiểm tra vào IndexedDB: không mất khi mất mạng hoặc tải lại trang.
+import type { Checklist } from './checklist';
 
 export interface Draft {
-  id: string; // id phiếu, tạo ở máy khách
   userId: string;
-  vehicleId: string | null;
-  result: InspectionResult;
-  odo: string;
-  note: string;
-  photos: Record<string, Blob>; // slot -> ảnh đã nén
-  uploaded: Record<string, string>; // slot -> đường dẫn đã tải lên
+  inspectionId: string;
+  vehicleId: string;
+  step: 'photos' | 'checklist';
+  checklist: Checklist;
+  otherNote: string;
+  abnormal: boolean;
+  abnormalNote: string;
+  pending: Record<string, Blob>; // ảnh đã chụp nhưng chưa tải lên được
   updatedAt: number;
 }
 
 const DB = 'kiem-tra-xe';
-const STORE = 'drafts';
+const STORE = 'drafts-v2';
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: 'userId' });
+    const req = indexedDB.open(DB, 2);
+    req.onupgradeneeded = () => {
+      if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE, { keyPath: 'userId' });
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });

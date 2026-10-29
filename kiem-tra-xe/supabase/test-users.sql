@@ -12,10 +12,6 @@ from (values
 join auth.users u on lower(u.email) = x.username || '@app.local'
 on conflict (id) do update set role = excluded.role, full_name = excluded.full_name, active = true;
 
-insert into public.kx_vehicles (plate, vehicle_type) values
-  ('51K-888.99', 'Tải 1,5T'),
-  ('51D-123.45', 'Van'),
-  ('60C-456.78', 'Tải 2,5T')
-on conflict (plate) do nothing;
+-- Danh sách xe không nhập tay: quản lý bấm "⟳ Đồng bộ xe từ Sheet" ở tab Tổng quan (đọc sheet Data xe).
 
 select username, full_name, role, active from public.kx_members order by username;

@@ -25,7 +25,7 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/tong-quan" element={isManager ? <Overview /> : <Navigate to={home} replace />} />
+        <Route path="/tong-quan" element={<Overview />} />
         <Route path="/kiem-tra" element={<Inspect />} />
         <Route path="/phieu/:id" element={<InspectionReport />} />
         <Route path="*" element={<Navigate to={home} replace />} />
