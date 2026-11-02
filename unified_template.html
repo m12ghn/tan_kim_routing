@@ -1321,7 +1321,31 @@
     '<div class="hk"><input type="checkbox" id="mtDist" checked> Ranh giới quận/huyện (nét đứt mờ)</div>'+
     '<div class="hk"><input type="checkbox" id="mtProvName" checked> Tên tỉnh</div>'+
     '<div class="hk"><input type="checkbox" id="mtDistName" checked> Tên quận/huyện <span style="color:#8aa0b4;font-size:11px">(hiện khi zoom gần)</span></div>';
+
+  // ---------- cao tốc (OpenStreetMap): vẽ trên bản đồ, mỗi tuyến có ô bật/tắt riêng ----------
+  var EXPW = DATA.expressways || [];
+  function exprLayers(mapObj, prefix, container){
+    if(!EXPW.length) return;
+    var html = '<div class="hr"></div><div style="font-weight:600;color:#aebfce;font-size:12px;margin:2px 0 4px">🛣️ Cao tốc</div>';
+    EXPW.forEach(function(x){
+      html += '<div class="hk"><input type="checkbox" id="'+prefix+x.id+'" checked> <span style="display:inline-block;width:18px;height:4px;background:'+x.color+';border-radius:2px;flex:none"></span> '+esc(x.name)+'</div>';
+    });
+    container.insertAdjacentHTML('beforeend', html);
+    // pane riêng nằm trên lớp mũi tên / vùng tô màu, dưới lớp chấm kho
+    if(!mapObj.getPane('hwy')){ mapObj.createPane('hwy'); mapObj.getPane('hwy').style.zIndex = 560; }
+    var rnd = L.svg({pane:'hwy'});
+    EXPW.forEach(function(x){
+      var g = L.layerGroup();
+      x.lines.forEach(function(ln){
+        L.polyline(ln, {pane:'hwy', renderer:rnd, color:'#0a1614', weight:7, opacity:.6, interactive:false}).addTo(g);
+        L.polyline(ln, {pane:'hwy', renderer:rnd, color:x.color, weight:3.5, opacity:1}).bindTooltip('🛣️ '+x.name, {sticky:true, className:'rt'}).addTo(g);
+      });
+      g.addTo(mapObj);
+      container.querySelector('#'+prefix+x.id).addEventListener('change', function(e){ if(e.target.checked) g.addTo(mapObj); else mapObj.removeLayer(g); });
+    });
+  }
   var mpanel = document.createElement('div'); mpanel.className='pnl'; mpanel.id='mpanel'; mpanel.innerHTML = mpanelHtml;
+  exprLayers(map, 'mx_', mpanel);
   document.getElementById('tkmap').appendChild(mpanel);
   var mstats = document.createElement('div'); mstats.className='pnl'; mstats.id='mstats';
   mstats.innerHTML = '<h3>📊 Thống kê</h3><div id="mstbody"></div>';
@@ -2347,6 +2371,7 @@
       '<div class="hk"><input type="checkbox" id="zKhoChk" checked> <span style="color:#f2c94c">◆</span> Kho KTC/KCT</div>'+
       '<div class="hk"><input type="checkbox" id="zProvName" checked> Tên tỉnh</div>'+
       '<div class="hk"><input type="checkbox" id="zDistName" checked> Tên quận/huyện <span style="color:#8aa0b4;font-size:11px">(zoom gần)</span></div>';
+    exprLayers(zmap, 'zx_', zp);
     var zs = document.createElement('div'); zs.className = 'pnl'; zs.id = 'zstats'; zs.innerHTML = '<h3>📊 Tổng theo kho</h3><div id="zstbody"></div>';
     document.getElementById('zmap').appendChild(zp); document.getElementById('zmap').appendChild(zs);
     pnlCollapsible([zp, zs]);
