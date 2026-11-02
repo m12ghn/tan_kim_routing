@@ -450,7 +450,7 @@ def build():
         "volGiao": {str(k): v for k, v in vol_giao.items()},
         "totals": totals,
         "defaultRules": default_rules,
-        "official": official, "actual": actual, "plan": plan, "bcDist": bc_dist, "distCover": dist_cover,
+        "official": official, "actual": actual, "expressways": (json.load(open(os.path.join(DATA, "expressways.json"), encoding="utf-8")) if os.path.exists(os.path.join(DATA, "expressways.json")) else []), "plan": plan, "bcDist": bc_dist, "distCover": dist_cover,
         "prov": prov, "adm2": adm2, "tk": tk,
     }
     with open(OUT, "w", encoding="utf-8") as f:

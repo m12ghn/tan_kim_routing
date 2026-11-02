@@ -106,3 +106,5 @@ Tab "Bản đồ khoanh vùng": mỗi quận/huyện (adm2) tô màu theo kho nh
 `plan_2027.json` → `force_north`: quận về HCM01 toàn bộ dù nằm phía nam đường ranh (Thủ Thừa, Bến Lức). Bản đồ khoanh vùng (tháng 2027) vẽ đường ranh và cắt đôi các quận bị đường ranh đi qua (Bình Chánh, Bình Tân, Tân Phú…), mỗi nửa tô theo BC nằm ở nửa đó.
 
 `data/detach.json` (min_share = 5%): tuyến BC × kho mà kho phụ chiếm < 5% lượng của BC (theo chiều) coi là đi nhầm và gộp về kho chính khi build; danh sách ở `data/detached_routes.csv`.
+
+`data/expressways.json`: hình học 3 tuyến cao tốc (TP.HCM – Long Thành – Dầu Giây, Bến Lức – Long Thành, TP.HCM – Trung Lương – Mỹ Thuận – Cần Thơ) lấy từ OpenStreetMap (highway=motorway, © OpenStreetMap contributors); bản đồ mạng lưới và bản đồ khoanh vùng có ô bật/tắt từng tuyến.
