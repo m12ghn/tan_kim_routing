@@ -245,6 +245,7 @@
   .pnl.collapsed{ width:auto !important; min-width:0; padding:8px 40px 8px 12px; }
   .pnl.collapsed > *:not(h3):not(.pnl-toggle){ display:none; }
   .pnl.collapsed h3{ margin:0; white-space:nowrap; }
+  .hwlbl span{ position:absolute; left:8px; top:-9px; white-space:nowrap; font:600 10.5px 'Be Vietnam Pro',sans-serif; color:#e6eef5; background:rgba(10,22,20,.82); border-left:3px solid; padding:1px 5px; border-radius:3px; pointer-events:none; }
   .khoicon{ width:16px; height:16px; background:#f2c94c; border:2px solid #0a1614; transform:rotate(45deg); box-shadow:0 0 0 2px rgba(242,201,76,.35); }
   .leaflet-tooltip.khotip{ background:#f2c94c; color:#1a1400; border:1px solid #0a1614; font-weight:700; font-size:11px; padding:2px 6px; }
   .leaflet-tooltip.khotip:before{ border-top-color:#f2c94c; }
@@ -1340,8 +1341,18 @@
         L.polyline(ln, {pane:'hwy', renderer:rnd, color:'#0a1614', weight:7, opacity:.6, interactive:false}).addTo(g);
         L.polyline(ln, {pane:'hwy', renderer:rnd, color:x.color, weight:3.5, opacity:1}).bindTooltip('🛣️ '+x.name, {sticky:true, className:'rt'}).addTo(g);
       });
-      g.addTo(mapObj);
-      container.querySelector('#'+prefix+x.id).addEventListener('change', function(e){ if(e.target.checked) g.addTo(mapObj); else mapObj.removeLayer(g); });
+      // chấm các điểm chính (nút giao, cầu lớn, đầu/cuối tuyến); rê chuột xem tên, tên hiện sẵn khi zoom ≥ 11
+      var lbl = L.layerGroup();
+      (x.points || []).forEach(function(pt){
+        L.circleMarker([pt.lat, pt.lng], {pane:'hwy', renderer:rnd, radius:4.5, color:x.color, weight:2.5, fillColor:'#ffffff', fillOpacity:1})
+          .bindTooltip('🛣️ <b>'+esc(pt.name)+'</b><br><span style="color:#8aa0b4">'+esc(x.name)+'</span>', {direction:'top', offset:[0,-4], className:'rt'}).addTo(g);
+        L.marker([pt.lat, pt.lng], {interactive:false, keyboard:false, pane:'hwy',
+          icon:L.divIcon({className:'hwlbl', html:'<span style="border-color:'+x.color+'">'+esc(pt.name.replace(/\s*\(.*\)\s*$/,''))+'</span>', iconSize:[0,0]})}).addTo(lbl);
+      });
+      function syncLbl(){ var on = mapObj.hasLayer(g) && mapObj.getZoom() >= 11; if(on && !mapObj.hasLayer(lbl)) lbl.addTo(mapObj); else if(!on && mapObj.hasLayer(lbl)) mapObj.removeLayer(lbl); }
+      mapObj.on('zoomend', syncLbl);
+      g.addTo(mapObj); syncLbl();
+      container.querySelector('#'+prefix+x.id).addEventListener('change', function(e){ if(e.target.checked) g.addTo(mapObj); else mapObj.removeLayer(g); syncLbl(); });
     });
   }
   var mpanel = document.createElement('div'); mpanel.className='pnl'; mpanel.id='mpanel'; mpanel.innerHTML = mpanelHtml;
