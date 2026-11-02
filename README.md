@@ -107,4 +107,4 @@ Tab "Bản đồ khoanh vùng": mỗi quận/huyện (adm2) tô màu theo kho nh
 
 `data/detach.json` (min_share = 5%): tuyến BC × kho mà kho phụ chiếm < 5% lượng của BC (theo chiều) coi là đi nhầm và gộp về kho chính khi build; danh sách ở `data/detached_routes.csv`.
 
-`data/expressways.json`: hình học 3 tuyến cao tốc (TP.HCM – Long Thành – Dầu Giây, Bến Lức – Long Thành, TP.HCM – Trung Lương – Mỹ Thuận – Cần Thơ) lấy từ OpenStreetMap (highway=motorway, © OpenStreetMap contributors); bản đồ mạng lưới và bản đồ khoanh vùng có ô bật/tắt từng tuyến.
+`data/expressways.json`: hình học 3 tuyến cao tốc (TP.HCM – Long Thành – Dầu Giây, Bến Lức – Long Thành, TP.HCM – Trung Lương – Mỹ Thuận – Cần Thơ) vẽ 1 đường tim theo OpenStreetMap / OSRM (© OpenStreetMap contributors): TP.HCM – Long Thành – Dầu Giây 55,7 km (An Phú → Dầu Giây), Bến Lức – Long Thành ~56 km (IC Mỹ Yên → IC Tân Hiệp); bản đồ mạng lưới và bản đồ khoanh vùng có ô bật/tắt từng tuyến.
